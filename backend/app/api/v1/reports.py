@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 from typing import Dict, Any
+from app.schemas.schemas import ReportRequest
 from app.workers.reports_worker import generate_pdf_report_task, generate_excel_report_task
 from app.core.celery_app import celery_app
 from celery.result import AsyncResult
@@ -9,20 +9,15 @@ import os
 
 router = APIRouter()
 
-class ReportRequest(BaseModel):
-    career_id: int
-    gestion_id: int
-    format: str
-
 @router.post("/generate")
 def generate_report(request: ReportRequest):
     if request.format == "pdf":
-        task = generate_pdf_report_task.delay(request.career_id, request.gestion_id)
+        task = generate_pdf_report_task.delay(request.career_id, request.gestion_id, request.report_type)
     elif request.format == "excel":
         task = generate_excel_report_task.delay(request.career_id, request.gestion_id)
     else:
         raise HTTPException(status_code=400, detail="Invalid format. Must be 'pdf' or 'excel'")
-    
+
     return {"task_id": task.id}
 
 @router.get("/{task_id}/status")

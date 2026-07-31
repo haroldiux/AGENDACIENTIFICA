@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import date
-from typing import Optional, List
+from typing import Optional, List, Literal
 from enum import Enum
 
 class ScientificActivityType(str, Enum):
@@ -163,4 +163,12 @@ class ActivityRowValidator(BaseModel):
     career_id: int
     gestion_id: int
     is_scientific: bool = False
+
+
+# --- Report Schemas ---
+class ReportRequest(BaseModel):
+    career_id: int
+    gestion_id: int
+    format: str
+    report_type: Literal["table", "research-agenda"] = "table"
 

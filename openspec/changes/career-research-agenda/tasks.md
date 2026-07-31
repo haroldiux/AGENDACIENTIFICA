@@ -43,10 +43,10 @@ _Note: Docker Desktop was unavailable on the apply workstation, so verification 
 
 ## Phase 3: Backend Reports
 
-- [ ] 3.1 Modify `backend/app/schemas/schemas.py` so `ReportRequest` includes `report_type: str = "table"`. Implements design § Report Request and `tracking-reports` spec.
-- [ ] 3.2 Modify `backend/app/api/v1/reports.py` to accept `report_type` and pass it to the Celery task. Implements `tracking-reports` and `research-agenda-pdf-report` specs.
-- [ ] 3.3 Modify `backend/app/workers/reports_worker.py` to branch on `report_type` and keep the existing table path as default. Implements design § Celery task and `tracking-reports` § Template Selection.
-- [ ] 3.4 Implement `build_research_agenda_pdf(doc, activities, career_name, gestion_name)` with header, month sections, and activity cards. Implements design § PDF Template and `research-agenda-pdf-report` spec.
+- [x] 3.1 Modify `backend/app/schemas/schemas.py` so `ReportRequest` includes `report_type: str = "table"`. Implements design § Report Request and `tracking-reports` spec.
+- [x] 3.2 Modify `backend/app/api/v1/reports.py` to accept `report_type` and pass it to the Celery task. Implements `tracking-reports` and `research-agenda-pdf-report` specs.
+- [x] 3.3 Modify `backend/app/workers/reports_worker.py` to branch on `report_type` and keep the existing table path as default. Implements design § Celery task and `tracking-reports` § Template Selection.
+- [x] 3.4 Implement `build_research_agenda_pdf(doc, activities, career_name, gestion_name)` with header, month sections, and activity cards. Implements design § PDF Template and `research-agenda-pdf-report` spec.
 
 ## Phase 4: Frontend Implementation
 
