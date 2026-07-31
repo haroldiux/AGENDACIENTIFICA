@@ -28,10 +28,12 @@ Chain strategy: feature-branch-chain
 
 ## Phase 1: Infrastructure
 
-- [ ] 1.1 Add `pytest` and `httpx` to `backend/pyproject.toml` dependencies. Implements `backend-test-infrastructure` spec.
-- [ ] 1.2 Create `backend/tests/conftest.py` with SQLite `get_db` override for FastAPI `TestClient`. Implements design § Testing Strategy.
-- [ ] 1.3 Quarantine stale tests in `backend/tests/test_api.py`: move `app.models.auth`/`app.schemas.auth` imports inside the test functions and add `@pytest.mark.skip(reason="quarantined stale test")`. Implements design § Stale Tests and `backend-test-infrastructure` spec.
-- [ ] 1.4 Run `docker compose exec backend pytest` and confirm collection passes without import errors. Verifies `backend-test-infrastructure` spec.
+- [x] 1.1 Add `pytest` and `httpx` to `backend/pyproject.toml` dependencies. Implements `backend-test-infrastructure` spec.
+- [x] 1.2 Create `backend/tests/conftest.py` with SQLite `get_db` override for FastAPI `TestClient`. Implements design § Testing Strategy.
+- [x] 1.3 Quarantine stale tests in `backend/tests/test_api.py`: move `app.models.auth`/`app.schemas.auth` imports inside the test functions and add `@pytest.mark.skip(reason="quarantined stale test")`. Implements design § Stale Tests and `backend-test-infrastructure` spec.
+- [x] 1.4 Run `docker compose exec backend pytest` and confirm collection passes without import errors. Verifies `backend-test-infrastructure` spec.
+
+_Note: Docker Desktop was unavailable on the apply workstation, so verification used a local venv with dependencies installed from `backend/pyproject.toml`. Pytest collected successfully with 8 quarantined tests skipped and 0 failures. Additionally, a minimal `backend/app/api/deps.py` was added because the baseline routers (`sedes.py`, `actividades.py`) import `app.api.deps`, which did not exist and prevented pytest collection; the module is pure infrastructure with no business logic._
 
 ## Phase 2: Backend Filters
 
