@@ -28,7 +28,7 @@ export default function CalendarioPage() {
   const [retryToken, setRetryToken] = useState(0);
   const [exporting, setExporting] = useState(false);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load selector options once on mount.
   useEffect(() => {
@@ -96,11 +96,11 @@ export default function CalendarioPage() {
     };
   }, [careerId, gestionId, retryToken]);
 
-  // Clean up any active polling interval on unmount.
+  // Clean up any active polling timeout on unmount.
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, []);
@@ -113,8 +113,8 @@ export default function CalendarioPage() {
   const handleExportPDF = async () => {
     if (careerId === null || gestionId === null) return;
 
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
     setExporting(true);
 
@@ -126,19 +126,16 @@ export default function CalendarioPage() {
         report_type: 'research-agenda',
       });
 
-      intervalRef.current = setInterval(async () => {
+      const pollStatus = async (taskId: string, attempt: number): Promise<void> => {
         try {
-          const status = await api.reports.status(task_id);
+          const status = await api.reports.status(taskId);
 
           if (status.status === 'completed') {
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current);
-            }
-            const blob = await api.reports.download(task_id);
+            const blob = await api.reports.download(taskId);
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = status.file_name || `agenda-${task_id}.pdf`;
+            link.download = status.result?.file_name || `agenda-${taskId}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -146,21 +143,26 @@ export default function CalendarioPage() {
             setExporting(false);
             toast.success('Agenda exportada correctamente');
           } else if (status.status === 'failed') {
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current);
-            }
             throw new Error(status.error || 'Error generando el PDF');
+          } else if (attempt >= 60) {
+            throw new Error(
+              'La generación del PDF tardó demasiado. Intente nuevamente.'
+            );
+          } else {
+            timeoutRef.current = setTimeout(
+              () => pollStatus(taskId, attempt + 1),
+              2000
+            );
           }
         } catch (err) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
           setExporting(false);
           toast.error(
             err instanceof Error ? err.message : 'Error exportando el PDF'
           );
         }
-      }, 2000);
+      };
+
+      timeoutRef.current = setTimeout(() => pollStatus(task_id, 1), 2000);
     } catch (err) {
       setExporting(false);
       toast.error('Error iniciando la exportación del PDF');

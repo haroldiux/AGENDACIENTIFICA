@@ -78,9 +78,11 @@ export interface ReportGenerateResponse {
 }
 
 export interface ReportStatusResponse {
-  status: 'pending' | 'started' | 'completed' | 'failed';
-  file_path?: string;
-  file_name?: string;
+  status: string;
+  result?: {
+    file_path?: string;
+    file_name?: string;
+  };
   error?: string;
 }
 

@@ -2,6 +2,7 @@ import os
 import uuid
 from collections import defaultdict
 from datetime import datetime
+from xml.sax.saxutils import escape
 from app.core.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion
@@ -28,9 +29,59 @@ SPANISH_MONTHS = {
     12: "Diciembre",
 }
 
+SPANISH_MONTH_ABBR = {
+    1: "ene",
+    2: "feb",
+    3: "mar",
+    4: "abr",
+    5: "may",
+    6: "jun",
+    7: "jul",
+    8: "ago",
+    9: "sep",
+    10: "oct",
+    11: "nov",
+    12: "dic",
+}
+
+ACTIVITY_TYPE_LABELS = {
+    "congreso": "Congreso",
+    "webinar": "Webinar",
+    "defensa": "Defensa",
+    "feria": "Feria",
+    "olimpiada": "Olimpiada",
+    "master_class": "Master Class",
+}
+
+ACTIVITY_STATUS_LABELS = {
+    "scheduled": "Programada",
+    "in_progress": "En progreso",
+    "completed": "Completada",
+    "cancelled": "Cancelada",
+}
+
+MAX_NOTES_LENGTH = 500
+
 
 def _month_label(year, month):
     return f"{SPANISH_MONTHS[month]} {year}"
+
+
+def _format_short_date(value):
+    return f"{value.day} {SPANISH_MONTH_ABBR[value.month]} {value.year}"
+
+
+def _format_date_range(start_date, end_date):
+    if start_date == end_date:
+        return _format_short_date(start_date)
+    return f"{_format_short_date(start_date)} – {_format_short_date(end_date)}"
+
+
+def _clamp_notes(notes):
+    text = notes or "—"
+    if len(text) > MAX_NOTES_LENGTH:
+        return text[:MAX_NOTES_LENGTH] + "…"
+    return text
 
 
 def _enum_value(value):
@@ -42,8 +93,8 @@ def build_research_agenda_pdf(doc, activities, career_name, gestion_name):
     styles = getSampleStyleSheet()
     elements = []
 
-    elements.append(Paragraph(f"Agenda Científica: {career_name}", styles["Title"]))
-    elements.append(Paragraph(f"Gestión: {gestion_name}", styles["Heading2"]))
+    elements.append(Paragraph(f"Agenda Científica: {escape(str(career_name))}", styles["Title"]))
+    elements.append(Paragraph(f"Gestión: {escape(str(gestion_name))}", styles["Heading2"]))
     elements.append(
         Paragraph(
             f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
@@ -71,18 +122,20 @@ def build_research_agenda_pdf(doc, activities, career_name, gestion_name):
         elements.append(Spacer(1, 6))
 
         for act in grouped[(year, month)]:
-            act_type = _enum_value(act.activity_type)
-            status = _enum_value(act.status)
-            date_range = f"{act.start_date} - {act.end_date}"
-            notes = act.notes or "—"
+            act_type_key = _enum_value(act.activity_type)
+            status_key = _enum_value(act.status)
+            act_type = ACTIVITY_TYPE_LABELS.get(act_type_key, str(act_type_key))
+            status = ACTIVITY_STATUS_LABELS.get(status_key, str(status_key))
+            date_range = _format_date_range(act.start_date, act.end_date)
+            notes = _clamp_notes(act.notes)
 
             data = [
-                [Paragraph(f"<b>{act.title}</b>", styles["Normal"])],
-                [Paragraph(f"Tipo: {act_type}", styles["Normal"])],
-                [Paragraph(f"Responsable: {act.responsible_name}", styles["Normal"])],
-                [Paragraph(f"Fechas: {date_range}", styles["Normal"])],
-                [Paragraph(f"Estado: {status}", styles["Normal"])],
-                [Paragraph(f"Notas: {notes}", styles["Normal"])],
+                [Paragraph(f"<b>{escape(str(act.title))}</b>", styles["Normal"])],
+                [Paragraph(f"Tipo: {escape(str(act_type))}", styles["Normal"])],
+                [Paragraph(f"Responsable: {escape(str(act.responsible_name))}", styles["Normal"])],
+                [Paragraph(f"Fechas: {escape(date_range)}", styles["Normal"])],
+                [Paragraph(f"Estado: {escape(str(status))}", styles["Normal"])],
+                [Paragraph(f"Notas: {escape(str(notes))}", styles["Normal"])],
             ]
             card = Table(data, colWidths=[450])
             card.setStyle(

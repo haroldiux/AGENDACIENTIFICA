@@ -26,7 +26,10 @@ def get_report_status(task_id: str):
     if task_result.state == "PENDING":
         return {"status": "pending"}
     elif task_result.state == "SUCCESS":
-        return {"status": "completed", "result": task_result.result}
+        result = task_result.result
+        if isinstance(result, dict) and result.get("status") == "failed":
+            return {"status": "failed", "error": result.get("error")}
+        return {"status": "completed", "result": result}
     elif task_result.state == "FAILURE":
         return {"status": "failed", "error": str(task_result.info)}
     else:

@@ -27,6 +27,7 @@ htmlcov/
 # Generated reports / media
 backend/reports/
 *.pdf
+*.db
 
 # OS / editor
 .DS_Store
