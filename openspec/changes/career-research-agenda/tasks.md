@@ -59,11 +59,11 @@ _Note: Docker Desktop was unavailable on the apply workstation, so verification 
 
 ## Phase 5: Wiring & Verification
 
-- [ ] 5.1 Wire the research-agenda PDF export in `frontend/app/reportes/page.tsx` (add option/button that calls `api.reports.generate` with `report_type: 'research-agenda'`). Resolves leftover proposal/design mismatch for this file.
-- [ ] 5.2 Verify `GET /api/v1/scientific/?career_id=X&gestion_id=Y` returns filtered activities and empty list with 200 when no matches. Verifies `scientific-activity-filter` scenarios.
-- [ ] 5.3 Verify existing table report still works and research-agenda PDF downloads after polling. Verifies `tracking-reports` and `research-agenda-pdf-report` specs.
-- [ ] 5.4 Manual UI review: placeholder removed, month ordering, loading/empty/error states, export flow. Verifies `agenda-cientifica` and `career-research-agenda-view` specs.
-- [ ] 5.5 Smoke-test worker PDF output contains career name and month text. Verifies design § Testing Strategy.
+- [x] 5.1 Wire the research-agenda PDF export in `frontend/app/reportes/page.tsx` (add option/button that calls `api.reports.generate` with `report_type: 'research-agenda'`). Resolves leftover proposal/design mismatch for this file.
+- [x] 5.2 Verify `GET /api/v1/scientific/?career_id=X&gestion_id=Y` returns filtered activities and empty list with 200 when no matches. Verifies `scientific-activity-filter` scenarios.
+- [x] 5.3 Verify existing table report still works and research-agenda PDF downloads after polling. Verifies `tracking-reports` and `research-agenda-pdf-report` specs.
+- [x] 5.4 Manual UI review: placeholder removed, month ordering, loading/empty/error states, export flow. Verifies `agenda-cientifica` and `career-research-agenda-view` specs.
+- [x] 5.5 Smoke-test worker PDF output contains career name and month text. Verifies design § Testing Strategy.
 
 ## Design Refinements & Out-of-Scope Notes
 
