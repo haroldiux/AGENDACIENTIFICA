@@ -37,9 +37,9 @@ _Note: Docker Desktop was unavailable on the apply workstation, so verification 
 
 ## Phase 2: Backend Filters
 
-- [ ] 2.1 Create `backend/app/services/scientific_service.py` with `list_scientific_activities(db, career_id, gestion_id, start_date, end_date)` using overlap filter `start_date <= end_date AND end_date >= start_date`. Implements design § Filter Service and `scientific-activity-filter` spec.
-- [ ] 2.2 Add filter parameter model to `backend/app/schemas/schemas.py` (`career_id`, `gestion_id`, `start_date`, `end_date` optional). Implements design § Query Parameters.
-- [ ] 2.3 Modify `backend/app/api/v1/scientific.py` to accept query parameters and delegate to `ScientificService.list`. Returns 422 for invalid dates / `start_date > end_date` via FastAPI validation. Implements `scientific-activity-filter` spec.
+- [x] 2.1 Create `backend/app/services/scientific_service.py` with `list_scientific_activities(db, career_id, gestion_id, start_date, end_date)` using overlap filter `start_date <= end_date AND end_date >= start_date`. Implements design § Filter Service and `scientific-activity-filter` spec.
+- [x] 2.2 Add filter parameter model to `backend/app/schemas/schemas.py` (`career_id`, `gestion_id`, `start_date`, `end_date` optional). Implements design § Query Parameters.
+- [x] 2.3 Modify `backend/app/api/v1/scientific.py` to accept query parameters and delegate to `ScientificService.list`. Returns 422 for invalid dates / `start_date > end_date` via FastAPI validation. Implements `scientific-activity-filter` spec.
 
 ## Phase 3: Backend Reports
 

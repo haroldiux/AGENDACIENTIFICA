@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import date
 from typing import Optional, List
 from enum import Enum
@@ -114,6 +114,18 @@ class ScientificActivityUpdate(BaseModel):
 class ScientificActivityStatusUpdate(BaseModel):
     status: ScientificActivityStatus
     evidence_url: Optional[str] = None
+
+class ScientificActivityFilterParams(BaseModel):
+    career_id: Optional[int] = Field(default=None, ge=1)
+    gestion_id: Optional[int] = Field(default=None, ge=1)
+    start_date: Optional[date] = Field(default=None)
+    end_date: Optional[date] = Field(default=None)
+
+    @model_validator(mode='after')
+    def check_date_range(self) -> 'ScientificActivityFilterParams':
+        if self.start_date is not None and self.end_date is not None and self.start_date > self.end_date:
+            raise ValueError('start_date cannot be after end_date')
+        return self
 
 class ScientificActivityResponse(ScientificActivityBase):
     id: int
