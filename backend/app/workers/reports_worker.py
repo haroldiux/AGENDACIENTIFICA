@@ -11,7 +11,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
-REPORTS_DIR = "/tmp/reports"
+REPORTS_DIR = "/app/reports"
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 SPANISH_MONTHS = {

@@ -14,3 +14,6 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
+
+# Register tasks defined in worker modules so Celery discovers them at startup.
+from app.workers import reports_worker  # noqa: E402,F401
