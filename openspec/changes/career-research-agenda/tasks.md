@@ -50,12 +50,12 @@ _Note: Docker Desktop was unavailable on the apply workstation, so verification 
 
 ## Phase 4: Frontend Implementation
 
-- [ ] 4.1 Add `api.scientific.list`, `api.reports.generate`, `api.reports.status`, and `api.reports.download` helpers to `frontend/lib/api.ts`. Implements design § Frontend API Helpers.
-- [ ] 4.2 Create `frontend/components/agenda/AgendaFilterBar.tsx` with career and gestión selectors. Implements `career-research-agenda-view` § Career Selector / Gestión Selector.
-- [ ] 4.3 Create `frontend/components/agenda/AgendaNoCareerSelected.tsx` prompt. Implements `agenda-cientifica` § Career Selection Required.
-- [ ] 4.4 Create `frontend/components/agenda/AgendaMonthGroup.tsx` and `AgendaActivityCard.tsx` for month-grouped cards showing title, type, responsible, dates, status, notes. Implements `career-research-agenda-view` § Month-Grouped Agenda / Activity Card Content.
-- [ ] 4.5 Create `frontend/components/agenda/AgendaSkeleton.tsx`, `AgendaEmptyState.tsx`, and `AgendaErrorState.tsx`. Implements `career-research-agenda-view` § Loading State / Empty State / Error State.
-- [ ] 4.6 Rewrite `frontend/app/calendario/page.tsx` as the container: hold filters, fetch activities, group by month, render states, and trigger PDF export. Implements `agenda-cientifica` and `career-research-agenda-view` specs.
+- [x] 4.1 Add `api.scientific.list`, `api.reports.generate`, `api.reports.status`, and `api.reports.download` helpers to `frontend/lib/api.ts`. Implements design § Frontend API Helpers.
+- [x] 4.2 Create `frontend/components/agenda/AgendaFilterBar.tsx` with career and gestión selectors. Implements `career-research-agenda-view` § Career Selector / Gestión Selector.
+- [x] 4.3 Create `frontend/components/agenda/AgendaNoCareerSelected.tsx` prompt. Implements `agenda-cientifica` § Career Selection Required.
+- [x] 4.4 Create `frontend/components/agenda/AgendaMonthGroup.tsx` and `AgendaActivityCard.tsx` for month-grouped cards showing title, type, responsible, dates, status, notes. Implements `career-research-agenda-view` § Month-Grouped Agenda / Activity Card Content.
+- [x] 4.5 Create `frontend/components/agenda/AgendaSkeleton.tsx`, `AgendaEmptyState.tsx`, and `AgendaErrorState.tsx`. Implements `career-research-agenda-view` § Loading State / Empty State / Error State.
+- [x] 4.6 Rewrite `frontend/app/calendario/page.tsx` as the container: hold filters, fetch activities, group by month, render states, and trigger PDF export. Implements `agenda-cientifica` and `career-research-agenda-view` specs.
 
 ## Phase 5: Wiring & Verification
 
