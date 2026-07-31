@@ -34,3 +34,5 @@ backend/reports/
 Thumbs.db
 .idea/
 .vscode/
+*.tsbuildinfo
+next-env.d.ts
