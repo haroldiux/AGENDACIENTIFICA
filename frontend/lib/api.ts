@@ -63,7 +63,7 @@ export interface ScientificActivityFilters {
 
 // --- Reports ---
 
-export type ReportFormat = 'pdf';
+export type ReportFormat = 'pdf' | 'excel';
 export type ReportType = 'table' | 'research-agenda';
 
 export interface ReportGenerateRequest {
@@ -86,16 +86,69 @@ export interface ReportStatusResponse {
   error?: string;
 }
 
+// --- Fusion / Merged Calendar ---
+
+export type SourceType = 'academic' | 'scientific';
+
+export interface MergedCalendarItem {
+  id: number;
+  title: string;
+  start_date: string;
+  end_date: string;
+  source_type: SourceType;
+  category?: string | null;
+  origin_color?: string | null;
+  activity_type?: ScientificActivityType | null;
+  status?: ScientificActivityStatus | null;
+  responsible_name?: string | null;
+}
+
+export interface MergedCalendarResponse {
+  items: MergedCalendarItem[];
+}
+
+export interface MergedCalendarFilters {
+  career_id?: number;
+  gestion_id?: number;
+  start_date?: string;
+  end_date?: string;
+}
+
+// --- Dashboard Stats ---
+
+export interface DashboardStats {
+  active_gestion: {
+    id: number | null;
+    name: string | null;
+  };
+  counts: {
+    total_academic: number;
+    total_scientific: number;
+    upcoming_events: number;
+    upcoming_scientific: number;
+  };
+  status_breakdown: Record<string, number>;
+  next_events: {
+    id: number;
+    title: string;
+    start_date: string;
+    end_date: string;
+    activity_type: string | null;
+    status: string | null;
+    career_id: number;
+  }[];
+}
+
 // --- API namespaces ---
 
 export const api = {
   fusion: {
-    getMerged: (params?: Record<string, unknown>) =>
-      apiClient.get('/fusion/merged', { params }).then((res) => res.data),
+    getMerged: (params?: MergedCalendarFilters) =>
+      apiClient.get<MergedCalendarResponse>('/fusion/', { params }).then((res) => res.data),
   },
   academic: {
     upload: (formData: FormData) =>
-      apiClient.post('/academic/upload', formData, {
+      apiClient.post('/importacion/upload-excel', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       }).then((res) => res.data),
     list: () => apiClient.get('/academic/').then((res) => res.data),
@@ -107,6 +160,8 @@ export const api = {
       apiClient.post('/scientific/', data).then((res) => res.data),
     update: (id: number, data: Record<string, unknown>) =>
       apiClient.put(`/scientific/${id}`, data).then((res) => res.data),
+    updateStatus: (id: number, status: ScientificActivityStatus, evidence_url?: string) =>
+      apiClient.put(`/scientific/${id}/status`, { status, evidence_url }).then((res) => res.data),
     delete: (id: number) => apiClient.delete(`/scientific/${id}`).then((res) => res.data),
   },
   careers: {
@@ -114,6 +169,9 @@ export const api = {
   },
   gestiones: {
     list: () => apiClient.get<Gestion[]>('/gestiones/').then((res) => res.data),
+  },
+  dashboard: {
+    stats: () => apiClient.get<DashboardStats>('/dashboard/stats').then((res) => res.data),
   },
   auth: {
     login: (credentials: Record<string, unknown>) =>

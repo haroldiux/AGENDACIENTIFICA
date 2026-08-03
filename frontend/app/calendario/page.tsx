@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Download, LayoutGrid, List } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import {
   api,
   type Career,
   type Gestion,
-  type ScientificActivity,
+  type MergedCalendarItem,
 } from '@/lib/api';
+import CalendarView from '@/components/calendar/CalendarView';
+import CalendarLegend from '@/components/calendar/CalendarLegend';
+import PageHeader from '@/components/layout/PageHeader';
 import AgendaFilterBar from '@/components/agenda/AgendaFilterBar';
-import AgendaMonthGroup from '@/components/agenda/AgendaMonthGroup';
 import AgendaNoCareerSelected from '@/components/agenda/AgendaNoCareerSelected';
 import AgendaSkeleton from '@/components/agenda/AgendaSkeleton';
-import AgendaEmptyState from '@/components/agenda/AgendaEmptyState';
 import AgendaErrorState from '@/components/agenda/AgendaErrorState';
-import { groupActivitiesByMonth } from '@/components/agenda/agenda-helpers';
 
 export default function CalendarioPage() {
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
   const [gestionId, setGestionId] = useState<number | null>(null);
-  const [activities, setActivities] = useState<ScientificActivity[]>([]);
+  const [items, setItems] = useState<MergedCalendarItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
@@ -54,33 +54,33 @@ export default function CalendarioPage() {
     };
   }, []);
 
-  // Fetch activities when filters change.
+  // Fetch merged calendar when filters change.
   useEffect(() => {
     if (careerId === null) {
-      setActivities([]);
+      setItems([]);
       setIsLoading(false);
       setError(null);
       return;
     }
 
     let cancelled = false;
-    const loadActivities = async () => {
+    const loadCalendar = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await api.scientific.list({
+        const data = await api.fusion.getMerged({
           career_id: careerId,
           gestion_id: gestionId ?? undefined,
         });
         if (!cancelled) {
-          setActivities(data);
+          setItems(data.items ?? []);
         }
       } catch (err) {
         if (!cancelled) {
           setError(
             err instanceof Error
               ? err.message
-              : 'No se pudo cargar la agenda. Intente de nuevo.'
+              : 'No se pudo cargar el calendario. Intente de nuevo.'
           );
         }
       } finally {
@@ -90,7 +90,7 @@ export default function CalendarioPage() {
       }
     };
 
-    loadActivities();
+    loadCalendar();
     return () => {
       cancelled = true;
     };
@@ -104,11 +104,6 @@ export default function CalendarioPage() {
       }
     };
   }, []);
-
-  const monthGroups = useMemo(
-    () => groupActivitiesByMonth(activities),
-    [activities]
-  );
 
   const handleExportPDF = async () => {
     if (careerId === null || gestionId === null) return;
@@ -169,11 +164,20 @@ export default function CalendarioPage() {
     }
   };
 
+  const academicCount = items.filter((i) => i.source_type === 'academic').length;
+  const scientificCount = items.filter((i) => i.source_type === 'scientific').length;
+
   return (
     <div className="space-y-6">
       <Toaster position="top-right" />
 
-      <div className="glass-panel p-4 rounded-xl flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+      <PageHeader
+        title="Calendario Fusionado"
+        description="Actividades académicas y científicas en una sola vista. Selecciona una carrera para comenzar."
+      />
+
+      {/* Top bar with filters and actions */}
+      <div className="glass-panel p-4 rounded-xl flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
         <AgendaFilterBar
           careers={careers}
           gestiones={gestiones}
@@ -184,46 +188,54 @@ export default function CalendarioPage() {
           disabled={exporting}
         />
 
-        <button
-          type="button"
-          onClick={handleExportPDF}
-          disabled={exporting || careerId === null || gestionId === null}
-          title={
-            careerId === null || gestionId === null
-              ? 'Seleccione una carrera y una gestión para exportar'
-              : 'Exportar agenda como PDF'
-          }
-          className="px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-        >
-          <Download className="w-4 h-4" />
-          {exporting ? 'Generando PDF...' : 'Exportar agenda PDF'}
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          {careerId !== null && (
+            <div className="hidden md:flex items-center gap-3 text-xs text-slate-400 mr-2">
+              <span className="flex items-center gap-1">
+                <LayoutGrid className="w-3.5 h-3.5" />
+                {academicCount} académicas
+              </span>
+              <span className="flex items-center gap-1">
+                <List className="w-3.5 h-3.5" />
+                {scientificCount} científicas
+              </span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleExportPDF}
+            disabled={exporting || careerId === null || gestionId === null}
+            title={
+              careerId === null || gestionId === null
+                ? 'Seleccione una carrera y una gestión para exportar'
+                : 'Exportar agenda como PDF'
+            }
+            className="px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            <Download className="w-4 h-4" />
+            {exporting ? 'Generando PDF...' : 'Exportar agenda PDF'}
+          </button>
+        </div>
       </div>
 
-      <div className="min-h-[400px]">
-        {careerId === null ? (
-          <AgendaNoCareerSelected />
-        ) : isLoading ? (
-          <AgendaSkeleton />
-        ) : error ? (
-          <AgendaErrorState
-            message={error}
-            onRetry={() => setRetryToken((token) => token + 1)}
-          />
-        ) : monthGroups.length === 0 ? (
-          <AgendaEmptyState />
-        ) : (
-          <div className="space-y-8">
-            {monthGroups.map((group) => (
-              <AgendaMonthGroup
-                key={group.monthKey}
-                monthKey={group.monthKey}
-                activities={group.activities}
-              />
-            ))}
+      {/* Main content */}
+      {careerId === null ? (
+        <AgendaNoCareerSelected />
+      ) : error ? (
+        <AgendaErrorState
+          message={error}
+          onRetry={() => setRetryToken((token) => token + 1)}
+        />
+      ) : (
+        <div className="flex flex-col xl:flex-row gap-6">
+          <div className="flex-1 min-w-0">
+            <CalendarView items={items} isLoading={isLoading} />
           </div>
-        )}
-      </div>
+          <div className="xl:w-72 shrink-0">
+            <CalendarLegend />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
