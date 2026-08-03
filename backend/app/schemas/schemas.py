@@ -165,10 +165,25 @@ class ActivityRowValidator(BaseModel):
     is_scientific: bool = False
 
 
+# --- Conflict Schemas ---
+class ConflictItem(BaseModel):
+    academic_id: int
+    academic_title: str
+    scientific_id: int
+    scientific_title: str
+    scientific_type: ScientificActivityType
+    scientific_start_date: date
+    scientific_end_date: date
+
+
+class ConflictListResponse(BaseModel):
+    conflicts: List[ConflictItem]
+
+
 # --- Report Schemas ---
 class ReportRequest(BaseModel):
     career_id: int
     gestion_id: int
     format: str
-    report_type: Literal["table", "research-agenda"] = "table"
+    report_type: Literal["table", "research-agenda", "conflict"] = "table"
 
