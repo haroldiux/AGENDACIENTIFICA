@@ -6,6 +6,8 @@ from xml.sax.saxutils import escape
 from app.core.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion
+from app.schemas.schemas import ConflictItem
+from app.services import conflict_service
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
@@ -86,6 +88,133 @@ def _clamp_notes(notes):
 
 def _enum_value(value):
     return value.value if hasattr(value, "value") else value
+
+
+def _conflict_month_group(conflicts):
+    """Group ConflictItem objects by the month of their scientific start date."""
+    grouped = defaultdict(list)
+    for item in conflicts:
+        grouped[(item.scientific_start_date.year, item.scientific_start_date.month)].append(item)
+    return grouped
+
+
+def _conflict_date_range_label(start_date, end_date):
+    return _format_date_range(start_date, end_date)
+
+
+def build_conflict_pdf(conflicts, career_id, gestion_id):
+    """Generate a PDF report of overlapping academic/scientific activity pairs.
+
+    Conflicts are grouped by the month of the scientific activity start date.
+    """
+    filename = f"conflict_report_{uuid.uuid4().hex}.pdf"
+    filepath = os.path.join(REPORTS_DIR, filename)
+    doc = SimpleDocTemplate(filepath, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Reporte de Conflictos", styles["Title"]))
+    elements.append(Paragraph(f"Carrera ID: {career_id} — Gestión ID: {gestion_id}", styles["Heading2"]))
+    elements.append(
+        Paragraph(
+            f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+            styles["Normal"],
+        )
+    )
+    elements.append(Spacer(1, 20))
+
+    if not conflicts:
+        elements.append(
+            Paragraph(
+                "No se encontraron conflictos para los filtros seleccionados.",
+                styles["Normal"],
+            )
+        )
+        doc.build(elements)
+        return {"status": "completed", "file_path": filepath, "file_name": filename}
+
+    grouped = _conflict_month_group(conflicts)
+    for (year, month) in sorted(grouped.keys()):
+        elements.append(Paragraph(_month_label(year, month), styles["Heading2"]))
+        elements.append(Spacer(1, 6))
+
+        for item in grouped[(year, month)]:
+            scientific_type_label = ACTIVITY_TYPE_LABELS.get(
+                _enum_value(item.scientific_type), str(_enum_value(item.scientific_type))
+            )
+            academic_dates = _conflict_date_range_label(
+                item.academic_start_date, item.academic_end_date
+            )
+            scientific_dates = _conflict_date_range_label(
+                item.scientific_start_date, item.scientific_end_date
+            )
+
+            data = [
+                [Paragraph(f"<b>Actividad académica:</b> {escape(str(item.academic_title))}", styles["Normal"])],
+                [Paragraph(f"Fechas académicas: {escape(academic_dates)}", styles["Normal"])],
+                [Paragraph(f"<b>Actividad científica:</b> {escape(str(item.scientific_title))}", styles["Normal"])],
+                [Paragraph(f"Tipo científico: {escape(str(scientific_type_label))}", styles["Normal"])],
+                [Paragraph(f"Fechas científicas: {escape(scientific_dates)}", styles["Normal"])],
+            ]
+            card = Table(data, colWidths=[450])
+            card.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FFF3F3")),
+                        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#DDDDDD")),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                        ("TOPPADDING", (0, 0), (-1, -1), 6),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ]
+                )
+            )
+            elements.append(card)
+            elements.append(Spacer(1, 10))
+
+        elements.append(Spacer(1, 12))
+
+    doc.build(elements)
+    return {"status": "completed", "file_path": filepath, "file_name": filename}
+
+
+def build_conflict_excel(conflicts, career_id, gestion_id):
+    """Generate an Excel report with one row per overlapping activity pair."""
+    from openpyxl import Workbook
+
+    filename = f"conflict_report_{uuid.uuid4().hex}.xlsx"
+    filepath = os.path.join(REPORTS_DIR, filename)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Conflictos"
+
+    ws.append(["Reporte de Conflictos"])
+    ws.append([f"Carrera ID: {career_id} — Gestión ID: {gestion_id}"])
+    ws.append([f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}"])
+    ws.append([])
+    ws.append([
+        "Título académico",
+        "Fechas académicas",
+        "Título científico",
+        "Tipo científico",
+        "Fechas científicas",
+    ])
+
+    for item in conflicts:
+        scientific_type_label = ACTIVITY_TYPE_LABELS.get(
+            _enum_value(item.scientific_type), str(_enum_value(item.scientific_type))
+        )
+        ws.append([
+            item.academic_title,
+            _format_date_range(item.academic_start_date, item.academic_end_date),
+            item.scientific_title,
+            scientific_type_label,
+            _format_date_range(item.scientific_start_date, item.scientific_end_date),
+        ])
+
+    wb.save(filepath)
+    return {"status": "completed", "file_path": filepath, "file_name": filename}
 
 
 def build_research_agenda_pdf(doc, activities, career_name, gestion_name):
@@ -252,7 +381,10 @@ def generate_pdf_report_task(
         filepath = os.path.join(REPORTS_DIR, filename)
         doc = SimpleDocTemplate(filepath, pagesize=letter)
 
-        if report_type == "research-agenda":
+        if report_type == "conflict":
+            conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
+            return build_conflict_pdf(conflicts, career_id, gestion_id)
+        elif report_type == "research-agenda":
             career = (
                 db.query(Career).filter(Career.id == career_id).first()
                 if career_id
@@ -285,19 +417,31 @@ def generate_pdf_report_task(
 
 
 @celery_app.task
-def generate_excel_report_task(career_id: int = None, gestion_id: int = None):
-    import time
+def generate_excel_report_task(
+    career_id: int = None, gestion_id: int = None, report_type: str = "table"
+):
+    db = SessionLocal()
+    try:
+        if report_type == "conflict":
+            conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
+            return build_conflict_excel(conflicts, career_id, gestion_id)
 
-    # Simulate Excel generation
-    time.sleep(2)
-    filename = f"report_{career_id}_{gestion_id}.xlsx"
-    filepath = os.path.join(REPORTS_DIR, filename)
+        import time
 
-    with open(filepath, "w") as f:
-        f.write(
-            "Simulated Excel content for career {} and gestion {}".format(
-                career_id, gestion_id
+        # Simulate Excel generation for legacy report types
+        time.sleep(2)
+        filename = f"report_{career_id}_{gestion_id}.xlsx"
+        filepath = os.path.join(REPORTS_DIR, filename)
+
+        with open(filepath, "w") as f:
+            f.write(
+                "Simulated Excel content for career {} and gestion {}".format(
+                    career_id, gestion_id
+                )
             )
-        )
 
-    return {"status": "completed", "file_path": filepath, "file_name": filename}
+        return {"status": "completed", "file_path": filepath, "file_name": filename}
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
+    finally:
+        db.close()

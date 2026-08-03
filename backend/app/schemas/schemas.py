@@ -169,6 +169,8 @@ class ActivityRowValidator(BaseModel):
 class ConflictItem(BaseModel):
     academic_id: int
     academic_title: str
+    academic_start_date: date
+    academic_end_date: date
     scientific_id: int
     scientific_title: str
     scientific_type: ScientificActivityType

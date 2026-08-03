@@ -44,6 +44,8 @@ def find_conflicts(db: Session, career_id: int, gestion_id: int) -> list[Conflic
                     ConflictItem(
                         academic_id=academic.id,
                         academic_title=academic.title,
+                        academic_start_date=academic.start_date,
+                        academic_end_date=academic.end_date,
                         scientific_id=scientific.id,
                         scientific_title=scientific.title,
                         scientific_type=scientific.activity_type,
