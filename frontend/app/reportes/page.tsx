@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Download, Clock } from 'lucide-react';
+import { FileText, Download, Eye, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import PageHeader from '@/components/layout/PageHeader';
 import {
@@ -10,6 +10,7 @@ import {
   type Gestion,
   type ReportFormat,
   type ReportType,
+  type ConflictItem,
 } from '@/lib/api';
 
 export default function ReportesPage() {
@@ -18,6 +19,9 @@ export default function ReportesPage() {
   const [careerId, setCareerId] = useState<number | null>(null);
   const [gestionId, setGestionId] = useState<number | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [conflicts, setConflicts] = useState<ConflictItem[]>([]);
+  const [conflictsOpen, setConflictsOpen] = useState(false);
+  const [loadingConflicts, setLoadingConflicts] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -115,6 +119,27 @@ export default function ReportesPage() {
     }
   };
 
+  const handleLoadConflicts = async () => {
+    if (careerId === null || gestionId === null) return;
+
+    setLoadingConflicts(true);
+    setConflictsOpen(true);
+
+    try {
+      const data = await api.conflicts.list({
+        career_id: careerId,
+        gestion_id: gestionId,
+      });
+      setConflicts(data.conflicts);
+    } catch (err) {
+      console.error('Error loading conflicts:', err);
+      toast.error('Error cargando lista de conflictos');
+      setConflicts([]);
+    } finally {
+      setLoadingConflicts(false);
+    }
+  };
+
   const selectorsDisabled = exporting !== null;
   const selectionMissing = careerId === null || gestionId === null;
 
@@ -181,14 +206,68 @@ export default function ReportesPage() {
               Lista de cruces detectados entre agenda académica y científica.
             </p>
           </div>
-          <button
-            disabled
-            title="Este reporte aún no está disponible en el backend"
-            className="mt-auto bg-[#1e293b] border border-[var(--border)] px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 w-full opacity-50 cursor-not-allowed"
-          >
-            <Clock className="w-4 h-4" />
-            Próximamente
-          </button>
+          <div className="mt-auto flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                handleExport(
+                  'conflict-pdf',
+                  'pdf',
+                  'conflict',
+                  'Reporte de conflictos PDF exportado correctamente'
+                )
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={
+                selectionMissing
+                  ? 'Seleccione una carrera y una gestión para exportar'
+                  : 'Exportar conflictos como PDF'
+              }
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'conflict-pdf'
+                ? 'Generando PDF...'
+                : 'Exportar PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleExport(
+                  'conflict-excel',
+                  'excel',
+                  'conflict',
+                  'Reporte de conflictos Excel exportado correctamente'
+                )
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={
+                selectionMissing
+                  ? 'Seleccione una carrera y una gestión para exportar'
+                  : 'Exportar conflictos como Excel'
+              }
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'conflict-excel'
+                ? 'Generando Excel...'
+                : 'Exportar Excel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleLoadConflicts}
+              disabled={selectionMissing}
+              title={
+                selectionMissing
+                  ? 'Seleccione una carrera y una gestión para ver conflictos'
+                  : 'Ver lista de conflictos'
+              }
+              className="bg-[#1e293b] hover:bg-[#334155] disabled:opacity-50 disabled:cursor-not-allowed border border-[var(--border)] px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Eye className="w-4 h-4" />
+              Ver conflictos
+            </button>
+          </div>
         </div>
 
         <div className="glass-panel p-6 rounded-xl flex flex-col gap-4">
@@ -247,6 +326,65 @@ export default function ReportesPage() {
           </button>
         </div>
       </div>
+
+      {conflictsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-4xl max-h-[80vh] overflow-hidden rounded-xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
+              <h3 className="font-medium text-lg">Conflictos detectados</h3>
+              <button
+                type="button"
+                onClick={() => setConflictsOpen(false)}
+                className="p-1 rounded hover:bg-white/10"
+                aria-label="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 overflow-auto">
+              {loadingConflicts ? (
+                <p className="text-sm text-slate-400">Cargando conflictos...</p>
+              ) : conflicts.length === 0 ? (
+                <p className="text-sm text-slate-400">
+                  No se encontraron conflictos para la carrera y gestión
+                  seleccionadas.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {conflicts.map((conflict) => (
+                    <li
+                      key={`${conflict.academic_id}-${conflict.scientific_id}`}
+                      className="border border-[var(--border)] rounded-lg p-3 text-sm"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div>
+                          <p className="font-medium">
+                            {conflict.academic_title}
+                          </p>
+                          <p className="text-slate-400 text-xs">
+                            Académica · {conflict.academic_start_date} al{' '}
+                            {conflict.academic_end_date}
+                          </p>
+                        </div>
+                        <div className="md:text-right">
+                          <p className="font-medium">
+                            {conflict.scientific_title}
+                          </p>
+                          <p className="text-slate-400 text-xs">
+                            {conflict.scientific_type} ·{' '}
+                            {conflict.scientific_start_date} al{' '}
+                            {conflict.scientific_end_date}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
