@@ -164,6 +164,29 @@ export default function CalendarioPage() {
     }
   };
 
+  const handleStatusChange = async (id: number, newStatus: string) => {
+    // Save previous items for rollback
+    const previousItems = [...items];
+
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id && item.source_type === 'scientific'
+          ? { ...item, status: newStatus as any }
+          : item
+      )
+    );
+
+    try {
+      await api.scientific.updateStatus(id, newStatus as any);
+      toast.success('Estado actualizado correctamente');
+    } catch (err) {
+      // Revert
+      setItems(previousItems);
+      toast.error('Error al actualizar el estado');
+    }
+  };
+
   const academicCount = items.filter((i) => i.source_type === 'academic').length;
   const scientificCount = items.filter((i) => i.source_type === 'scientific').length;
 
@@ -229,7 +252,7 @@ export default function CalendarioPage() {
       ) : (
         <div className="flex flex-col xl:flex-row gap-6">
           <div className="flex-1 min-w-0">
-            <CalendarView items={items} isLoading={isLoading} />
+            <CalendarView items={items} isLoading={isLoading} onStatusChange={handleStatusChange} />
           </div>
           <div className="xl:w-72 shrink-0">
             <CalendarLegend />

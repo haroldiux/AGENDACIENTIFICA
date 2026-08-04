@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Calendar as BigCalendar,
   momentLocalizer,
@@ -25,6 +25,7 @@ interface CalendarEvent extends RBCEvent {
 interface CalendarViewProps {
   items: MergedCalendarItem[];
   isLoading?: boolean;
+  onStatusChange?: (id: number, newStatus: string) => Promise<void>;
 }
 
 // Spanish translations for react-big-calendar
@@ -88,9 +89,21 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${start.toLocaleDateString('es-ES', options)} – ${end.toLocaleDateString('es-ES', options)}`;
 }
 
-export default function CalendarView({ items, isLoading }: CalendarViewProps) {
+export default function CalendarView({ items, isLoading, onStatusChange }: CalendarViewProps) {
   const [view, setView] = useState<View>('month');
   const [selectedEvent, setSelectedEvent] = useState<MergedCalendarItem | null>(null);
+
+  // Sync selectedEvent if it changes in the items array (e.g. from optimistic updates)
+  useEffect(() => {
+    if (selectedEvent) {
+      const freshItem = items.find(
+        (i) => i.id === selectedEvent.id && i.source_type === selectedEvent.source_type
+      );
+      if (freshItem && freshItem.status !== selectedEvent.status) {
+        setSelectedEvent(freshItem);
+      }
+    }
+  }, [items, selectedEvent]);
 
   const events = useMemo(() => items.map(mergedItemToEvent), [items]);
 
@@ -182,12 +195,16 @@ export default function CalendarView({ items, isLoading }: CalendarViewProps) {
                   <FlaskConical className="w-4 h-4 text-slate-400 shrink-0" />
                   <span className="capitalize">{selectedEvent.activity_type.replace('_', ' ')}</span>
                   {selectedEvent.status && (
-                    <span className="ml-1 px-2 py-0.5 rounded text-xs bg-white/10">
-                      {selectedEvent.status === 'scheduled' && 'Programada'}
-                      {selectedEvent.status === 'in_progress' && 'En progreso'}
-                      {selectedEvent.status === 'completed' && 'Completada'}
-                      {selectedEvent.status === 'cancelled' && 'Cancelada'}
-                    </span>
+                    <select
+                      value={selectedEvent.status}
+                      onChange={(e) => onStatusChange?.(selectedEvent.id, e.target.value)}
+                      className="ml-2 px-2 py-1 rounded text-xs bg-slate-800 text-white border border-slate-700 outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="scheduled">Programada</option>
+                      <option value="in_progress">En progreso</option>
+                      <option value="completed">Completada</option>
+                      <option value="cancelled">Cancelada</option>
+                    </select>
                   )}
                 </div>
               )}

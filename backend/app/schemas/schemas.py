@@ -143,6 +143,7 @@ class ScientificActivityUpdate(BaseModel):
     end_date: Optional[date] = None
     responsible_name: Optional[str] = None
     notes: Optional[str] = None
+    status: Optional[ScientificActivityStatus] = None
 
 class ScientificActivityStatusUpdate(BaseModel):
     status: ScientificActivityStatus
