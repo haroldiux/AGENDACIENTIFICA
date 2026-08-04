@@ -64,7 +64,7 @@ export interface ScientificActivityFilters {
 // --- Reports ---
 
 export type ReportFormat = 'pdf' | 'excel';
-export type ReportType = 'table' | 'research-agenda';
+export type ReportType = 'table' | 'research-agenda' | 'conflict';
 
 export interface ReportGenerateRequest {
   career_id: number;
@@ -84,6 +84,29 @@ export interface ReportStatusResponse {
     file_name?: string;
   };
   error?: string;
+}
+
+// --- Conflicts ---
+
+export interface ConflictItem {
+  academic_id: number;
+  academic_title: string;
+  academic_start_date: string;
+  academic_end_date: string;
+  scientific_id: number;
+  scientific_title: string;
+  scientific_type: ScientificActivityType;
+  scientific_start_date: string;
+  scientific_end_date: string;
+}
+
+export interface ConflictListResponse {
+  conflicts: ConflictItem[];
+}
+
+export interface ConflictFilters {
+  career_id: number;
+  gestion_id: number;
 }
 
 // --- Fusion / Merged Calendar ---
@@ -189,6 +212,12 @@ export const api = {
     download: (taskId: string) =>
       apiClient
         .get<Blob>(`/reports/${taskId}/download`, { responseType: 'blob' })
+        .then((res) => res.data),
+  },
+  conflicts: {
+    list: (filters: ConflictFilters) =>
+      apiClient
+        .get<ConflictListResponse>('/conflicts/', { params: filters })
         .then((res) => res.data),
   },
 };
