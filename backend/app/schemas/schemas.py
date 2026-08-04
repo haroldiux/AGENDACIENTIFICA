@@ -52,6 +52,39 @@ class CareerResponse(CareerBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
 
+# --- Role Enum ---
+class RoleEnum(str, Enum):
+    super_admin = "super_admin"
+    admin = "admin"
+    research = "research"
+    coordinator = "coordinator"
+    teacher = "teacher"
+
+# --- Token Schemas ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+# --- User Schemas ---
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    role: RoleEnum = RoleEnum.teacher
+
+class UserCreate(UserBase):
+    password: str
+    career_ids: List[int] = []
+
+class UserResponse(UserBase):
+    id: int
+    is_active: bool
+    careers: List[CareerResponse] = []
+    
+    model_config = ConfigDict(from_attributes=True)
+
 # --- Gestion Schemas ---
 class GestionBase(BaseModel):
     name: str

@@ -9,6 +9,29 @@ export const apiClient = axios.create({
   },
 });
 
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        window.dispatchEvent(new Event('auth-logout'));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // --- Career / Gestion ---
 
 export interface Career {
@@ -199,6 +222,9 @@ export const api = {
   auth: {
     login: (credentials: Record<string, unknown>) =>
       apiClient.post('/auth/login', credentials).then((res) => res.data),
+  },
+  users: {
+    me: () => apiClient.get('/users/me').then((res) => res.data),
   },
   reports: {
     generate: (payload: ReportGenerateRequest) =>

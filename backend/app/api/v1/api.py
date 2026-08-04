@@ -1,9 +1,11 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, careers, gestiones, academic, scientific, fusion, reports, sedes, actividades, importacion, dashboard, conflicts
+from app.api.v1 import auth, careers, gestiones, academic, scientific, fusion, reports, sedes, actividades, importacion, dashboard, conflicts, users, public
 
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(public.router, prefix="/public", tags=["public"])
 api_router.include_router(careers.router, prefix="/careers", tags=["careers"])
 api_router.include_router(gestiones.router, prefix="/gestiones", tags=["gestiones"])
 api_router.include_router(academic.router, prefix="/academic", tags=["academic"])

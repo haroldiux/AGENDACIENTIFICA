@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     
     DATABASE_URL: str | None = None
     REDIS_URL: str = "redis://redis:6379/0"
+    
+    SUPER_ADMIN_EMAIL: str = "admin@unitepc.edu.bo"
+    SUPER_ADMIN_PASSWORD: str = "admin123"
 
     class Config:
         env_file = ".env"

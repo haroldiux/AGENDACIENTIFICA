@@ -4,6 +4,7 @@ import enum
 from app.db.base_class import Base
 
 class RoleEnum(str, enum.Enum):
+    super_admin = "super_admin"
     admin = "admin"
     research = "research"
     coordinator = "coordinator"
@@ -18,6 +19,15 @@ class User(Base):
     full_name = Column(String, index=True)
     role = Column(Enum(RoleEnum), default=RoleEnum.teacher, nullable=False)
     is_active = Column(Boolean, default=True)
+
+    careers = relationship("Career", secondary="user_career", back_populates="users")
+
+user_career_association = Table(
+    "user_career",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("career_id", Integer, ForeignKey("careers.id"), primary_key=True)
+)
 
 sede_career_association = Table(
     "sede_career",
@@ -43,6 +53,7 @@ class Career(Base):
     academic_activities = relationship("AcademicActivity", back_populates="career")
     scientific_activities = relationship("ScientificActivity", back_populates="career")
     sedes = relationship("Sede", secondary=sede_career_association, back_populates="careers")
+    users = relationship("User", secondary="user_career", back_populates="careers")
 
 class Gestion(Base):
     __tablename__ = "gestiones"
