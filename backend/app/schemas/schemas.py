@@ -219,8 +219,8 @@ class ConflictListResponse(BaseModel):
 
 # --- Report Schemas ---
 class ReportRequest(BaseModel):
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
     format: str
-    report_type: Literal["table", "research-agenda", "conflict"] = "table"
+    report_type: Literal["table", "research-agenda", "conflict", "agenda-completa", "agenda-academica", "agenda-cientifica"] = "table"
 

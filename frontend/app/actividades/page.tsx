@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Upload, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Plus, Upload, Trash2, Pencil, Loader2, Search, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export default function ActividadesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ScientificActivity | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Load selector options once on mount.
   useEffect(() => {
@@ -82,9 +83,17 @@ export default function ActividadesPage() {
     loadActivities();
   }, [loadActivities]);
 
-  const visibleActivities = statusFilter
-    ? activities.filter((a) => a.status === statusFilter)
-    : activities;
+  const visibleActivities = activities
+    .filter((a) => !statusFilter || a.status === statusFilter)
+    .filter((a) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        a.title.toLowerCase().includes(q) ||
+        (a.responsible_name ?? "").toLowerCase().includes(q) ||
+        a.activity_type.toLowerCase().includes(q)
+      );
+    });
 
   const careerName = (id: number) =>
     careers.find((c) => c.id === id)?.name ?? `#${id}`;
@@ -174,6 +183,26 @@ export default function ActividadesPage() {
             ))}
           </select>
         </Card>
+      </div>
+
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Buscar por título, responsable o tipo de actividad..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-10 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <Card className="p-0 overflow-hidden border-border shadow-sm">

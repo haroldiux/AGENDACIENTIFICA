@@ -56,7 +56,7 @@ export default function AgendaFilterBar({
             value={careerId ?? ''}
             onChange={(e) => handleCareerChange(e.target.value)}
             disabled={disabled}
-            className="w-full bg-[#1e293b] border border-[var(--border)] rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="w-full bg-background text-foreground border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             <option value="">Seleccione una carrera</option>
             {careers.map((career) => (
@@ -76,7 +76,7 @@ export default function AgendaFilterBar({
             value={gestionId ?? ''}
             onChange={(e) => handleGestionChange(e.target.value)}
             disabled={disabled}
-            className="w-full bg-[#1e293b] border border-[var(--border)] rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="w-full bg-background text-foreground border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             <option value="">Todas las gestiones</option>
             {gestiones.map((gestion) => (

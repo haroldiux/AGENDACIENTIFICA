@@ -61,7 +61,7 @@ export default function ReportesPage() {
     reportType: ReportType,
     successMessage: string
   ) => {
-    if (careerId === null || gestionId === null) return;
+    if (gestionId === null) return;
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -120,7 +120,7 @@ export default function ReportesPage() {
   };
 
   const handleLoadConflicts = async () => {
-    if (careerId === null || gestionId === null) return;
+    if (gestionId === null) return;
 
     setLoadingConflicts(true);
     setConflictsOpen(true);
@@ -141,7 +141,7 @@ export default function ReportesPage() {
   };
 
   const selectorsDisabled = exporting !== null;
-  const selectionMissing = careerId === null || gestionId === null;
+  const selectionMissing = gestionId === null;
 
   return (
     <div className="space-y-6">
@@ -163,7 +163,7 @@ export default function ReportesPage() {
             value={careerId ?? ''}
             onChange={(e) => setCareerId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-[#0f172a] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             <option value="">Seleccione una carrera</option>
             {careers.map((career) => (
@@ -183,7 +183,7 @@ export default function ReportesPage() {
             value={gestionId ?? ''}
             onChange={(e) => setGestionId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-[#0f172a] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             <option value="">Seleccione una gestión</option>
             {gestiones.map((gestion) => (
@@ -223,7 +223,7 @@ export default function ReportesPage() {
                   ? 'Seleccione una carrera y una gestión para exportar'
                   : 'Exportar conflictos como PDF'
               }
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
             >
               <Download className="w-4 h-4" />
               {exporting === 'conflict-pdf'
@@ -246,7 +246,7 @@ export default function ReportesPage() {
                   ? 'Seleccione una carrera y una gestión para exportar'
                   : 'Exportar conflictos como Excel'
               }
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
             >
               <Download className="w-4 h-4" />
               {exporting === 'conflict-excel'
@@ -262,7 +262,7 @@ export default function ReportesPage() {
                   ? 'Seleccione una carrera y una gestión para ver conflictos'
                   : 'Ver lista de conflictos'
               }
-              className="bg-[#1e293b] hover:bg-[#334155] disabled:opacity-50 disabled:cursor-not-allowed border border-[var(--border)] px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
             >
               <Eye className="w-4 h-4" />
               Ver conflictos
@@ -291,7 +291,7 @@ export default function ReportesPage() {
                 ? 'Seleccione una carrera y una gestión para exportar'
                 : 'Exportar agenda consolidada como Excel'
             }
-            className="mt-auto bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            className="mt-auto bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
           >
             <Download className="w-4 h-4" />
             {exporting === 'consolidada' ? 'Generando Excel...' : 'Exportar Excel'}
@@ -303,27 +303,49 @@ export default function ReportesPage() {
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-medium text-lg">Agenda Científica</h4>
+            <h4 className="font-medium text-lg">Agendas PDF (Visual)</h4>
             <p className="text-sm text-slate-400 mt-1">
-              Exporta la agenda científica mensual de una carrera y gestión.
+              Exporta las actividades en un calendario ilustrado listo para imprimir.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() =>
-              handleExport('cientifica', 'pdf', 'research-agenda', 'Agenda científica exportada correctamente')
-            }
-            disabled={exporting !== null || selectionMissing}
-            title={
-              selectionMissing
-                ? 'Seleccione una carrera y una gestión para exportar'
-                : 'Exportar agenda científica como PDF'
-            }
-            className="mt-auto bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
-          >
-            <Download className="w-4 h-4" />
-            {exporting === 'cientifica' ? 'Generando PDF...' : 'Exportar agenda PDF'}
-          </button>
+          <div className="mt-auto flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                handleExport('agenda-completa', 'pdf', 'agenda-completa', 'Agenda completa exportada correctamente')
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar agenda completa'}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'agenda-completa' ? 'Generando...' : 'Exportar Completa'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleExport('agenda-academica', 'pdf', 'agenda-academica', 'Agenda académica exportada correctamente')
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar agenda académica'}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'agenda-academica' ? 'Generando...' : 'Exportar Académica'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleExport('agenda-cientifica', 'pdf', 'agenda-cientifica', 'Agenda científica exportada correctamente')
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar agenda científica'}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'agenda-cientifica' ? 'Generando...' : 'Exportar Científica'}
+            </button>
+          </div>
         </div>
       </div>
 

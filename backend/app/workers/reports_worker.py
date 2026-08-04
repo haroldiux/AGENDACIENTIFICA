@@ -11,6 +11,33 @@ from app.services import conflict_service
 
 from weasyprint import HTML
 from jinja2 import Environment, FileSystemLoader
+import base64
+import urllib.request
+
+CAREER_IMAGES = {
+    "Ingeniería de Sistemas": "https://picsum.photos/seed/sistemas/800/500",
+    "Medicina": "https://picsum.photos/seed/medicina/800/500",
+    "Odontología": "https://picsum.photos/seed/odontologia/800/500",
+    "Administración de Empresas": "https://picsum.photos/seed/admin/800/500",
+    "Derecho": "https://picsum.photos/seed/derecho/800/500",
+    "Arquitectura": "https://picsum.photos/seed/arquitectura/800/500",
+    "Comunicación Social": "https://picsum.photos/seed/comunicacion/800/500",
+    "Ingeniería Comercial": "https://picsum.photos/seed/comercial/800/500",
+}
+DEFAULT_CAREER_IMAGE = "https://picsum.photos/seed/unitepc/800/500"
+
+def fetch_image_as_base64(url: str) -> str:
+    import httpx
+    try:
+        with httpx.Client(follow_redirects=True, timeout=15.0) as client:
+            response = client.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+            response.raise_for_status()
+            b64_data = base64.b64encode(response.content).decode('utf-8')
+            return f"data:image/jpeg;base64,{b64_data}"
+    except Exception as e:
+        print(f"Error fetching image {url}: {e}")
+        return ""
+
 
 REPORTS_DIR = os.getenv("REPORTS_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "reports")) if os.name == "nt" else "/app/reports")
 try:
@@ -161,24 +188,42 @@ def build_conflict_excel(conflicts, career_id, gestion_id):
     return {"status": "completed", "file_path": filepath, "file_name": filename}
 
 
-def build_research_agenda_pdf(filepath, activities, career_name, gestion_name):
+def build_research_agenda_pdf(filepath, activities, career_name, gestion_name, report_title="Calendario Académico y Científico"):
+    # Determine the target year (default to current year if no activities)
+    target_year = activities[0].start_date.year if activities else datetime.now().year
+
     grouped = defaultdict(list)
     if activities:
         for act in activities:
             grouped[(act.start_date.year, act.start_date.month)].append(act)
 
+    career_image_url = CAREER_IMAGES.get(career_name, DEFAULT_CAREER_IMAGE)
+    base64_image = fetch_image_as_base64(career_image_url)
+
     grouped_list = []
-    for (year, month) in sorted(grouped.keys()):
-        grouped_list.append({
-            "label": _month_label(year, month),
-            "activities": grouped[(year, month)]
-        })
+    for month in range(1, 13):
+        year_month = (target_year, month)
+        acts = grouped.get(year_month, [])
+        # Only include months that have activities, or if you want all 12, keep it. 
+        # The user's image shows ONLY the months that have activities basically (Jul-Dec), 
+        # but 12 months is fine. We will sort them correctly.
+        if acts or month in (1, 2, 3, 4, 5, 6): # Include standard semester months
+            grouped_list.append({
+                "month_name": SPANISH_MONTHS[month].upper(),
+                "month_idx": month,
+                "activities": sorted(acts, key=lambda x: x.start_date),
+                "side": "left" if len(grouped_list) % 2 == 0 else "right" # Alternate based on visible rows
+            })
 
     context = {
         **DEFAULT_CONTEXT,
         "grouped_agenda": grouped_list,
         "current_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "subtitle": f"{career_name} — {gestion_name}"
+        "year": gestion_name,
+        "report_title": report_title,
+        "career_name": career_name,
+        "career_image": base64_image,
+        "gestion_name": gestion_name
     }
 
     template = jinja_env.get_template("research_agenda.html")
@@ -226,7 +271,7 @@ def generate_pdf_report_task(
         if report_type == "conflict":
             conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
             build_conflict_pdf(filepath, conflicts, career_id, gestion_id)
-        elif report_type == "research-agenda":
+        elif report_type in ["agenda-completa", "agenda-academica", "agenda-cientifica", "research-agenda"]:
             career = (
                 db.query(Career).filter(Career.id == career_id).first()
                 if career_id
@@ -240,14 +285,43 @@ def generate_pdf_report_task(
             career_name = career.name if career else "Todas las carreras"
             gestion_name = gestion.name if gestion else "Todas las gestiones"
 
-            query = db.query(ScientificActivity)
-            if career_id is not None:
-                query = query.filter(ScientificActivity.career_id == career_id)
-            if gestion_id is not None:
-                query = query.filter(ScientificActivity.gestion_id == gestion_id)
-            activities = query.order_by(ScientificActivity.start_date).all()
+            activities_sc = []
+            if report_type in ["agenda-completa", "agenda-cientifica", "research-agenda"]:
+                query_sc = db.query(ScientificActivity)
+                if career_id is not None:
+                    query_sc = query_sc.filter(ScientificActivity.career_id == career_id)
+                if gestion_id is not None:
+                    query_sc = query_sc.filter(ScientificActivity.gestion_id == gestion_id)
+                activities_sc = query_sc.all()
 
-            build_research_agenda_pdf(filepath, activities, career_name, gestion_name)
+            activities_ac = []
+            if report_type in ["agenda-completa", "agenda-academica"]:
+                query_ac = db.query(AcademicActivity)
+                if career_id is not None:
+                    query_ac = query_ac.filter(AcademicActivity.career_id == career_id)
+                if gestion_id is not None:
+                    query_ac = query_ac.filter(AcademicActivity.gestion_id == gestion_id)
+                activities_ac = query_ac.all()
+            
+            class UnifiedActivity:
+                def __init__(self, obj, is_scientific=True):
+                    self.title = obj.title
+                    self.start_date = obj.start_date
+                    self.end_date = obj.end_date
+                    self.activity_type = obj.activity_type if is_scientific else obj.category
+                    self.is_scientific = is_scientific
+
+            activities = [UnifiedActivity(a, True) for a in activities_sc] + [UnifiedActivity(a, False) for a in activities_ac]
+            activities.sort(key=lambda x: x.start_date)
+
+            if report_type == "agenda-academica":
+                r_title = "Calendario Académico"
+            elif report_type in ["agenda-cientifica", "research-agenda"]:
+                r_title = "Calendario de Investigación"
+            else:
+                r_title = "Calendario Académico y Científico"
+
+            build_research_agenda_pdf(filepath, activities, career_name, gestion_name, r_title)
         else:
             _build_table_report(filepath, career_id, gestion_id, db)
 

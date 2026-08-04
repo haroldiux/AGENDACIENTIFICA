@@ -87,10 +87,10 @@ export interface ScientificActivityFilters {
 // --- Reports ---
 
 export type ReportFormat = 'pdf' | 'excel';
-export type ReportType = 'table' | 'research-agenda' | 'conflict';
+export type ReportType = 'table' | 'research-agenda' | 'conflict' | 'agenda-completa' | 'agenda-academica' | 'agenda-cientifica';
 
 export interface ReportGenerateRequest {
-  career_id: number;
+  career_id: number | null;
   gestion_id: number;
   format: ReportFormat;
   report_type: ReportType;

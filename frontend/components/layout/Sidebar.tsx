@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,7 +13,9 @@ import {
   FileBarChart,
   GraduationCap,
   Menu,
-  ChevronLeft
+  ChevronLeft,
+  Moon,
+  Sun
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +31,12 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -118,6 +127,21 @@ export default function Sidebar() {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Theme Toggle */}
+      <div className="p-4 border-t border-border mt-auto hidden md:flex items-center justify-center">
+        {mounted && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className={cn("w-full flex items-center gap-2", collapsed ? "justify-center" : "justify-start px-3")}
+          >
+            {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {!collapsed && <span>{theme === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>}
+          </Button>
+        )}
       </div>
     </motion.aside>
   );
