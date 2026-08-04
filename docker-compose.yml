@@ -49,6 +49,21 @@ services:
       - redis
     command: celery -A app.core.celery_app.celery_app worker --loglevel=info
 
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: unitepc_celery_beat
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/agenda
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - redis
+    command: celery -A app.core.celery_app.celery_app beat --loglevel=info
+
   frontend:
     build:
       context: ./frontend

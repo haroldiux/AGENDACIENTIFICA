@@ -19,6 +19,7 @@ class User(Base):
     full_name = Column(String, index=True)
     role = Column(Enum(RoleEnum), default=RoleEnum.teacher, nullable=False)
     is_active = Column(Boolean, default=True)
+    phone_number = Column(String, nullable=True)
 
     careers = relationship("Career", secondary="user_career", back_populates="users")
 

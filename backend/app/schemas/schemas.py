@@ -72,6 +72,7 @@ class TokenData(BaseModel):
 class UserBase(BaseModel):
     email: str
     full_name: Optional[str] = None
+    phone_number: Optional[str] = None
     role: RoleEnum = RoleEnum.teacher
 
 class UserCreate(UserBase):

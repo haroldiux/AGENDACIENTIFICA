@@ -17,7 +17,14 @@ class Settings(BaseSettings):
     
     SUPER_ADMIN_EMAIL: str = "admin@unitepc.edu.bo"
     SUPER_ADMIN_PASSWORD: str = "admin123"
-
+    
+    NOTIFICATION_DAYS_AHEAD: int = 7
+    WHATSAPP_API_TOKEN: str | None = None
+    WHATSAPP_PHONE_ID: str | None = None
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int | None = None
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
     class Config:
         env_file = ".env"
 
