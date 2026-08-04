@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Agenda de Investigación{% endblock %}
+{% block header_title %}Agenda Científica{% endblock %}
+
+{% block content %}
+    {% if not grouped_agenda %}
+        <p>No hay actividades de investigación programadas para los parámetros seleccionados.</p>
+    {% else %}
+        {% for group in grouped_agenda %}
+            <div {% if not loop.first %}class="page-break"{% endif %}>
+                <h2 style="border-bottom: 2px solid var(--primary-color); padding-bottom: 5px; margin-top: 20px; color: var(--primary-color);">
+                    {{ group.label }}
+                </h2>
+                
+                {% for act in group.activities %}
+                <div style="background-color: #F5F5F5; border: 1px solid #DDDDDD; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+                    <p style="margin: 4px 0;"><b>{{ act.title }}</b></p>
+                    <p style="margin: 4px 0;">Tipo: {{ get_activity_label(act.activity_type) }}</p>
+                    <p style="margin: 4px 0;">Responsable: {{ act.responsible_name }}</p>
+                    <p style="margin: 4px 0;">Fechas: {{ format_date_range(act.start_date, act.end_date) }}</p>
+                    <p style="margin: 4px 0;">Estado: {{ get_status_label(act.status) }}</p>
+                    <p style="margin: 4px 0; color: #555;">Notas: {{ clamp_notes(act.notes) }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

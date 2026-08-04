@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Conflictos{% endblock %}
+{% block header_title %}Reporte de Conflictos{% endblock %}
+
+{% block content %}
+    {% if not grouped_conflicts %}
+        <p>No se encontraron conflictos para los filtros seleccionados.</p>
+    {% else %}
+        {% for group in grouped_conflicts %}
+            <h2 class="text-primary" style="margin-top: 20px;">{{ group.label }}</h2>
+            {% for item in group.activities %}
+            <div style="background-color: #FFF3F3; border: 1px solid #DDDDDD; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+                <p style="margin: 4px 0;"><b>Actividad académica:</b> {{ item.academic_title }}</p>
+                <p style="margin: 4px 0;">Fechas académicas: {{ format_date_range(item.academic_start_date, item.academic_end_date) }}</p>
+                <p style="margin: 4px 0;"><b>Actividad científica:</b> {{ item.scientific_title }}</p>
+                <p style="margin: 4px 0;">Tipo científico: {{ get_activity_label(item.scientific_type) }}</p>
+                <p style="margin: 4px 0;">Fechas científicas: {{ format_date_range(item.scientific_start_date, item.scientific_end_date) }}</p>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
+{% endblock %}

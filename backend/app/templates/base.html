@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Reporte{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 2cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Inter', sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        :root {
+            --primary-color: #6B3392;
+            --secondary-color: #009E96;
+            --text-color: #333333;
+            --border-color: #dddddd;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            line-height: 1.5;
+            font-size: 10pt;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18pt;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 11pt;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #888;
+        }
+        
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+        }
+        
+        /* Utility classes */
+        .text-primary { color: var(--primary-color); }
+        .text-secondary { color: var(--secondary-color); }
+        .bg-primary { background-color: var(--primary-color); color: white; }
+        .bg-secondary { background-color: var(--secondary-color); color: white; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="header">
+        <h1>{% block header_title %}UNITEPC - Agenda Científica{% endblock %}</h1>
+        {% if subtitle %}
+        <p>{{ subtitle }}</p>
+        {% endif %}
+    </div>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="footer">
+        <p>Generado el {{ current_date }} - Sistema Agenda UNITEPC</p>
+    </div>
+</body>
+</html>
