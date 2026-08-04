@@ -153,7 +153,7 @@ export default function ReportesPage() {
       />
 
       {/* Shared career/gestión selectors */}
-      <div className="glass-panel p-4 rounded-xl flex flex-col md:flex-row gap-4">
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl flex flex-col md:flex-row gap-4">
         <div className="flex flex-col gap-1 flex-1">
           <label htmlFor="report-career" className="text-xs text-slate-400">
             Carrera
@@ -196,7 +196,7 @@ export default function ReportesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="glass-panel p-6 rounded-xl flex flex-col gap-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
           <div className="w-10 h-10 rounded bg-primary/20 text-primary flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
@@ -270,7 +270,7 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-xl flex flex-col gap-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
           <div className="w-10 h-10 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
@@ -298,7 +298,7 @@ export default function ReportesPage() {
           </button>
         </div>
 
-        <div className="glass-panel p-6 rounded-xl flex flex-col gap-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
           <div className="w-10 h-10 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
@@ -329,7 +329,7 @@ export default function ReportesPage() {
 
       {conflictsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-4xl max-h-[80vh] overflow-hidden rounded-xl flex flex-col">
+          <div className="bg-card text-card-foreground border border-border shadow-sm w-full max-w-4xl max-h-[80vh] overflow-hidden rounded-xl flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
               <h3 className="font-medium text-lg">Conflictos detectados</h3>
               <button

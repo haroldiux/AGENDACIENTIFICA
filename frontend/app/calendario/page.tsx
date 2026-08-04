@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { Download, LayoutGrid, List } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   api,
   type Career,
@@ -200,7 +202,7 @@ export default function CalendarioPage() {
       />
 
       {/* Top bar with filters and actions */}
-      <div className="glass-panel p-4 rounded-xl flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+      <Card className="p-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between shadow-sm">
         <AgendaFilterBar
           careers={careers}
           gestiones={gestiones}
@@ -213,7 +215,7 @@ export default function CalendarioPage() {
 
         <div className="flex items-center gap-3 shrink-0">
           {careerId !== null && (
-            <div className="hidden md:flex items-center gap-3 text-xs text-slate-400 mr-2">
+            <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground mr-2">
               <span className="flex items-center gap-1">
                 <LayoutGrid className="w-3.5 h-3.5" />
                 {academicCount} académicas
@@ -224,7 +226,7 @@ export default function CalendarioPage() {
               </span>
             </div>
           )}
-          <button
+          <Button
             type="button"
             onClick={handleExportPDF}
             disabled={exporting || careerId === null || gestionId === null}
@@ -233,13 +235,13 @@ export default function CalendarioPage() {
                 ? 'Seleccione una carrera y una gestión para exportar'
                 : 'Exportar agenda como PDF'
             }
-            className="px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            className="flex items-center gap-2 shrink-0"
           >
             <Download className="w-4 h-4" />
             {exporting ? 'Generando PDF...' : 'Exportar agenda PDF'}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Main content */}
       {careerId === null ? (

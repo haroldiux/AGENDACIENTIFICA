@@ -7,7 +7,7 @@ interface AgendaErrorStateProps {
 
 export default function AgendaErrorState({ message, onRetry }: AgendaErrorStateProps) {
   return (
-    <div className="glass-panel p-8 rounded-xl flex flex-col items-center text-center gap-4 min-h-[400px] justify-center">
+    <div className="bg-card text-card-foreground border border-border shadow-sm p-8 rounded-xl flex flex-col items-center text-center gap-4 min-h-[400px] justify-center">
       <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
         <AlertTriangle className="w-8 h-8 text-red-400" />
       </div>

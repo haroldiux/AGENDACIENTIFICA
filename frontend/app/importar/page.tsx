@@ -102,7 +102,7 @@ export default function ImportarPage() {
         onDrop={handleDrop}
         onClick={() => !file && inputRef.current?.click()}
         className={`
-          glass-panel rounded-xl p-12 text-center cursor-pointer transition-all
+          bg-card text-card-foreground border border-border shadow-sm rounded-xl p-12 text-center cursor-pointer transition-all
           ${isDragging ? "border-blue-500 bg-blue-500/5" : "border-dashed border-2 border-[var(--border)]"}
           ${file ? "cursor-default" : "hover:bg-white/5"}
         `}
@@ -174,7 +174,7 @@ export default function ImportarPage() {
 
       {/* Results */}
       {result && (
-        <div className="glass-panel p-6 rounded-xl space-y-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl space-y-4">
           <h3 className="font-semibold flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-400" />
             Resultado de la importación
@@ -210,7 +210,7 @@ export default function ImportarPage() {
       )}
 
       {/* Template hint */}
-      <div className="glass-panel p-6 rounded-xl">
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl">
         <h4 className="font-medium mb-3 text-sm text-slate-300">Formato esperado del Excel</h4>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">

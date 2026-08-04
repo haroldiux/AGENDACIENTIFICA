@@ -4,28 +4,59 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #0a0f1e;
-  --foreground: #f1f5f9;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --border: rgba(148, 163, 184, 0.14);
-  --card: rgba(21, 30, 52, 0.72);
-  --card-hover: rgba(30, 41, 66, 0.85);
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 188.7 94.5% 42.7%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 4%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 188.7 94.5% 42.7%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262.1 83.3% 57.8%;
+  }
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  color: var(--foreground);
-  background:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(59, 130, 246, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(139, 92, 246, 0.08), transparent),
-    var(--background);
-  background-attachment: fixed;
-  min-height: 100vh;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 /* Custom scrollbar */
@@ -37,142 +68,28 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 6px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  @apply bg-border rounded-md border-2 border-transparent bg-clip-content;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.35);
-  background-clip: content-box;
+  @apply bg-muted-foreground bg-clip-content;
 }
 
-/* Focus visible accessibility */
-:focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.6);
-  outline-offset: 2px;
-}
-
-/* ---------- Surfaces ---------- */
-
-.glass-panel {
-  background: var(--card);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border);
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.25),
-    0 2px 4px -1px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.sidebar {
-  background: rgba(10, 15, 30, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-/* ---------- Navigation ---------- */
-
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.625rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #94a3b8;
-  border: 1px solid transparent;
-  transition: all 0.15s ease;
-}
-
-.nav-link:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.nav-link-active,
-.nav-link-active:hover {
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(99, 102, 241, 0.12));
-  border-color: rgba(59, 130, 246, 0.35);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-}
-
-/* ---------- Form controls ---------- */
-
-select,
-input[type="text"],
-input[type="date"],
-input[type="number"],
-input[type="email"],
-input[type="password"] {
-  color-scheme: dark;
-}
-
-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.6rem center;
-  background-size: 0.9rem;
-  padding-right: 2rem;
-}
-
-/* ---------- Stat / badge helpers ---------- */
-
-.stat-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--stat-accent, var(--primary));
-  opacity: 0.8;
-}
-
-.icon-chip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-}
-
-/* ---------- react-big-calendar dark theme overrides ---------- */
+/* ---------- react-big-calendar shadcn overrides ---------- */
 .rbc-calendar {
   background: transparent;
-  color: #e2e8f0;
+  color: hsl(var(--foreground));
 }
 
 .rbc-header {
-  background: rgba(30, 41, 59, 0.5);
-  border-bottom: 1px solid var(--border);
-  color: #94a3b8;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 8px 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  @apply bg-muted/50 border-b border-border text-muted-foreground text-xs font-semibold uppercase tracking-wide py-2;
 }
 
 .rbc-month-view {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  @apply border border-border rounded-xl overflow-hidden;
 }
 
 .rbc-month-row {
-  border-top: 1px solid var(--border);
+  @apply border-t border-border;
 }
 
 .rbc-day-bg {
@@ -180,47 +97,31 @@ select {
 }
 
 .rbc-day-bg + .rbc-day-bg {
-  border-left: 1px solid var(--border);
+  @apply border-l border-border;
 }
 
 .rbc-off-range-bg {
-  background: rgba(15, 23, 42, 0.4);
+  @apply bg-muted/20;
 }
 
 .rbc-off-range {
-  color: #475569;
+  @apply text-muted-foreground;
 }
 
 .rbc-today {
-  background: rgba(59, 130, 246, 0.08);
+  @apply bg-primary/5;
 }
 
 .rbc-date-cell {
-  font-size: 0.85rem;
-  color: #cbd5e1;
-  padding: 4px 6px;
+  @apply text-sm text-foreground/80 p-1.5;
 }
 
 .rbc-date-cell.rbc-now {
-  color: #3b82f6;
-  font-weight: 700;
-}
-
-.rbc-date-cell.rbc-now::after {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 6px;
-  background: #3b82f6;
-  border-radius: 50%;
-  margin: 2px auto 0;
+  @apply text-primary font-bold;
 }
 
 .rbc-event {
-  border-radius: 4px;
-  font-size: 0.75rem;
-  padding: 1px 4px;
-  min-height: 20px;
+  @apply rounded text-xs px-1 min-h-[20px] bg-primary text-primary-foreground;
 }
 
 .rbc-event-content {
@@ -231,75 +132,52 @@ select {
   font-style: italic;
 }
 
-.rbc-row-segment {
-  padding: 0 2px;
-}
-
 .rbc-show-more {
-  color: #3b82f6;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: transparent;
+  @apply text-primary text-xs font-semibold bg-transparent;
 }
 
 .rbc-show-more:hover {
-  color: #60a5fa;
+  @apply text-primary/80;
 }
 
 .rbc-agenda-view table {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
+  @apply border border-border rounded-lg overflow-hidden;
 }
 
 .rbc-agenda-view table thead {
-  background: rgba(30, 41, 59, 0.5);
+  @apply bg-muted/50;
 }
 
 .rbc-agenda-view table th {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
+  @apply text-muted-foreground text-sm font-semibold p-2 border-b border-border;
 }
 
 .rbc-agenda-view table td {
-  padding: 10px;
-  color: #e2e8f0;
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.rbc-agenda-view table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  @apply p-2 text-foreground text-sm border-b border-border;
 }
 
 .rbc-time-view {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  @apply border border-border rounded-xl overflow-hidden;
 }
 
 .rbc-time-header {
-  background: rgba(30, 41, 59, 0.5);
+  @apply bg-muted/50;
 }
 
 .rbc-time-header-content {
-  border-left: 1px solid var(--border);
+  @apply border-l border-border;
 }
 
 .rbc-time-content {
-  border-top: 1px solid var(--border);
+  @apply border-t border-border;
 }
 
 .rbc-timeslot-group {
-  border-bottom: 1px solid var(--border);
+  @apply border-b border-border;
 }
 
 .rbc-time-slot {
-  color: #64748b;
-  font-size: 0.75rem;
+  @apply text-muted-foreground text-xs;
 }
 
 .rbc-day-slot .rbc-event {
@@ -307,68 +185,30 @@ select {
 }
 
 .rbc-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
-  align-items: center;
+  @apply flex flex-wrap gap-3 mb-4 items-center;
 }
 
 .rbc-toolbar-label {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #f1f5f9;
-  text-transform: capitalize;
-  flex: 1;
-  text-align: center;
+  @apply text-lg font-semibold text-foreground capitalize flex-1 text-center;
 }
 
 .rbc-btn-group {
-  display: flex;
-  gap: 4px;
+  @apply flex gap-1;
 }
 
 .rbc-btn-group button {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid var(--border);
-  color: #cbd5e1;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.rbc-btn-group button:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: #fff;
+  @apply bg-background border border-input text-foreground px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground;
 }
 
 .rbc-btn-group button.rbc-active {
-  background: rgba(59, 130, 246, 0.25);
-  border-color: #3b82f6;
-  color: #fff;
-}
-
-.rbc-btn-group button.rbc-active:hover {
-  background: rgba(59, 130, 246, 0.35);
+  @apply bg-accent text-accent-foreground;
 }
 
 /* Popup overlay */
 .rbc-overlay {
-  background: rgba(30, 41, 59, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  @apply bg-popover/95 backdrop-blur-md border border-border rounded-lg shadow-lg;
 }
 
 .rbc-overlay-header {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border-bottom: 1px solid var(--border);
-  padding: 8px 12px;
+  @apply text-muted-foreground text-sm font-semibold border-b border-border py-2 px-3;
 }

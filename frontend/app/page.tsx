@@ -76,7 +76,7 @@ export default function Dashboard() {
 
   if (error || !stats) {
     return (
-      <div className="glass-panel p-8 rounded-2xl text-center max-w-lg mx-auto mt-12">
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-8 rounded-2xl text-center max-w-lg mx-auto mt-12">
         <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
         <h3 className="text-lg font-medium text-red-300">Error cargando el dashboard</h3>
         <p className="text-slate-400 mt-1 text-sm">{error}</p>
@@ -137,7 +137,7 @@ export default function Dashboard() {
         {statCards.map(({ label, value, hint, icon: Icon, accent, chipClass }) => (
           <div
             key={label}
-            className="glass-panel stat-card p-6 rounded-2xl flex flex-col gap-3"
+            className="bg-card text-card-foreground border border-border shadow-sm stat-card p-6 rounded-2xl flex flex-col gap-3"
             style={{ '--stat-accent': accent } as React.CSSProperties}
           >
             <div className="flex items-center justify-between">
@@ -153,7 +153,7 @@ export default function Dashboard() {
       </div>
 
       {/* Status Breakdown */}
-      <div className="glass-panel p-6 rounded-2xl">
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl">
         <h3 className="text-base font-semibold mb-4">Estado de Actividades Científicas</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(status_breakdown).map(([status, count]) => (
@@ -172,7 +172,7 @@ export default function Dashboard() {
       </div>
 
       {/* Next Events */}
-      <div className="glass-panel p-6 rounded-2xl">
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold">Próximos Eventos Científicos</h3>
           <Link
@@ -227,7 +227,7 @@ export default function Dashboard() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <Link href="/actividades" className="glass-panel p-6 rounded-2xl hover:bg-white/[0.04] hover:border-blue-500/30 transition-all group">
+        <Link href="/actividades" className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl hover:bg-white/[0.04] hover:border-blue-500/30 transition-all group">
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-4">
               <div className="icon-chip bg-violet-500/15 text-violet-400">
@@ -246,7 +246,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link href="/importar" className="glass-panel p-6 rounded-2xl hover:bg-white/[0.04] hover:border-blue-500/30 transition-all group">
+        <Link href="/importar" className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl hover:bg-white/[0.04] hover:border-blue-500/30 transition-all group">
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-4">
               <div className="icon-chip bg-emerald-500/15 text-emerald-400">

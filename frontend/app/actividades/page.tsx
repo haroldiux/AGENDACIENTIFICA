@@ -4,6 +4,10 @@ import Link from "next/link";
 import { Plus, Upload, Trash2, Pencil, Loader2 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AgendaFilterBar from "@/components/agenda/AgendaFilterBar";
 import PageHeader from "@/components/layout/PageHeader";
 import {
@@ -122,20 +126,19 @@ export default function ActividadesPage() {
         description="Crea, edita y da seguimiento a las actividades de investigación por carrera y gestión."
         actions={
           <>
-            <Link
-              href="/importar"
-              className="bg-white/10 hover:bg-white/15 text-slate-200 px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors"
-            >
-              <Upload className="w-4 h-4" />
-              Importar Excel
+            <Link href="/importar">
+              <Button variant="secondary" className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Importar Excel
+              </Button>
             </Link>
-            <button
+            <Button
               onClick={openCreateModal}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors shadow-lg shadow-blue-600/25"
+              className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Nueva Actividad
-            </button>
+            </Button>
           </>
         }
       />
@@ -151,8 +154,8 @@ export default function ActividadesPage() {
             onGestionChange={setGestionId}
           />
         </div>
-        <div className="glass-panel p-4 rounded-xl flex flex-col gap-1.5 md:w-56">
-          <label htmlFor="status-select" className="text-xs text-slate-400">
+        <Card className="p-4 flex flex-col gap-1.5 md:w-56 shadow-sm border-border">
+          <label htmlFor="status-select" className="text-xs text-muted-foreground font-medium">
             Estado
           </label>
           <select
@@ -161,7 +164,7 @@ export default function ActividadesPage() {
             onChange={(e) =>
               setStatusFilter(e.target.value as ScientificActivityStatus | "")
             }
-            className="w-full bg-[#1e293b] border border-[var(--border)] rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
           >
             <option value="">Todos los estados</option>
             {Object.entries(activityStatusLabels).map(([value, label]) => (
@@ -170,92 +173,96 @@ export default function ActividadesPage() {
               </option>
             ))}
           </select>
-        </div>
+        </Card>
       </div>
 
-      <div className="glass-panel p-6 rounded-xl">
+      <Card className="p-0 overflow-hidden border-border shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-red-300 text-sm">{error}</p>
-            <button
+            <p className="text-destructive text-sm">{error}</p>
+            <Button
+              variant="outline"
               onClick={loadActivities}
-              className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-white transition-colors"
+              className="mt-4"
             >
               Reintentar
-            </button>
+            </Button>
           </div>
         ) : visibleActivities.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-12">
+          <p className="text-muted-foreground text-sm text-center py-12">
             No hay actividades con los filtros seleccionados.
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[var(--border)] text-slate-400 text-sm">
-                  <th className="pb-3 font-medium">Nombre</th>
-                  <th className="pb-3 font-medium">Fecha</th>
-                  <th className="pb-3 font-medium">Tipo</th>
-                  <th className="pb-3 font-medium">Carrera</th>
-                  <th className="pb-3 font-medium">Estado</th>
-                  <th className="pb-3 font-medium text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border)]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[300px]">Nombre</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Carrera</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {visibleActivities.map((activity) => (
-                  <tr key={activity.id}>
-                    <td className="py-4 font-medium text-white">{activity.title}</td>
-                    <td className="py-4 text-sm whitespace-nowrap">
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">{activity.title}</TableCell>
+                    <TableCell className="whitespace-nowrap">
                       {formatDateRange(activity.start_date, activity.end_date)}
-                    </td>
-                    <td className="py-4">
-                      <span className="bg-primary/20 text-primary px-2 py-1 rounded text-xs">
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                         {activityTypeLabels[activity.activity_type] ??
                           activity.activity_type}
-                      </span>
-                    </td>
-                    <td className="py-4 text-sm">{careerName(activity.career_id)}</td>
-                    <td className="py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          activityStatusClasses[activity.status] ?? ""
-                        }`}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{careerName(activity.career_id)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={`${activityStatusClasses[activity.status] ?? ""}`}
                       >
                         {activityStatusLabels[activity.status] ?? activity.status}
-                      </span>
-                    </td>
-                    <td className="py-4 text-right whitespace-nowrap">
-                      <button
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => openEditModal(activity)}
-                        className="text-slate-400 hover:text-white text-sm inline-flex items-center gap-1 mr-3 transition-colors"
+                        className="text-muted-foreground hover:text-foreground mr-2"
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Pencil className="w-3.5 h-3.5 mr-1" />
                         Editar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDelete(activity)}
                         disabled={deletingId === activity.id}
-                        className="text-slate-400 hover:text-red-400 text-sm inline-flex items-center gap-1 transition-colors disabled:opacity-50"
+                        className="text-muted-foreground hover:text-destructive"
                       >
                         {deletingId === activity.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
                         ) : (
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
                         )}
                         Eliminar
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
-      </div>
+      </Card>
 
       <ActivityModal
         isOpen={isModalOpen}
