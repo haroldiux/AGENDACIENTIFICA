@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Download, Clock } from 'lucide-react';
+import { FileText, Download, Eye, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import PageHeader from '@/components/layout/PageHeader';
 import {
@@ -10,6 +10,7 @@ import {
   type Gestion,
   type ReportFormat,
   type ReportType,
+  type ConflictItem,
 } from '@/lib/api';
 
 export default function ReportesPage() {
@@ -18,6 +19,9 @@ export default function ReportesPage() {
   const [careerId, setCareerId] = useState<number | null>(null);
   const [gestionId, setGestionId] = useState<number | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [conflicts, setConflicts] = useState<ConflictItem[]>([]);
+  const [conflictsOpen, setConflictsOpen] = useState(false);
+  const [loadingConflicts, setLoadingConflicts] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -57,7 +61,7 @@ export default function ReportesPage() {
     reportType: ReportType,
     successMessage: string
   ) => {
-    if (careerId === null || gestionId === null) return;
+    if (gestionId === null) return;
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -115,8 +119,29 @@ export default function ReportesPage() {
     }
   };
 
+  const handleLoadConflicts = async () => {
+    if (gestionId === null) return;
+
+    setLoadingConflicts(true);
+    setConflictsOpen(true);
+
+    try {
+      const data = await api.conflicts.list({
+        career_id: careerId,
+        gestion_id: gestionId,
+      });
+      setConflicts(data.conflicts);
+    } catch (err) {
+      console.error('Error loading conflicts:', err);
+      toast.error('Error cargando lista de conflictos');
+      setConflicts([]);
+    } finally {
+      setLoadingConflicts(false);
+    }
+  };
+
   const selectorsDisabled = exporting !== null;
-  const selectionMissing = careerId === null || gestionId === null;
+  const selectionMissing = gestionId === null;
 
   return (
     <div className="space-y-6">
@@ -128,7 +153,7 @@ export default function ReportesPage() {
       />
 
       {/* Shared career/gestión selectors */}
-      <div className="glass-panel p-4 rounded-xl flex flex-col md:flex-row gap-4">
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl flex flex-col md:flex-row gap-4">
         <div className="flex flex-col gap-1 flex-1">
           <label htmlFor="report-career" className="text-xs text-slate-400">
             Carrera
@@ -138,7 +163,7 @@ export default function ReportesPage() {
             value={careerId ?? ''}
             onChange={(e) => setCareerId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-[#0f172a] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             <option value="">Seleccione una carrera</option>
             {careers.map((career) => (
@@ -158,7 +183,7 @@ export default function ReportesPage() {
             value={gestionId ?? ''}
             onChange={(e) => setGestionId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-[#0f172a] border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             <option value="">Seleccione una gestión</option>
             {gestiones.map((gestion) => (
@@ -171,7 +196,7 @@ export default function ReportesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="glass-panel p-6 rounded-xl flex flex-col gap-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
           <div className="w-10 h-10 rounded bg-primary/20 text-primary flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
@@ -181,17 +206,71 @@ export default function ReportesPage() {
               Lista de cruces detectados entre agenda académica y científica.
             </p>
           </div>
-          <button
-            disabled
-            title="Este reporte aún no está disponible en el backend"
-            className="mt-auto bg-[#1e293b] border border-[var(--border)] px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 w-full opacity-50 cursor-not-allowed"
-          >
-            <Clock className="w-4 h-4" />
-            Próximamente
-          </button>
+          <div className="mt-auto flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                handleExport(
+                  'conflict-pdf',
+                  'pdf',
+                  'conflict',
+                  'Reporte de conflictos PDF exportado correctamente'
+                )
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={
+                selectionMissing
+                  ? 'Seleccione una carrera y una gestión para exportar'
+                  : 'Exportar conflictos como PDF'
+              }
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'conflict-pdf'
+                ? 'Generando PDF...'
+                : 'Exportar PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleExport(
+                  'conflict-excel',
+                  'excel',
+                  'conflict',
+                  'Reporte de conflictos Excel exportado correctamente'
+                )
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={
+                selectionMissing
+                  ? 'Seleccione una carrera y una gestión para exportar'
+                  : 'Exportar conflictos como Excel'
+              }
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'conflict-excel'
+                ? 'Generando Excel...'
+                : 'Exportar Excel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleLoadConflicts}
+              disabled={selectionMissing}
+              title={
+                selectionMissing
+                  ? 'Seleccione una carrera y una gestión para ver conflictos'
+                  : 'Ver lista de conflictos'
+              }
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Eye className="w-4 h-4" />
+              Ver conflictos
+            </button>
+          </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-xl flex flex-col gap-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
           <div className="w-10 h-10 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
@@ -212,41 +291,122 @@ export default function ReportesPage() {
                 ? 'Seleccione una carrera y una gestión para exportar'
                 : 'Exportar agenda consolidada como Excel'
             }
-            className="mt-auto bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            className="mt-auto bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
           >
             <Download className="w-4 h-4" />
             {exporting === 'consolidada' ? 'Generando Excel...' : 'Exportar Excel'}
           </button>
         </div>
 
-        <div className="glass-panel p-6 rounded-xl flex flex-col gap-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
           <div className="w-10 h-10 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-medium text-lg">Agenda Científica</h4>
+            <h4 className="font-medium text-lg">Agendas PDF (Visual)</h4>
             <p className="text-sm text-slate-400 mt-1">
-              Exporta la agenda científica mensual de una carrera y gestión.
+              Exporta las actividades en un calendario ilustrado listo para imprimir.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() =>
-              handleExport('cientifica', 'pdf', 'research-agenda', 'Agenda científica exportada correctamente')
-            }
-            disabled={exporting !== null || selectionMissing}
-            title={
-              selectionMissing
-                ? 'Seleccione una carrera y una gestión para exportar'
-                : 'Exportar agenda científica como PDF'
-            }
-            className="mt-auto bg-blue-600 hover:bg-blue-700 disabled:bg-[#1e293b] disabled:hover:bg-[#1e293b] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
-          >
-            <Download className="w-4 h-4" />
-            {exporting === 'cientifica' ? 'Generando PDF...' : 'Exportar agenda PDF'}
-          </button>
+          <div className="mt-auto flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                handleExport('agenda-completa', 'pdf', 'agenda-completa', 'Agenda completa exportada correctamente')
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar agenda completa'}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'agenda-completa' ? 'Generando...' : 'Exportar Completa'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleExport('agenda-academica', 'pdf', 'agenda-academica', 'Agenda académica exportada correctamente')
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar agenda académica'}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'agenda-academica' ? 'Generando...' : 'Exportar Académica'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleExport('agenda-cientifica', 'pdf', 'agenda-cientifica', 'Agenda científica exportada correctamente')
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar agenda científica'}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'agenda-cientifica' ? 'Generando...' : 'Exportar Científica'}
+            </button>
+          </div>
         </div>
       </div>
+
+      {conflictsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-card text-card-foreground border border-border shadow-sm w-full max-w-4xl max-h-[80vh] overflow-hidden rounded-xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
+              <h3 className="font-medium text-lg">Conflictos detectados</h3>
+              <button
+                type="button"
+                onClick={() => setConflictsOpen(false)}
+                className="p-1 rounded hover:bg-white/10"
+                aria-label="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 overflow-auto">
+              {loadingConflicts ? (
+                <p className="text-sm text-slate-400">Cargando conflictos...</p>
+              ) : conflicts.length === 0 ? (
+                <p className="text-sm text-slate-400">
+                  No se encontraron conflictos para la carrera y gestión
+                  seleccionadas.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {conflicts.map((conflict) => (
+                    <li
+                      key={`${conflict.academic_id}-${conflict.scientific_id}`}
+                      className="border border-[var(--border)] rounded-lg p-3 text-sm"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div>
+                          <p className="font-medium">
+                            {conflict.academic_title}
+                          </p>
+                          <p className="text-slate-400 text-xs">
+                            Académica · {conflict.academic_start_date} al{' '}
+                            {conflict.academic_end_date}
+                          </p>
+                        </div>
+                        <div className="md:text-right">
+                          <p className="font-medium">
+                            {conflict.scientific_title}
+                          </p>
+                          <p className="text-slate-400 text-xs">
+                            {conflict.scientific_type} ·{' '}
+                            {conflict.scientific_start_date} al{' '}
+                            {conflict.scientific_end_date}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

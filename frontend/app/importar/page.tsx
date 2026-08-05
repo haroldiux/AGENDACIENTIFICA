@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle, X, Loader2 } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle, X, Loader2, Download } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { api } from "@/lib/api";
 import PageHeader from "@/components/layout/PageHeader";
@@ -102,7 +102,7 @@ export default function ImportarPage() {
         onDrop={handleDrop}
         onClick={() => !file && inputRef.current?.click()}
         className={`
-          glass-panel rounded-xl p-12 text-center cursor-pointer transition-all
+          bg-card text-card-foreground border border-border shadow-sm rounded-xl p-12 text-center cursor-pointer transition-all
           ${isDragging ? "border-blue-500 bg-blue-500/5" : "border-dashed border-2 border-[var(--border)]"}
           ${file ? "cursor-default" : "hover:bg-white/5"}
         `}
@@ -174,7 +174,7 @@ export default function ImportarPage() {
 
       {/* Results */}
       {result && (
-        <div className="glass-panel p-6 rounded-xl space-y-4">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl space-y-4">
           <h3 className="font-semibold flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-400" />
             Resultado de la importación
@@ -209,9 +209,22 @@ export default function ImportarPage() {
         </div>
       )}
 
-      {/* Template hint */}
-      <div className="glass-panel p-6 rounded-xl">
-        <h4 className="font-medium mb-3 text-sm text-slate-300">Formato esperado del Excel</h4>
+      {/* Template download + hint */}
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h4 className="font-semibold text-slate-200">Plantilla de importación</h4>
+            <p className="text-xs text-slate-500 mt-0.5">Descarga el formato en blanco, llénalo y súbelo arriba</p>
+          </div>
+          <a
+            href={`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')}/importacion/template/download`}
+            download="plantilla_actividades.xlsx"
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Descargar Plantilla .xlsx
+          </a>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>

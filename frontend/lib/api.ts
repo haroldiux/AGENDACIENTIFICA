@@ -9,6 +9,29 @@ export const apiClient = axios.create({
   },
 });
 
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        window.dispatchEvent(new Event('auth-logout'));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // --- Career / Gestion ---
 
 export interface Career {
@@ -64,10 +87,10 @@ export interface ScientificActivityFilters {
 // --- Reports ---
 
 export type ReportFormat = 'pdf' | 'excel';
-export type ReportType = 'table' | 'research-agenda';
+export type ReportType = 'table' | 'research-agenda' | 'conflict' | 'agenda-completa' | 'agenda-academica' | 'agenda-cientifica';
 
 export interface ReportGenerateRequest {
-  career_id: number;
+  career_id: number | null;
   gestion_id: number;
   format: ReportFormat;
   report_type: ReportType;
@@ -84,6 +107,29 @@ export interface ReportStatusResponse {
     file_name?: string;
   };
   error?: string;
+}
+
+// --- Conflicts ---
+
+export interface ConflictItem {
+  academic_id: number;
+  academic_title: string;
+  academic_start_date: string;
+  academic_end_date: string;
+  scientific_id: number;
+  scientific_title: string;
+  scientific_type: ScientificActivityType;
+  scientific_start_date: string;
+  scientific_end_date: string;
+}
+
+export interface ConflictListResponse {
+  conflicts: ConflictItem[];
+}
+
+export interface ConflictFilters {
+  career_id: number;
+  gestion_id: number;
 }
 
 // --- Fusion / Merged Calendar ---
@@ -177,6 +223,9 @@ export const api = {
     login: (credentials: Record<string, unknown>) =>
       apiClient.post('/auth/login', credentials).then((res) => res.data),
   },
+  users: {
+    me: () => apiClient.get('/users/me').then((res) => res.data),
+  },
   reports: {
     generate: (payload: ReportGenerateRequest) =>
       apiClient
@@ -189,6 +238,12 @@ export const api = {
     download: (taskId: string) =>
       apiClient
         .get<Blob>(`/reports/${taskId}/download`, { responseType: 'blob' })
+        .then((res) => res.data),
+  },
+  conflicts: {
+    list: (filters: ConflictFilters) =>
+      apiClient
+        .get<ConflictListResponse>('/conflicts/', { params: filters })
         .then((res) => res.data),
   },
 };

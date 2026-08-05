@@ -4,13 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.models.models import ScientificActivity, Career, Gestion
+from app.api.deps import get_current_active_user
+from app.models.models import ScientificActivity, Career, Gestion, User
 from app.schemas.schemas import (
     ScientificActivityCreate,
     ScientificActivityUpdate,
     ScientificActivityStatusUpdate,
     ScientificActivityResponse,
     ScientificActivityFilterParams,
+    RoleEnum,
 )
 from app.services.scientific_service import list_scientific_activities
 
@@ -64,11 +66,18 @@ def create_scientific_activity(activity: ScientificActivityCreate, db: Session =
     return db_activity
 
 @router.put("/{id}", response_model=ScientificActivityResponse)
-def update_scientific_activity(id: int, activity_update: ScientificActivityUpdate, db: Session = Depends(get_db)):
+def update_scientific_activity(id: int, activity_update: ScientificActivityUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
+    if current_user.role not in [RoleEnum.super_admin, RoleEnum.admin, RoleEnum.research]:
+        if current_user.role == RoleEnum.coordinator:
+            if db_activity.career_id not in [c.id for c in current_user.careers]:
+                raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+            
     update_data = activity_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_activity, key, value)
@@ -78,21 +87,35 @@ def update_scientific_activity(id: int, activity_update: ScientificActivityUpdat
     return db_activity
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_scientific_activity(id: int, db: Session = Depends(get_db)):
+def delete_scientific_activity(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
+    if current_user.role not in [RoleEnum.super_admin, RoleEnum.admin, RoleEnum.research]:
+        if current_user.role == RoleEnum.coordinator:
+            if db_activity.career_id not in [c.id for c in current_user.careers]:
+                raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+            
     db.delete(db_activity)
     db.commit()
     return None
 
 @router.put("/{id}/status", response_model=ScientificActivityResponse)
-def update_scientific_status(id: int, status_update: ScientificActivityStatusUpdate, db: Session = Depends(get_db)):
+def update_scientific_status(id: int, status_update: ScientificActivityStatusUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
+    if current_user.role not in [RoleEnum.super_admin, RoleEnum.admin, RoleEnum.research]:
+        if current_user.role == RoleEnum.coordinator:
+            if db_activity.career_id not in [c.id for c in current_user.careers]:
+                raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+            
     db_activity.status = status_update.status
     if status_update.evidence_url is not None:
         db_activity.evidence_url = status_update.evidence_url

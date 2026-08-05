@@ -16,6 +16,14 @@ services:
       - ENVIRONMENT=production
     restart: always
 
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    environment:
+      - ENVIRONMENT=production
+    restart: always
+
   frontend:
     build:
       context: ./frontend

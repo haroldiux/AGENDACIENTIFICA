@@ -131,7 +131,7 @@ export default function ActivityModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="glass-panel p-6 rounded-xl w-full max-w-md shadow-lg text-white">
+      <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl w-full max-w-md shadow-lg text-white">
         <h2 className="text-xl font-bold mb-4">
           {isEdit ? "Editar Actividad Científica" : "Nueva Actividad Científica"}
         </h2>

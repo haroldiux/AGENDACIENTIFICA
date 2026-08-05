@@ -61,7 +61,7 @@ interface CalendarLegendProps {
 
 export default function CalendarLegend({ className = '' }: CalendarLegendProps) {
   return (
-    <div className={`glass-panel p-4 rounded-xl space-y-4 ${className}`}>
+    <div className={`bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl space-y-4 ${className}`}>
       <h4 className="text-sm font-semibold text-slate-300">Leyenda</h4>
 
       <div className="space-y-3">

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Actividades{% endblock %}
+{% block header_title %}Reporte General de Actividades{% endblock %}
+
+{% block content %}
+    <h2 class="text-primary" style="margin-top: 20px;">Actividades Académicas</h2>
+    {% if academic_activities %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
+                    <th>Categoría</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in academic_activities %}
+                <tr>
+                    <td>{{ act.title }}</td>
+                    <td>{{ act.start_date }}</td>
+                    <td>{{ act.end_date }}</td>
+                    <td>{{ act.category }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay actividades académicas.</p>
+    {% endif %}
+
+    <h2 class="text-primary" style="margin-top: 30px;">Actividades Científicas</h2>
+    {% if scientific_activities %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in scientific_activities %}
+                <tr>
+                    <td>{{ act.title }}</td>
+                    <td>{{ get_activity_label(act.activity_type) }}</td>
+                    <td>{{ act.start_date }}</td>
+                    <td>{{ act.end_date }}</td>
+                    <td>{{ get_status_label(act.status) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay actividades científicas.</p>
+    {% endif %}
+{% endblock %}

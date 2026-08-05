@@ -8,7 +8,7 @@ export default function AgendaSkeleton() {
             {[1, 2].map((card) => (
               <div
                 key={card}
-                className="glass-panel p-4 rounded-xl space-y-3 border-slate-700/50"
+                className="bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl space-y-3 border-slate-700/50"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="h-5 bg-slate-700 rounded w-3/4" />

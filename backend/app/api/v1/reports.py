@@ -14,7 +14,7 @@ def generate_report(request: ReportRequest):
     if request.format == "pdf":
         task = generate_pdf_report_task.delay(request.career_id, request.gestion_id, request.report_type)
     elif request.format == "excel":
-        task = generate_excel_report_task.delay(request.career_id, request.gestion_id)
+        task = generate_excel_report_task.delay(request.career_id, request.gestion_id, request.report_type)
     else:
         raise HTTPException(status_code=400, detail="Invalid format. Must be 'pdf' or 'excel'")
 

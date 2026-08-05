@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Calendar as BigCalendar,
   momentLocalizer,
@@ -13,11 +13,14 @@ import 'moment/locale/es';
 import type { MergedCalendarItem } from '@/lib/api';
 import { getEventColor } from './CalendarLegend';
 import { X, BookOpen, FlaskConical, CalendarDays, User, Tag, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 moment.locale('es');
 const localizer = momentLocalizer(moment);
 
-// Custom event shape for react-big-calendar
 interface CalendarEvent extends RBCEvent {
   resource: MergedCalendarItem;
 }
@@ -25,9 +28,9 @@ interface CalendarEvent extends RBCEvent {
 interface CalendarViewProps {
   items: MergedCalendarItem[];
   isLoading?: boolean;
+  onStatusChange?: (id: number, newStatus: string) => Promise<void>;
 }
 
-// Spanish translations for react-big-calendar
 const messages = {
   allDay: 'Todo el día',
   previous: 'Anterior',
@@ -47,7 +50,6 @@ const messages = {
 function mergedItemToEvent(item: MergedCalendarItem): CalendarEvent {
   const start = new Date(`${item.start_date}T12:00:00`);
   const end = new Date(`${item.end_date}T12:00:00`);
-  // Make end date inclusive for single-day events
   if (item.start_date === item.end_date) {
     end.setHours(23, 59, 0, 0);
   }
@@ -88,9 +90,20 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${start.toLocaleDateString('es-ES', options)} – ${end.toLocaleDateString('es-ES', options)}`;
 }
 
-export default function CalendarView({ items, isLoading }: CalendarViewProps) {
+export default function CalendarView({ items, isLoading, onStatusChange }: CalendarViewProps) {
   const [view, setView] = useState<View>('month');
   const [selectedEvent, setSelectedEvent] = useState<MergedCalendarItem | null>(null);
+
+  useEffect(() => {
+    if (selectedEvent) {
+      const freshItem = items.find(
+        (i) => i.id === selectedEvent.id && i.source_type === selectedEvent.source_type
+      );
+      if (freshItem && freshItem.status !== selectedEvent.status) {
+        setSelectedEvent(freshItem);
+      }
+    }
+  }, [items, selectedEvent]);
 
   const events = useMemo(() => items.map(mergedItemToEvent), [items]);
 
@@ -100,15 +113,15 @@ export default function CalendarView({ items, isLoading }: CalendarViewProps) {
 
   if (isLoading) {
     return (
-      <div className="glass-panel rounded-xl p-8 min-h-[500px] flex items-center justify-center">
-        <div className="animate-pulse text-slate-400">Cargando calendario...</div>
-      </div>
+      <Card className="rounded-xl p-8 min-h-[500px] flex items-center justify-center border-border shadow-sm">
+        <div className="animate-pulse text-muted-foreground">Cargando calendario...</div>
+      </Card>
     );
   }
 
   return (
     <>
-      <div className="glass-panel rounded-xl p-4">
+      <Card className="rounded-xl p-4 border-border shadow-sm">
         <BigCalendar<CalendarEvent>
           localizer={localizer}
           events={events}
@@ -124,97 +137,94 @@ export default function CalendarView({ items, isLoading }: CalendarViewProps) {
           style={{ height: 650 }}
           culture="es"
         />
-      </div>
+      </Card>
 
-      {/* Event Detail Modal */}
-      {selectedEvent && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={() => setSelectedEvent(null)}
-        >
-          <div
-            className="glass-panel rounded-xl max-w-md w-full p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                {selectedEvent.source_type === 'academic' ? (
-                  <BookOpen className="w-5 h-5 text-blue-400" />
-                ) : (
-                  <FlaskConical className="w-5 h-5 text-amber-400" />
-                )}
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-                  {selectedEvent.source_type === 'academic' ? 'Académica' : 'Científica'}
-                </span>
-              </div>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <h3 className="text-lg font-semibold text-white">{selectedEvent.title}</h3>
-
-            <div className="space-y-3 text-sm text-slate-300">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>{formatDateRange(selectedEvent.start_date, selectedEvent.end_date)}</span>
-              </div>
-
-              {selectedEvent.responsible_name && (
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>{selectedEvent.responsible_name}</span>
-                </div>
-              )}
-
-              {selectedEvent.category && (
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="capitalize">{selectedEvent.category}</span>
-                </div>
-              )}
-
-              {selectedEvent.activity_type && (
-                <div className="flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="capitalize">{selectedEvent.activity_type.replace('_', ' ')}</span>
-                  {selectedEvent.status && (
-                    <span className="ml-1 px-2 py-0.5 rounded text-xs bg-white/10">
-                      {selectedEvent.status === 'scheduled' && 'Programada'}
-                      {selectedEvent.status === 'in_progress' && 'En progreso'}
-                      {selectedEvent.status === 'completed' && 'Completada'}
-                      {selectedEvent.status === 'cancelled' && 'Cancelada'}
-                    </span>
+      <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+        <DialogContent className="sm:max-w-md">
+          {selectedEvent && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  {selectedEvent.source_type === 'academic' ? (
+                    <BookOpen className="w-5 h-5 text-primary" />
+                  ) : (
+                    <FlaskConical className="w-5 h-5 text-accent" />
                   )}
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {selectedEvent.source_type === 'academic' ? 'Académica' : 'Científica'}
+                  </span>
                 </div>
-              )}
+                <DialogTitle className="text-lg font-semibold">{selectedEvent.title}</DialogTitle>
+              </DialogHeader>
 
-              {selectedEvent.source_type === 'academic' && selectedEvent.origin_color && (
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span
-                    className="inline-block w-4 h-4 rounded"
-                    style={{ backgroundColor: selectedEvent.origin_color }}
-                  />
-                  <span className="text-xs text-slate-500">Color original del calendario académico</span>
+              <div className="space-y-4 py-4 text-sm text-foreground/90">
+                <div className="flex items-center gap-3">
+                  <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span>{formatDateRange(selectedEvent.start_date, selectedEvent.end_date)}</span>
                 </div>
-              )}
-            </div>
 
-            <div className="pt-3 border-t border-[var(--border)]">
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="w-full py-2 rounded-lg bg-white/10 hover:bg-white/15 text-sm text-white transition-colors"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                {selectedEvent.responsible_name && (
+                  <div className="flex items-center gap-3">
+                    <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span>{selectedEvent.responsible_name}</span>
+                  </div>
+                )}
+
+                {selectedEvent.category && (
+                  <div className="flex items-center gap-3">
+                    <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="capitalize">{selectedEvent.category}</span>
+                  </div>
+                )}
+
+                {selectedEvent.activity_type && (
+                  <div className="flex items-center gap-3">
+                    <FlaskConical className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="capitalize">{selectedEvent.activity_type.replace('_', ' ')}</span>
+                    {selectedEvent.status && (
+                      <div className="ml-auto">
+                        <Select
+                          value={selectedEvent.status || undefined}
+                          onValueChange={(val) => {
+                            if (val && onStatusChange) onStatusChange(selectedEvent.id, val);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs w-[130px]">
+                            <SelectValue placeholder="Estado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="scheduled">Programada</SelectItem>
+                            <SelectItem value="in_progress">En progreso</SelectItem>
+                            <SelectItem value="completed">Completada</SelectItem>
+                            <SelectItem value="cancelled">Cancelada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedEvent.source_type === 'academic' && selectedEvent.origin_color && (
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span
+                      className="inline-block w-4 h-4 rounded"
+                      style={{ backgroundColor: selectedEvent.origin_color }}
+                    />
+                    <span className="text-xs text-muted-foreground">Color original del calendario académico</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <Button variant="outline" onClick={() => setSelectedEvent(null)}>
+                  Cerrar
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

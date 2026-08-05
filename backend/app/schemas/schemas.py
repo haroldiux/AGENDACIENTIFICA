@@ -52,6 +52,40 @@ class CareerResponse(CareerBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
 
+# --- Role Enum ---
+class RoleEnum(str, Enum):
+    super_admin = "super_admin"
+    admin = "admin"
+    research = "research"
+    coordinator = "coordinator"
+    teacher = "teacher"
+
+# --- Token Schemas ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+# --- User Schemas ---
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    role: RoleEnum = RoleEnum.teacher
+
+class UserCreate(UserBase):
+    password: str
+    career_ids: List[int] = []
+
+class UserResponse(UserBase):
+    id: int
+    is_active: bool
+    careers: List[CareerResponse] = []
+    
+    model_config = ConfigDict(from_attributes=True)
+
 # --- Gestion Schemas ---
 class GestionBase(BaseModel):
     name: str
@@ -110,6 +144,7 @@ class ScientificActivityUpdate(BaseModel):
     end_date: Optional[date] = None
     responsible_name: Optional[str] = None
     notes: Optional[str] = None
+    status: Optional[ScientificActivityStatus] = None
 
 class ScientificActivityStatusUpdate(BaseModel):
     status: ScientificActivityStatus
@@ -165,10 +200,27 @@ class ActivityRowValidator(BaseModel):
     is_scientific: bool = False
 
 
+# --- Conflict Schemas ---
+class ConflictItem(BaseModel):
+    academic_id: int
+    academic_title: str
+    academic_start_date: date
+    academic_end_date: date
+    scientific_id: int
+    scientific_title: str
+    scientific_type: ScientificActivityType
+    scientific_start_date: date
+    scientific_end_date: date
+
+
+class ConflictListResponse(BaseModel):
+    conflicts: List[ConflictItem]
+
+
 # --- Report Schemas ---
 class ReportRequest(BaseModel):
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
     format: str
-    report_type: Literal["table", "research-agenda"] = "table"
+    report_type: Literal["table", "research-agenda", "conflict", "agenda-completa", "agenda-academica", "agenda-cientifica"] = "table"
 

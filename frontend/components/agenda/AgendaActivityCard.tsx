@@ -16,7 +16,7 @@ export default function AgendaActivityCard({ activity }: AgendaActivityCardProps
     activityStatusClasses[activity.status] ?? 'bg-slate-500/20 text-slate-300';
 
   return (
-    <article className="glass-panel p-4 rounded-xl flex flex-col gap-3 transition-colors hover:border-primary/30">
+    <article className="bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl flex flex-col gap-3 transition-colors hover:border-primary/30">
       <div className="flex items-start justify-between gap-3">
         <h4 className="font-medium text-white leading-snug">{activity.title}</h4>
         <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs whitespace-nowrap">
