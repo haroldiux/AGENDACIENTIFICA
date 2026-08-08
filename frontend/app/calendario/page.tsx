@@ -61,20 +61,13 @@ export default function CalendarioPage() {
 
   // Fetch merged calendar when filters change.
   useEffect(() => {
-    if (careerId === null) {
-      setItems([]);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
-
     let cancelled = false;
     const loadCalendar = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const data = await api.fusion.getMerged({
-          career_id: careerId,
+          career_id: careerId ?? undefined,
           gestion_id: gestionId ?? undefined,
         });
         if (!cancelled) {
@@ -211,7 +204,7 @@ export default function CalendarioPage() {
 
       <PageHeader
         title="Calendario Fusionado"
-        description="Actividades académicas y científicas en una sola vista. Selecciona una carrera para comenzar."
+        description="Actividades académicas y científicas en una sola vista. Filtra por alcance global o por carrera."
       />
 
       {/* Top bar with filters and actions */}
@@ -227,18 +220,16 @@ export default function CalendarioPage() {
         />
 
         <div className="flex items-center gap-3 shrink-0">
-          {careerId !== null && (
-            <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground mr-2">
-              <span className="flex items-center gap-1">
-                <LayoutGrid className="w-3.5 h-3.5" />
-                {academicCount} académicas
-              </span>
-              <span className="flex items-center gap-1">
-                <List className="w-3.5 h-3.5" />
-                {scientificCount} científicas
-              </span>
-            </div>
-          )}
+          <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground mr-2">
+            <span className="flex items-center gap-1">
+              <LayoutGrid className="w-3.5 h-3.5" />
+              {academicCount} académicas
+            </span>
+            <span className="flex items-center gap-1">
+              <List className="w-3.5 h-3.5" />
+              {scientificCount} científicas
+            </span>
+          </div>
           <div className="flex items-center bg-muted/50 p-1 rounded-lg shrink-0 border border-border">
             <Button
               type="button"
@@ -281,47 +272,44 @@ export default function CalendarioPage() {
       </Card>
 
       {/* Search + type filter */}
-      {careerId !== null && (
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar actividad por nombre..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border shrink-0">
-            {(['all', 'academic', 'scientific'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTypeFilter(t)}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  typeFilter === t
-                    ? 'bg-background shadow text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {t === 'all' ? 'Todas' : t === 'academic' ? 'Académicas' : 'Científicas'}
-              </button>
-            ))}
-          </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Buscar actividad por nombre..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
-      )}
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border shrink-0">
+          {(['all', 'academic', 'scientific'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                typeFilter === t
+                  ? 'bg-background shadow text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t === 'all' ? 'Todas' : t === 'academic' ? 'Académicas' : 'Científicas'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Main content */}
-      {careerId === null ? (
-        <AgendaNoCareerSelected />
-      ) : error ? (
+      {error ? (
         <AgendaErrorState
           message={error}
           onRetry={() => setRetryToken((token) => token + 1)}

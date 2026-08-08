@@ -53,12 +53,15 @@ export default function AgendaFilterBar({
           </label>
           <select
             id="career-select"
-            value={careerId ?? ''}
-            onChange={(e) => handleCareerChange(e.target.value)}
+            value={careerId === null ? 'all' : careerId}
+            onChange={(e) => {
+              const val = e.target.value;
+              onCareerChange(val === 'all' ? null : Number(val));
+            }}
             disabled={disabled}
             className="w-full bg-background text-foreground border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
-            <option value="">Seleccione una carrera</option>
+            <option value="all">Todas las carreras / Calendario General</option>
             {careers.map((career) => (
               <option key={career.id} value={career.id}>
                 {career.name}

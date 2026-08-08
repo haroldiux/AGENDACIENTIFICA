@@ -6,6 +6,8 @@ import { api } from '@/lib/api';
 export interface User {
   id: number;
   email: string;
+  full_name?: string | null;
+  phone_number?: string | null;
   is_active: boolean;
   role: string;
   careers: { id: number; name: string }[];
@@ -51,20 +53,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleLogoutEvent = () => logout();
-    window.addEventListener('auth-logout', handleLogoutEvent);
-    
-    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    window.addEventListener("auth-logout", handleLogoutEvent);
+
+    const storedToken = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
     if (storedToken) {
       setToken(storedToken);
       api.users.me()
-        .then(res => setUser(res))
+        .then((res) => setUser(res))
         .catch(() => logout())
         .finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
     }
-    
-    return () => window.removeEventListener('auth-logout', handleLogoutEvent);
+
+    return () => window.removeEventListener("auth-logout", handleLogoutEvent);
   }, [logout]);
 
   return (

@@ -1,22 +1,34 @@
+import os
+import uuid
 from typing import List, Optional
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.deps import get_current_active_user
-from app.models.models import ScientificActivity, Career, Gestion, User
+from app.api.deps import get_current_active_user, check_activity_scope_permission
+from app.models.models import ScientificActivity, ScientificActivityEvidence, Career, Gestion, User, ActivityCategory
 from app.schemas.schemas import (
     ScientificActivityCreate,
     ScientificActivityUpdate,
     ScientificActivityStatusUpdate,
     ScientificActivityResponse,
     ScientificActivityFilterParams,
+    ScientificActivityEvidenceResponse,
     RoleEnum,
 )
 from app.services.scientific_service import list_scientific_activities
 
 router = APIRouter()
+
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".docx"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 @router.get("/", response_model=List[ScientificActivityResponse])
 def get_scientific_activities(
@@ -50,71 +62,108 @@ def get_scientific_activities(
     return activities
 
 @router.post("/", response_model=ScientificActivityResponse, status_code=status.HTTP_201_CREATED)
-def create_scientific_activity(activity: ScientificActivityCreate, db: Session = Depends(get_db)):
-    career = db.query(Career).filter(Career.id == activity.career_id).first()
-    if not career:
-        raise HTTPException(status_code=404, detail="Career not found")
+def create_scientific_activity(
+    activity: ScientificActivityCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    check_activity_scope_permission(current_user, activity.career_id)
+
+    if activity.career_id is not None:
+        career = db.query(Career).filter(Career.id == activity.career_id).first()
+        if not career:
+            raise HTTPException(status_code=404, detail="Career not found")
         
     gestion = db.query(Gestion).filter(Gestion.id == activity.gestion_id).first()
     if not gestion:
         raise HTTPException(status_code=404, detail="Gestion not found")
 
-    db_activity = ScientificActivity(**activity.model_dump())
+    if activity.category_id is not None:
+        cat = db.query(ActivityCategory).filter(ActivityCategory.id == activity.category_id).first()
+        if not cat:
+            raise HTTPException(status_code=404, detail="Activity category not found")
+
+    activity_data = activity.model_dump(exclude={'collaboration_career_ids'})
+    collab_ids = activity.collaboration_career_ids or []
+
+    db_activity = ScientificActivity(**activity_data)
     db.add(db_activity)
+    db.flush()  # get db_activity.id without committing
+
+    if collab_ids:
+        db_activity.collaboration_careers = db.query(Career).filter(Career.id.in_(collab_ids)).all()
+    else:
+        db_activity.collaboration_careers = []
+
     db.commit()
     db.refresh(db_activity)
     return db_activity
 
 @router.put("/{id}", response_model=ScientificActivityResponse)
-def update_scientific_activity(id: int, activity_update: ScientificActivityUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+def update_scientific_activity(
+    id: int,
+    activity_update: ScientificActivityUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    if current_user.role not in [RoleEnum.super_admin, RoleEnum.admin, RoleEnum.research]:
-        if current_user.role == RoleEnum.coordinator:
-            if db_activity.career_id not in [c.id for c in current_user.careers]:
-                raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
-        else:
-            raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
-            
+    check_activity_scope_permission(current_user, db_activity.career_id)
+
     update_data = activity_update.model_dump(exclude_unset=True)
+    if "career_id" in update_data and update_data["career_id"] != db_activity.career_id:
+        check_activity_scope_permission(current_user, update_data["career_id"])
+
+    if "category_id" in update_data and update_data["category_id"] is not None:
+        cat = db.query(ActivityCategory).filter(ActivityCategory.id == update_data["category_id"]).first()
+        if not cat:
+            raise HTTPException(status_code=404, detail="Activity category not found")
+
+    collab_ids = update_data.pop('collaboration_career_ids', None)
+
     for key, value in update_data.items():
         setattr(db_activity, key, value)
-        
+
+    if collab_ids is not None:
+        db_activity.collaboration_careers = (
+            db.query(Career).filter(Career.id.in_(collab_ids)).all()
+            if collab_ids else []
+        )
+
     db.commit()
     db.refresh(db_activity)
     return db_activity
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_scientific_activity(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+def delete_scientific_activity(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    if current_user.role not in [RoleEnum.super_admin, RoleEnum.admin, RoleEnum.research]:
-        if current_user.role == RoleEnum.coordinator:
-            if db_activity.career_id not in [c.id for c in current_user.careers]:
-                raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
-        else:
-            raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+    check_activity_scope_permission(current_user, db_activity.career_id)
             
     db.delete(db_activity)
     db.commit()
     return None
 
 @router.put("/{id}/status", response_model=ScientificActivityResponse)
-def update_scientific_status(id: int, status_update: ScientificActivityStatusUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+def update_scientific_status(
+    id: int,
+    status_update: ScientificActivityStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    if current_user.role not in [RoleEnum.super_admin, RoleEnum.admin, RoleEnum.research]:
-        if current_user.role == RoleEnum.coordinator:
-            if db_activity.career_id not in [c.id for c in current_user.careers]:
-                raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
-        else:
-            raise HTTPException(status_code=403, detail="Not authorized to modify this activity")
+    check_activity_scope_permission(current_user, db_activity.career_id)
             
     db_activity.status = status_update.status
     if status_update.evidence_url is not None:
@@ -123,3 +172,88 @@ def update_scientific_status(id: int, status_update: ScientificActivityStatusUpd
     db.commit()
     db.refresh(db_activity)
     return db_activity
+
+# --- Evidence Endpoints ---
+
+@router.post("/{id}/evidence", response_model=ScientificActivityEvidenceResponse, status_code=status.HTTP_201_CREATED)
+async def upload_scientific_activity_evidence(
+    id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
+    if not db_activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    check_activity_scope_permission(current_user, db_activity.career_id)
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_EXTENSIONS and file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Allowed types: PDF, PNG, JPG, DOCX",
+        )
+
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds maximum limit of 10MB",
+        )
+
+    upload_dir = os.path.join("uploads", "evidences", str(id))
+    os.makedirs(upload_dir, exist_ok=True)
+
+    filename_safe = f"{uuid.uuid4().hex}_{file.filename}"
+    file_path = os.path.join(upload_dir, filename_safe)
+
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    evidence = ScientificActivityEvidence(
+        scientific_activity_id=id,
+        filename=file.filename or filename_safe,
+        file_path=file_path,
+        file_type=file.content_type or "application/octet-stream",
+        file_size=len(content),
+        uploaded_by_id=current_user.id,
+    )
+    db.add(evidence)
+    db.commit()
+    db.refresh(evidence)
+    return evidence
+
+@router.get("/{id}/evidence", response_model=List[ScientificActivityEvidenceResponse])
+def list_scientific_activity_evidences(
+    id: int,
+    db: Session = Depends(get_db),
+):
+    db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
+    if not db_activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    return db_activity.evidences
+
+@router.delete("/evidence/{evidence_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_scientific_activity_evidence(
+    evidence_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    evidence = db.query(ScientificActivityEvidence).filter(ScientificActivityEvidence.id == evidence_id).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+
+    if evidence.scientific_activity:
+        check_activity_scope_permission(current_user, evidence.scientific_activity.career_id)
+
+    if os.path.exists(evidence.file_path):
+        try:
+            os.remove(evidence.file_path)
+        except OSError:
+            pass
+
+    db.delete(evidence)
+    db.commit()
+    return None
+

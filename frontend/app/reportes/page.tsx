@@ -393,7 +393,7 @@ export default function ReportesPage() {
                             {conflict.scientific_title}
                           </p>
                           <p className="text-slate-400 text-xs">
-                            {conflict.scientific_type} ·{' '}
+                            Científica ·{' '}
                             {conflict.scientific_start_date} al{' '}
                             {conflict.scientific_end_date}
                           </p>

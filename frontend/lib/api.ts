@@ -32,6 +32,16 @@ apiClient.interceptors.response.use(
   }
 );
 
+export type RoleEnum =
+  | 'super_admin'
+  | 'admin'
+  | 'research'
+  | 'coordinator'
+  | 'teacher'
+  | 'vicerrectorado'
+  | 'director_investigacion'
+  | 'jefe_investigacion';
+
 // --- Career / Gestion ---
 
 export interface Career {
@@ -63,6 +73,29 @@ export type ScientificActivityStatus =
   | 'completed'
   | 'cancelled';
 
+export interface ScientificActivityEvidence {
+  id: number;
+  scientific_activity_id: number;
+  filename: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+  uploaded_at: string;
+  uploaded_by_id?: number | null;
+}
+
+export interface ActivityCategory {
+  id: number;
+  name: string;
+  code: string;
+  scope: 'academic' | 'scientific' | 'both';
+  color?: string | null;
+  description?: string | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ScientificActivity {
   id: number;
   title: string;
@@ -71,10 +104,14 @@ export interface ScientificActivity {
   end_date: string;
   responsible_name: string;
   notes?: string | null;
-  career_id: number;
+  career_id?: number | null;
   gestion_id: number;
   status: ScientificActivityStatus;
   evidence_url?: string | null;
+  evidences?: ScientificActivityEvidence[];
+  category_id?: number | null;
+  activity_category?: ActivityCategory | null;
+  collaboration_career_ids?: number[];
 }
 
 export interface ScientificActivityFilters {
@@ -118,7 +155,6 @@ export interface ConflictItem {
   academic_end_date: string;
   scientific_id: number;
   scientific_title: string;
-  scientific_type: ScientificActivityType;
   scientific_start_date: string;
   scientific_end_date: string;
 }
@@ -128,9 +164,10 @@ export interface ConflictListResponse {
 }
 
 export interface ConflictFilters {
-  career_id: number;
+  career_id?: number | null;
   gestion_id: number;
 }
+
 
 // --- Fusion / Merged Calendar ---
 
@@ -142,6 +179,9 @@ export interface MergedCalendarItem {
   start_date: string;
   end_date: string;
   source_type: SourceType;
+  scope: 'global' | 'career';
+  career_id?: number | null;
+  career_name?: string | null;
   category?: string | null;
   origin_color?: string | null;
   activity_type?: ScientificActivityType | null;
@@ -209,6 +249,33 @@ export const api = {
     updateStatus: (id: number, status: ScientificActivityStatus, evidence_url?: string) =>
       apiClient.put(`/scientific/${id}/status`, { status, evidence_url }).then((res) => res.data),
     delete: (id: number) => apiClient.delete(`/scientific/${id}`).then((res) => res.data),
+    uploadEvidence: (activityId: number, file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return apiClient
+        .post<ScientificActivityEvidence>(`/scientific/${activityId}/evidence`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        .then((res) => res.data);
+    },
+    listEvidences: (activityId: number) =>
+      apiClient.get<ScientificActivityEvidence[]>(`/scientific/${activityId}/evidence`).then((res) => res.data),
+    deleteEvidence: (evidenceId: number) =>
+      apiClient.delete(`/scientific/evidence/${evidenceId}`).then((res) => res.data),
+  },
+  categories: {
+    list: (scope?: string, include_inactive: boolean = false) =>
+      apiClient
+        .get<ActivityCategory[]>('/categories/', { params: { scope, include_inactive } })
+        .then((res) => res.data),
+    get: (id: number) =>
+      apiClient.get<ActivityCategory>(`/categories/${id}`).then((res) => res.data),
+    create: (data: Partial<ActivityCategory>) =>
+      apiClient.post<ActivityCategory>('/categories/', data).then((res) => res.data),
+    update: (id: number, data: Partial<ActivityCategory>) =>
+      apiClient.put<ActivityCategory>(`/categories/${id}`, data).then((res) => res.data),
+    delete: (id: number) =>
+      apiClient.delete<ActivityCategory>(`/categories/${id}`).then((res) => res.data),
   },
   careers: {
     list: () => apiClient.get<Career[]>('/careers/').then((res) => res.data),
@@ -220,8 +287,16 @@ export const api = {
     stats: () => apiClient.get<DashboardStats>('/dashboard/stats').then((res) => res.data),
   },
   auth: {
-    login: (credentials: Record<string, unknown>) =>
-      apiClient.post('/auth/login', credentials).then((res) => res.data),
+    login: (username: string, password: string) => {
+      const params = new URLSearchParams();
+      params.append('username', username);
+      params.append('password', password);
+      return apiClient
+        .post('/auth/login', params, {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        })
+        .then((res) => res.data);
+    },
   },
   users: {
     me: () => apiClient.get('/users/me').then((res) => res.data),

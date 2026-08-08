@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from datetime import date
+from datetime import date, datetime
 from typing import Optional, List, Literal
 from enum import Enum
 
@@ -35,8 +35,9 @@ class ActivityCreate(BaseModel):
     end_date: date
     activity_type: Optional[ScientificActivityType] = None
     category: Optional[str] = None
+    category_id: Optional[int] = None
     responsible_name: Optional[str] = None
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
     is_scientific: bool = False
 
@@ -59,6 +60,9 @@ class RoleEnum(str, Enum):
     research = "research"
     coordinator = "coordinator"
     teacher = "teacher"
+    vicerrectorado = "vicerrectorado"
+    director_investigacion = "director_investigacion"
+    jefe_investigacion = "jefe_investigacion"
 
 # --- Token Schemas ---
 class Token(BaseModel):
@@ -99,16 +103,43 @@ class GestionResponse(GestionBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
 
+# --- Activity Category Schemas ---
+class ActivityCategoryBase(BaseModel):
+    name: str
+    code: str
+    scope: Literal['academic', 'scientific', 'both'] = 'both'
+    color: Optional[str] = None
+    description: Optional[str] = None
+    is_active: bool = True
+
+class ActivityCategoryCreate(ActivityCategoryBase):
+    pass
+
+class ActivityCategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    scope: Optional[Literal['academic', 'scientific', 'both']] = None
+    color: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class ActivityCategoryResponse(ActivityCategoryBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 # --- Academic Activity Schemas ---
 class AcademicActivityBase(BaseModel):
     title: str
     start_date: date
     end_date: date
-    category: str
+    category: Optional[str] = "GENERAL"
+    category_id: Optional[int] = None
     origin_color: Optional[str] = None
 
 class AcademicActivityCreate(AcademicActivityBase):
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
 
 class AcademicActivityUpdate(BaseModel):
@@ -116,12 +147,35 @@ class AcademicActivityUpdate(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     category: Optional[str] = None
+    category_id: Optional[int] = None
     origin_color: Optional[str] = None
+    career_id: Optional[int] = None
 
 class AcademicActivityResponse(AcademicActivityBase):
     id: int
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
+    activity_category: Optional[ActivityCategoryResponse] = None
+    model_config = ConfigDict(from_attributes=True)
+
+# --- Scientific Activity Evidence Schemas ---
+class ScientificActivityEvidenceBase(BaseModel):
+    filename: str
+    file_type: str
+    file_size: int
+
+class ScientificActivityEvidenceCreate(ScientificActivityEvidenceBase):
+    scientific_activity_id: int
+    file_path: str
+    uploaded_by_id: Optional[int] = None
+
+class ScientificActivityEvidenceResponse(ScientificActivityEvidenceBase):
+    id: int
+    scientific_activity_id: int
+    file_path: str
+    uploaded_at: datetime
+    uploaded_by_id: Optional[int] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 # --- Scientific Activity Schemas ---
@@ -132,10 +186,12 @@ class ScientificActivityBase(BaseModel):
     end_date: date
     responsible_name: str
     notes: Optional[str] = None
+    category_id: Optional[int] = None
 
 class ScientificActivityCreate(ScientificActivityBase):
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
+    collaboration_career_ids: Optional[List[int]] = []
 
 class ScientificActivityUpdate(BaseModel):
     title: Optional[str] = None
@@ -145,6 +201,9 @@ class ScientificActivityUpdate(BaseModel):
     responsible_name: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[ScientificActivityStatus] = None
+    career_id: Optional[int] = None
+    category_id: Optional[int] = None
+    collaboration_career_ids: Optional[List[int]] = []
 
 class ScientificActivityStatusUpdate(BaseModel):
     status: ScientificActivityStatus
@@ -164,10 +223,13 @@ class ScientificActivityFilterParams(BaseModel):
 
 class ScientificActivityResponse(ScientificActivityBase):
     id: int
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
     status: ScientificActivityStatus
     evidence_url: Optional[str] = None
+    evidences: List[ScientificActivityEvidenceResponse] = []
+    activity_category: Optional[ActivityCategoryResponse] = None
+    collaboration_career_ids: List[int] = []
     model_config = ConfigDict(from_attributes=True)
 
 # --- Fusion Schemas ---
@@ -177,8 +239,11 @@ class MergedCalendarItem(BaseModel):
     start_date: date
     end_date: date
     source_type: str # 'academic' or 'scientific'
-    # Additional common or specific fields can be optional
+    scope: str = "career" # 'global' or 'career'
+    career_id: Optional[int] = None
+    career_name: Optional[str] = None
     category: Optional[str] = None
+    category_id: Optional[int] = None
     origin_color: Optional[str] = None
     activity_type: Optional[ScientificActivityType] = None
     status: Optional[ScientificActivityStatus] = None
@@ -194,8 +259,9 @@ class ActivityRowValidator(BaseModel):
     end_date: date
     activity_type: Optional[ScientificActivityType] = None
     category: Optional[str] = None
+    category_id: Optional[int] = None
     responsible_name: Optional[str] = None
-    career_id: int
+    career_id: Optional[int] = None
     gestion_id: int
     is_scientific: bool = False
 
@@ -223,4 +289,5 @@ class ReportRequest(BaseModel):
     gestion_id: int
     format: str
     report_type: Literal["table", "research-agenda", "conflict", "agenda-completa", "agenda-academica", "agenda-cientifica"] = "table"
+
 

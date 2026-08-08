@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Upload, Trash2, Pencil, Loader2, Search, X } from "lucide-react";
+import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import {
   formatDateRange,
 } from "@/components/agenda/agenda-helpers";
 
+type SortKey = "nombre" | "fecha" | "tipo" | "carrera" | "estado";
+
 export default function ActividadesPage() {
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
@@ -39,6 +41,12 @@ export default function ActividadesPage() {
   const [editingActivity, setEditingActivity] = useState<ScientificActivity | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Sort state — default: fecha ASC
+  const [sortState, setSortState] = useState<{ col: SortKey; dir: "asc" | "desc" }>({
+    col: "fecha",
+    dir: "asc",
+  });
 
   // Load selector options once on mount.
   useEffect(() => {
@@ -83,7 +91,20 @@ export default function ActividadesPage() {
     loadActivities();
   }, [loadActivities]);
 
-  const visibleActivities = activities
+  const careerName = (id?: number | null) =>
+    id ? (careers.find((c) => c.id === id)?.name ?? `#${id}`) : "Global / Vicerrectorado";
+
+  // Sort handler
+  const handleSort = (col: SortKey) => {
+    setSortState((prev) =>
+      prev.col === col
+        ? { col, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { col, dir: "asc" }
+    );
+  };
+
+  // Comparator
+  const sortedActivities = [...activities]
     .filter((a) => !statusFilter || a.status === statusFilter)
     .filter((a) => {
       if (!searchQuery.trim()) return true;
@@ -93,10 +114,30 @@ export default function ActividadesPage() {
         (a.responsible_name ?? "").toLowerCase().includes(q) ||
         a.activity_type.toLowerCase().includes(q)
       );
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      switch (sortState.col) {
+        case "nombre":
+          cmp = a.title.localeCompare(b.title);
+          break;
+        case "fecha":
+          cmp = a.start_date.localeCompare(b.start_date);
+          break;
+        case "tipo":
+          cmp = a.activity_type.localeCompare(b.activity_type);
+          break;
+        case "carrera":
+          cmp = careerName(a.career_id).localeCompare(careerName(b.career_id));
+          break;
+        case "estado":
+          cmp = a.status.localeCompare(b.status);
+          break;
+      }
+      return sortState.dir === "asc" ? cmp : -cmp;
     });
 
-  const careerName = (id: number) =>
-    careers.find((c) => c.id === id)?.name ?? `#${id}`;
+  const visibleActivities = sortedActivities;
 
   const openCreateModal = () => {
     setEditingActivity(null);
@@ -124,6 +165,17 @@ export default function ActividadesPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  // Helper to render sort icon
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortState.col !== col)
+      return <ChevronUp className="w-3 h-3 ml-1 opacity-30 inline-block" />;
+    return sortState.dir === "asc" ? (
+      <ChevronUp className="w-3 h-3 ml-1 inline-block" />
+    ) : (
+      <ChevronDown className="w-3 h-3 ml-1 inline-block" />
+    );
   };
 
   return (
@@ -230,11 +282,36 @@ export default function ActividadesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[300px]">Nombre</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Carrera</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead
+                    className="w-[300px] cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("nombre")}
+                  >
+                    Nombre <SortIcon col="nombre" />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("fecha")}
+                  >
+                    Fecha <SortIcon col="fecha" />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("tipo")}
+                  >
+                    Tipo <SortIcon col="tipo" />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("carrera")}
+                  >
+                    Carrera <SortIcon col="carrera" />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("estado")}
+                  >
+                    Estado <SortIcon col="estado" />
+                  </TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>

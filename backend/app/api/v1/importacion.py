@@ -9,8 +9,8 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from app.db.session import get_db
-from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion
-from app.schemas.schemas import ActivityRowValidator
+from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, ActivityCategory
+from app.schemas.schemas import ActivityRowValidator, ScientificActivityType
 
 router = APIRouter()
 
@@ -54,12 +54,13 @@ def _add_example_row(ws, values: list):
 
 @router.get("/template/download")
 def download_template(db: Session = Depends(get_db)):
-    """Return a bilingual blank Excel template with career/gestion reference."""
+    """Return a bilingual blank Excel template with career/gestion/category reference."""
     wb = openpyxl.Workbook()
 
     # ---- fetch live data ----
     careers = db.query(Career).order_by(Career.id).all()
     gestiones = db.query(Gestion).order_by(Gestion.id).all()
+    categories = db.query(ActivityCategory).filter(ActivityCategory.is_active.is_(True)).order_by(ActivityCategory.id).all()
 
     # ---- Sheet 1: Academic Activities ----
     ws_ac = wb.active
@@ -112,7 +113,7 @@ def download_template(db: Session = Depends(get_db)):
     ws_sc.cell(row=3, column=1, value="⚠ La fila 2 es ejemplo – bórrala antes de importar")
     ws_sc.cell(row=3, column=1).font = Font(color="EF4444", bold=True, size=9)
 
-    # ---- Sheet 3: Reference (fields + careers + gestiones) ----
+    # ---- Sheet 3: Reference (fields + careers + gestiones + categories) ----
     ws_ref = wb.create_sheet(title="Referencia")
 
     # --- Column widths ---
@@ -123,12 +124,17 @@ def download_template(db: Session = Depends(get_db)):
     ws_ref.column_dimensions["F"].width = 25
     ws_ref.column_dimensions["H"].width = 10
     ws_ref.column_dimensions["I"].width = 22
+    ws_ref.column_dimensions["K"].width = 15
+    ws_ref.column_dimensions["L"].width = 25
+    ws_ref.column_dimensions["M"].width = 15
 
     dark_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
     green_fill = PatternFill(start_color="009E96", end_color="009E96", fill_type="solid")
     purple_fill = PatternFill(start_color="6B3392", end_color="6B3392", fill_type="solid")
+    blue_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
     white_bold = Font(bold=True, color="FFFFFF", size=11)
     center = Alignment(horizontal="center", vertical="center")
+    alt_fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
 
     # --- Fields section header ---
     ws_ref.cell(row=1, column=1, value="📋 Campos del archivo Excel").font = white_bold
@@ -148,14 +154,13 @@ def download_template(db: Session = Depends(get_db)):
         ("titulo", "Nombre de la actividad (texto libre, requerido)"),
         ("fecha_inicio", "Fecha inicio: formato YYYY-MM-DD, p.ej. 2026-02-11"),
         ("fecha_fin", "Fecha fin: formato YYYY-MM-DD  (igual a inicio si dura 1 día)"),
-        ("categoria", "Solo académicas: GENERAL · FERIADO · PARCIAL · FINAL · TALLER"),
-        ("tipo_actividad", "Solo científicas: CONGRESO · SEMINARIO · TALLER · WEBINAR · MASTER_CLASS · INVESTIGACION"),
+        ("categoria", "Solo académicas: código o nombre de categoría (ver tabla Categorías ▶)"),
+        ("tipo_actividad", "Solo científicas: código de categoría/tipo (ver tabla Categorías ▶)"),
         ("nombre_responsable", "Solo científicas: nombre del docente o investigador responsable"),
         ("id_carrera", "Número entero – ver tabla 'Carreras' a la derecha ▶"),
         ("id_gestion", "Número entero – ver tabla 'Gestiones' a la derecha ▶"),
         ("es_cientifica", "FALSE para actividades académicas  |  TRUE para científicas"),
     ]
-    alt_fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
     for r_off, (col_a, col_b) in enumerate(field_rows, start=3):
         row = r_off
         ca = ws_ref.cell(row=row, column=1, value=col_a)
@@ -208,6 +213,27 @@ def download_template(db: Session = Depends(get_db)):
             if r_off % 2 == 0:
                 c.fill = alt_fill
 
+    # --- Categories table (column K-M) ---
+    ws_ref.cell(row=1, column=11, value="🏷 Categorías Dinámicas").font = white_bold
+    ws_ref.cell(row=1, column=11).fill = blue_fill
+    ws_ref.cell(row=1, column=11).alignment = center
+    ws_ref.merge_cells("K1:M1")
+
+    for col, txt in [(11, "Código"), (12, "Nombre"), (13, "Ámbito")]:
+        c = ws_ref.cell(row=2, column=col, value=txt)
+        c.fill = blue_fill
+        c.font = white_bold
+        c.alignment = center
+
+    for r_off, cat in enumerate(categories, start=3):
+        row = r_off
+        for col, val in [(11, cat.code), (12, cat.name), (13, cat.scope)]:
+            c = ws_ref.cell(row=row, column=col, value=val)
+            c.font = Font(color="1E293B", size=10)
+            c.alignment = Alignment(horizontal="center" if col in (11, 13) else "left", vertical="center")
+            if r_off % 2 == 0:
+                c.fill = alt_fill
+
     # ---- Stream ----
     buffer = BytesIO()
     wb.save(buffer)
@@ -217,7 +243,6 @@ def download_template(db: Session = Depends(get_db)):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment; filename=plantilla_actividades.xlsx"},
     )
-
 
 
 # ---------------------------------------------------------------------------
@@ -258,6 +283,15 @@ async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_d
         renamed_records.append(renamed)
     records = renamed_records
 
+    # Dynamic Category lookup map
+    categories = db.query(ActivityCategory).filter(ActivityCategory.is_active.is_(True)).all()
+    cat_lookup = {}
+    for cat in categories:
+        cat_lookup[cat.code.upper().strip()] = cat
+        cat_lookup[cat.name.upper().strip()] = cat
+
+    valid_enum_types = {t.value for t in ScientificActivityType}
+
     valid_academic = []
     valid_scientific = []
     errors = []
@@ -268,14 +302,32 @@ async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_d
             validated = ActivityRowValidator(**clean_record)
             
             if validated.is_scientific:
-                if not validated.activity_type:
-                    errors.append({"row": i + 2, "error": "activity_type is required for scientific activities"})
+                raw_type = (validated.activity_type.value if hasattr(validated.activity_type, 'value')
+                            else str(validated.activity_type or ''))
+                if not raw_type and not validated.category:
+                    errors.append({"row": i + 2, "error": "activity_type or category is required for scientific activities"})
                     continue
+
+                # Match dynamic category by type or category string
+                lookup_key = (raw_type or validated.category or '').strip().upper()
+                matched_cat = cat_lookup.get(lookup_key)
+                category_id = matched_cat.id if matched_cat else None
+
+                # Determine enum activity_type fallback for DB constraint
+                type_lower = raw_type.lower().strip()
+                if type_lower in valid_enum_types:
+                    act_type_val = type_lower
+                elif matched_cat and matched_cat.code.lower() in valid_enum_types:
+                    act_type_val = matched_cat.code.lower()
+                else:
+                    act_type_val = ScientificActivityType.congreso.value
+
                 valid_scientific.append({
                     "title": validated.title,
                     "start_date": validated.start_date,
                     "end_date": validated.end_date,
-                    "activity_type": validated.activity_type.value,
+                    "activity_type": act_type_val,
+                    "category_id": category_id,
                     "responsible_name": validated.responsible_name or "Unknown",
                     "career_id": validated.career_id,
                     "gestion_id": validated.gestion_id,
@@ -285,11 +337,22 @@ async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_d
                 if not validated.category:
                     errors.append({"row": i + 2, "error": "category is required for academic activities"})
                     continue
+
+                lookup_key = validated.category.strip().upper()
+                matched_cat = cat_lookup.get(lookup_key)
+                if matched_cat:
+                    category_id = matched_cat.id
+                    category_code = matched_cat.code
+                else:
+                    category_id = None
+                    category_code = validated.category
+
                 valid_academic.append({
                     "title": validated.title,
                     "start_date": validated.start_date,
                     "end_date": validated.end_date,
-                    "category": validated.category,
+                    "category": category_code,
+                    "category_id": category_id,
                     "career_id": validated.career_id,
                     "gestion_id": validated.gestion_id,
                 })

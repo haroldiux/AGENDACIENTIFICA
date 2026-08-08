@@ -12,10 +12,11 @@ import moment from 'moment';
 import 'moment/locale/es';
 import type { MergedCalendarItem } from '@/lib/api';
 import { getEventColor } from './CalendarLegend';
-import { X, BookOpen, FlaskConical, CalendarDays, User, Tag, AlertCircle } from 'lucide-react';
+import { X, BookOpen, FlaskConical, CalendarDays, User, Tag, AlertCircle, Globe, GraduationCap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 moment.locale('es');
@@ -46,6 +47,27 @@ const messages = {
   noEventsInRange: 'No hay actividades en este rango',
   showMore: (total: number) => `+ ${total} más`,
 };
+
+function CalendarEventContent({ event }: { event: CalendarEvent }) {
+  const item = event.resource;
+  const isGlobal = item.scope === 'global' || item.career_id === null;
+
+  return (
+    <div className="flex items-center gap-1.5 overflow-hidden truncate px-1 py-0.5">
+      <span
+        className={`text-[9px] px-1 py-0.2 rounded font-semibold uppercase shrink-0 ${
+          isGlobal
+            ? 'bg-purple-600 text-white dark:bg-purple-700'
+            : 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-400/30'
+        }`}
+        title={isGlobal ? 'Global / Vicerrectorado' : `Carrera: ${item.career_name || 'Asignada'}`}
+      >
+        {isGlobal ? 'Global' : 'Carrera'}
+      </span>
+      <span className="truncate text-xs">{item.title}</span>
+    </div>
+  );
+}
 
 function mergedItemToEvent(item: MergedCalendarItem): CalendarEvent {
   const start = new Date(`${item.start_date}T12:00:00`);
@@ -133,6 +155,9 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
           messages={messages}
           eventPropGetter={eventPropGetter}
           onSelectEvent={handleSelectEvent}
+          components={{
+            event: CalendarEventContent,
+          }}
           popup
           style={{ height: 650 }}
           culture="es"
@@ -153,6 +178,20 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {selectedEvent.source_type === 'academic' ? 'Académica' : 'Científica'}
                   </span>
+                  <Badge
+                    variant={selectedEvent.scope === 'global' || selectedEvent.career_id === null ? 'default' : 'outline'}
+                    className={`ml-auto text-xs ${
+                      selectedEvent.scope === 'global' || selectedEvent.career_id === null
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300'
+                    }`}
+                  >
+                    {selectedEvent.scope === 'global' || selectedEvent.career_id === null
+                      ? 'Global / Vicerrectorado'
+                      : selectedEvent.career_name
+                      ? `Carrera: ${selectedEvent.career_name}`
+                      : 'Carrera'}
+                  </Badge>
                 </div>
                 <DialogTitle className="text-lg font-semibold">{selectedEvent.title}</DialogTitle>
               </DialogHeader>
@@ -162,6 +201,18 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
                   <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span>{formatDateRange(selectedEvent.start_date, selectedEvent.end_date)}</span>
                 </div>
+
+                {selectedEvent.scope === 'global' || selectedEvent.career_id === null ? (
+                  <div className="flex items-center gap-3">
+                    <Globe className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                    <span className="font-medium text-purple-700 dark:text-purple-300">Alcance Global / Vicerrectorado</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <GraduationCap className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span>Carrera: {selectedEvent.career_name || 'Específica'}</span>
+                  </div>
+                )}
 
                 {selectedEvent.responsible_name && (
                   <div className="flex items-center gap-3">

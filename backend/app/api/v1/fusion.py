@@ -1,6 +1,7 @@
 from typing import List, Optional
 from datetime import date
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.models import AcademicActivity, ScientificActivity
@@ -19,9 +20,13 @@ def get_fusion_calendar(
     academic_query = db.query(AcademicActivity)
     scientific_query = db.query(ScientificActivity)
     
-    if career_id:
-        academic_query = academic_query.filter(AcademicActivity.career_id == career_id)
-        scientific_query = scientific_query.filter(ScientificActivity.career_id == career_id)
+    if career_id is not None:
+        academic_query = academic_query.filter(
+            or_(AcademicActivity.career_id == career_id, AcademicActivity.career_id.is_(None))
+        )
+        scientific_query = scientific_query.filter(
+            or_(ScientificActivity.career_id == career_id, ScientificActivity.career_id.is_(None))
+        )
         
     if gestion_id:
         academic_query = academic_query.filter(AcademicActivity.gestion_id == gestion_id)
@@ -48,6 +53,9 @@ def get_fusion_calendar(
                 start_date=act.start_date,
                 end_date=act.end_date,
                 source_type="academic",
+                scope="global" if act.career_id is None else "career",
+                career_id=act.career_id,
+                career_name=act.career.name if act.career else None,
                 category=act.category,
                 origin_color=act.origin_color
             )
@@ -61,6 +69,9 @@ def get_fusion_calendar(
                 start_date=act.start_date,
                 end_date=act.end_date,
                 source_type="scientific",
+                scope="global" if act.career_id is None else "career",
+                career_id=act.career_id,
+                career_name=act.career.name if act.career else None,
                 activity_type=act.activity_type,
                 status=act.status,
                 responsible_name=act.responsible_name
@@ -71,3 +82,4 @@ def get_fusion_calendar(
     merged_items.sort(key=lambda x: x.start_date)
     
     return MergedCalendarResponse(items=merged_items)
+
