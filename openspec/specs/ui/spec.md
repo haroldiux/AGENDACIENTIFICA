@@ -39,6 +39,93 @@ The `react-big-calendar` component MUST be heavily restyled with targeted CSS ov
 - WHEN the `react-big-calendar` renders
 - THEN the structural borders and events MUST display appropriate Dark mode colors and UNITEPC accents
 
+### Requirement: Dedicated Dark-Themed Login View
+The system MUST provide a responsive login page at `/login` featuring a UNITEPC brand banner with purple-to-cyan gradient (`#6B3392` to `#009E96`), SVG wave graphic, UNITEPC logo, tagline, and pill-shaped form controls without rendering the application sidebar.
+
+#### Scenario: Desktop split-screen layout rendering
+- GIVEN an unauthenticated user on a desktop screen accessing `/login`
+- WHEN the login page loads
+- THEN the system MUST render a two-column split layout with the UNITEPC brand banner on the left and the pill-styled login form on the right without the `Sidebar`
+
+#### Scenario: Mobile viewport header rendering
+- GIVEN an unauthenticated user on a mobile viewport accessing `/login`
+- WHEN the login page loads
+- THEN the system MUST render the brand banner at the top scaled so the form card remains immediately visible without vertical clipping
+
+#### Scenario: Pill input field interaction and focus
+- GIVEN an unauthenticated user on `/login`
+- WHEN entering data into credential input fields
+- THEN the fields MUST render rounded pill containers (`rounded-full`) with embedded left icons (`Mail`, `Lock`) and focus ring highlights (`focus:ring-[#009E96]`)
+
+#### Scenario: Authentication submission and navigation
+- GIVEN an unauthenticated user on `/login`
+- WHEN submitting valid credentials
+- THEN the system MUST show a loading spinner, invoke `api.auth.login()`, update `AuthContext`, and navigate to `/` upon success
+
+#### Scenario: Authentication error presentation
+- GIVEN an unauthenticated user on `/login`
+- WHEN submitting invalid credentials
+- THEN the system MUST display an inline error banner explaining the failure without clearing valid input fields
+
+### Requirement: Sidebar User Session Footer
+The system MUST enhance the `Sidebar` footer to display the active user's details and a functional "Cerrar Sesión" button.
+
+#### Scenario: Displaying active user info in sidebar
+- GIVEN an authenticated user viewing the main application layout
+- WHEN the `Sidebar` renders
+- THEN the sidebar footer MUST display the user's name or email and role alongside a logout trigger button
+
+### Requirement: Activity Form Field Renaming and Ordering
+The activity creation/edit modal MUST rename "Tipo de Actividad" to "Tipo de Evento" and "Categoria Dinamica" to "Categoria", display hint text for each, and render "Categoria" above "Tipo de Evento" in the field layout.
+
+#### Scenario: Activity modal renders correct labels
+- GIVEN a user opens `ActivityModal.tsx` to create or edit a scientific activity
+- WHEN the form renders
+- THEN the label "Tipo de Evento" MUST appear (not "Tipo de Actividad") and "Categoria" MUST appear (not "Categoria Dinamica")
+
+#### Scenario: Categoria field is above Tipo de Evento
+- GIVEN a user opens `ActivityModal.tsx`
+- WHEN the form layout renders
+- THEN the "Categoria" dropdown MUST appear before (above) the "Tipo de Evento" dropdown in DOM order
+
+#### Scenario: Hint text displayed for both fields
+- GIVEN a user opens `ActivityModal.tsx`
+- WHEN the form renders
+- THEN a hint/description text MUST be visible beneath each of the "Categoria" and "Tipo de Evento" fields
+
+### Requirement: Collaboration Careers Multi-Select in Activity Form
+The activity creation/edit modal MUST include a "Carreras en Colaboracion" multi-select component that allows selecting one or more additional careers, excluding the primary selected career, bound to `collaboration_career_ids`.
+
+#### Scenario: Multi-select excludes primary career
+- GIVEN a user has selected "Ingenieria en Sistemas" as the primary career
+- WHEN the "Carreras en Colaboracion" multi-select renders
+- THEN "Ingenieria en Sistemas" MUST NOT appear as a selectable option in that multi-select
+
+#### Scenario: Editing an activity pre-fills collaboration careers
+- GIVEN an existing activity has stored collaboration career IDs
+- WHEN the user opens `ActivityModal.tsx` in edit mode for that activity
+- THEN the "Carreras en Colaboracion" multi-select MUST be pre-populated with those stored career IDs
+
+### Requirement: Sortable Columns on Activities Table
+The activities table on `/actividades` MUST support client-side sorting by column: Nombre, Fecha, Tipo, Carrera, and Estado. The default sort MUST be Fecha ASC. Column headers MUST show an up/down direction indicator reflecting the active sort state.
+
+#### Scenario: Default sort on page load
+- GIVEN a user navigates to the `/actividades` page
+- WHEN the activities table renders
+- THEN rows MUST be sorted by Fecha in ascending order and the Fecha header MUST display the ascending indicator
+
+#### Scenario: Clicking a sortable column header
+- GIVEN the activities table is displayed with Fecha ASC sort active
+- WHEN the user clicks the "Nombre" column header
+- THEN the table rows MUST re-sort by Nombre ASC and the Nombre header MUST display the ascending indicator
+
+#### Scenario: Toggling sort direction
+- GIVEN the activities table is sorted by Nombre ASC
+- WHEN the user clicks the "Nombre" column header again
+- THEN the table MUST re-sort by Nombre DESC and the Nombre header indicator MUST switch to descending
+
 ## REMOVED Requirements
+
 ### Requirement: Custom CSS Utility Classes
 (Reason: The system is deprecating raw CSS classes like `glass-panel` in favor of standard `shadcn/ui` semantic variables and components.)
+
