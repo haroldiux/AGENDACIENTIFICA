@@ -13,7 +13,10 @@ import {
   type ConflictItem,
 } from '@/lib/api';
 
+import { useUser } from '@/context/AuthContext';
+
 export default function ReportesPage() {
+  const { user } = useUser();
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
@@ -33,8 +36,36 @@ export default function ReportesPage() {
           api.gestiones.list(),
         ]);
         if (!cancelled) {
-          setCareers(careersData);
+          let filteredCareers = careersData;
+          const globalRoles = ['vicerrectorado', 'director_investigacion', 'super_admin', 'admin'];
+          if (user && !globalRoles.includes(user.role)) {
+            const userCareerIds = user.careers.map((c) => c.id);
+            if (userCareerIds.length > 0) {
+              filteredCareers = careersData.filter((c) => userCareerIds.includes(c.id));
+            }
+          }
+          setCareers(filteredCareers);
           setGestiones(gestionesData);
+
+          // Auto-select active gestion based on current date
+          const today = new Date();
+          const activeGestion = gestionesData.find((g) => {
+            const start = new Date(g.start_date);
+            const end = new Date(g.end_date);
+            return today >= start && today <= end;
+          });
+
+          if (activeGestion && gestionId === null) {
+            setGestionId(activeGestion.id);
+          } else if (gestionesData.length > 0 && gestionId === null) {
+            const mostRecent = [...gestionesData].sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())[0];
+            setGestionId(mostRecent.id);
+          }
+
+          // Auto-select career for restricted single-career users
+          if (filteredCareers.length === 1 && user && !globalRoles.includes(user.role) && careerId === null) {
+            setCareerId(filteredCareers[0].id);
+          }
         }
       } catch (err) {
         console.error('Error loading selector options:', err);
@@ -45,7 +76,7 @@ export default function ReportesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     return () => {
