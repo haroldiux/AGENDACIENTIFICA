@@ -262,13 +262,13 @@ export default function ImportarPage() {
                 <td className="py-2 pr-4 font-mono text-slate-300">start_date</td>
                 <td className="py-2 pr-4">fecha</td>
                 <td className="py-2 pr-4 text-green-400">Sí</td>
-                <td className="py-2">Fecha de inicio (YYYY-MM-DD)</td>
+                <td className="py-2">Fecha de inicio (DD/MM/AAAA o YYYY-MM-DD)</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4 font-mono text-slate-300">end_date</td>
                 <td className="py-2 pr-4">fecha</td>
                 <td className="py-2 pr-4 text-green-400">Sí</td>
-                <td className="py-2">Fecha de fin (YYYY-MM-DD)</td>
+                <td className="py-2">Fecha de fin (DD/MM/AAAA o YYYY-MM-DD)</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4 font-mono text-slate-300">carrera</td>

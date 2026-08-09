@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from datetime import datetime, date
 import pandas as pd
 from pydantic import ValidationError
 from io import BytesIO
@@ -83,8 +84,8 @@ def download_template(
     _style_header_row(ws_ac, academic_headers, "009E96")
     _add_example_row(ws_ac, [
         "Inicio de clases",
-        "2026-02-11",
-        "2026-02-11",
+        "11/02/2026",
+        "11/02/2026",
         categories[0].name if categories else "GENERAL",
         careers[0].name if careers else "Tec. Superior Prótesis Dental",
         gestiones[0].name if gestiones else "2-2026",
@@ -92,6 +93,11 @@ def download_template(
     ])
     ws_ac.cell(row=3, column=1, value="⚠ La fila 2 es ejemplo – bórrala antes de importar")
     ws_ac.cell(row=3, column=1).font = Font(color="EF4444", bold=True, size=9)
+
+    # Format date columns B and C as DD/MM/YYYY
+    for r in range(2, 501):
+        ws_ac.cell(row=r, column=2).number_format = "DD/MM/YYYY"
+        ws_ac.cell(row=r, column=3).number_format = "DD/MM/YYYY"
 
     # ---- Sheet 2: Scientific Activities ----
     ws_sc = wb.create_sheet(title="Actividades Científicas")
@@ -108,8 +114,8 @@ def download_template(
     _style_header_row(ws_sc, scientific_headers, "6B3392")
     _add_example_row(ws_sc, [
         "Congreso de Investigación",
-        "2026-03-15",
-        "2026-03-17",
+        "15/03/2026",
+        "17/03/2026",
         "CONGRESO",
         "Dr. Juan Pérez",
         careers[0].name if careers else "Tec. Superior Prótesis Dental",
@@ -118,6 +124,11 @@ def download_template(
     ])
     ws_sc.cell(row=3, column=1, value="⚠ La fila 2 es ejemplo – bórrala antes de importar")
     ws_sc.cell(row=3, column=1).font = Font(color="EF4444", bold=True, size=9)
+
+    # Format date columns B and C as DD/MM/YYYY
+    for r in range(2, 501):
+        ws_sc.cell(row=r, column=2).number_format = "DD/MM/YYYY"
+        ws_sc.cell(row=r, column=3).number_format = "DD/MM/YYYY"
 
     # ---- Sheet 3: Reference (fields + careers + gestiones + categories) ----
     ws_ref = wb.create_sheet(title="Referencia")
@@ -158,8 +169,8 @@ def download_template(
 
     field_rows = [
         ("titulo", "Nombre de la actividad (texto libre, requerido)"),
-        ("fecha_inicio", "Fecha inicio: formato YYYY-MM-DD, p.ej. 2026-02-11"),
-        ("fecha_fin", "Fecha fin: formato YYYY-MM-DD  (igual a inicio si dura 1 día)"),
+        ("fecha_inicio", "Fecha inicio: formato DD/MM/AAAA (ej. 11/02/2026) o YYYY-MM-DD"),
+        ("fecha_fin", "Fecha fin: formato DD/MM/AAAA (igual a inicio si dura 1 día)"),
         ("categoria", "Solo académicas: selecciona de la lista desplegable o escribe la categoría"),
         ("tipo_actividad", "Solo científicas: selecciona del desplegable (CONGRESO, WEBINAR, etc.)"),
         ("nombre_responsable", "Solo científicas: nombre del docente o investigador responsable"),
@@ -240,7 +251,19 @@ def download_template(
             if r_off % 2 == 0:
                 c.fill = alt_fill
 
-    # ---- Add Data Validations (Comboboxes) ----
+    # ---- Add Data Validations (Comboboxes + Date Validation) ----
+    dv_date_ac = DataValidation(type="date", operator="greaterThanOrEqual", formula1="2000-01-01", allow_blank=True)
+    dv_date_ac.error = "Formato de fecha inválido. Ingresa DD/MM/AAAA (ej. 11/02/2026)"
+    dv_date_ac.errorTitle = "Fecha Inválida"
+    ws_ac.add_data_validation(dv_date_ac)
+    dv_date_ac.add("B2:C500")
+
+    dv_date_sc = DataValidation(type="date", operator="greaterThanOrEqual", formula1="2000-01-01", allow_blank=True)
+    dv_date_sc.error = "Formato de fecha inválido. Ingresa DD/MM/AAAA (ej. 15/03/2026)"
+    dv_date_sc.errorTitle = "Fecha Inválida"
+    ws_sc.add_data_validation(dv_date_sc)
+    dv_date_sc.add("B2:C500")
+
     dv_bool_ac = DataValidation(type="list", formula1='"SI,NO"', allow_blank=True)
     ws_ac.add_data_validation(dv_bool_ac)
     dv_bool_ac.add("G2:G500")
@@ -298,6 +321,21 @@ def download_template(
 # Upload Excel
 # ---------------------------------------------------------------------------
 
+def parse_date_val(val):
+    if val is None or pd.isna(val):
+        return None
+    if isinstance(val, (datetime, date)):
+        if isinstance(val, datetime):
+            return val.date()
+        return val
+    val_str = str(val).strip()
+    try:
+        dt = pd.to_datetime(val_str, dayfirst=True)
+        return dt.date()
+    except Exception:
+        return val_str
+
+
 @router.post("/upload-excel")
 async def upload_excel(
     file: UploadFile = File(...),
@@ -351,6 +389,12 @@ async def upload_excel(
     renamed_records = []
     for record in records:
         renamed = {COLUMN_MAP.get(str(k).strip().lower(), k): v for k, v in record.items()}
+
+        # Normalize start_date & end_date (supports DD/MM/YYYY and YYYY-MM-DD)
+        if "start_date" in renamed and pd.notnull(renamed["start_date"]):
+            renamed["start_date"] = parse_date_val(renamed["start_date"])
+        if "end_date" in renamed and pd.notnull(renamed["end_date"]):
+            renamed["end_date"] = parse_date_val(renamed["end_date"])
 
         # Normalize career_id / carrera
         if "career_id" in renamed and pd.notnull(renamed["career_id"]):
