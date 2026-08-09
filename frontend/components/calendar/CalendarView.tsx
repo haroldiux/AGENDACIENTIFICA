@@ -56,16 +56,16 @@ function CalendarEventContent({ event }: { event: CalendarEvent }) {
   return (
     <div className="flex items-center gap-1.5 overflow-hidden truncate px-1 py-0.5 leading-tight">
       <span
-        className={`w-2 h-2 rounded-full shrink-0 ${
+        className={`w-2 h-2 rounded-full shrink-0 shadow-sm ${
           isGlobal
-            ? 'bg-purple-400 ring-2 ring-purple-500/50'
+            ? 'bg-purple-300 ring-2 ring-purple-400'
             : isScientific
-            ? 'bg-pink-400 ring-1 ring-pink-400/50'
-            : 'bg-emerald-400'
+            ? 'bg-pink-300 ring-1 ring-white/60'
+            : 'bg-white/90'
         }`}
         title={isGlobal ? 'Global / Vicerrectorado' : isScientific ? 'Actividad Científica' : `Carrera: ${item.career_name || 'Asignada'}`}
       />
-      <span className="truncate text-[11px] font-medium tracking-tight text-white drop-shadow-sm">
+      <span className="truncate text-[11px] font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
         {item.title}
       </span>
     </div>
@@ -89,25 +89,22 @@ function mergedItemToEvent(item: MergedCalendarItem): CalendarEvent {
 const eventPropGetter: EventPropGetter<CalendarEvent> = (event) => {
   const item = event.resource;
   const color = getEventColor(item);
-  const isAcademic = item.source_type === 'academic';
   const isGlobal = item.scope === 'global' || item.career_id === null;
 
   return {
     style: {
-      backgroundColor: isAcademic ? color : '#1e1b4b',
+      backgroundColor: color,
       color: '#ffffff',
-      borderLeft: `4px solid ${isGlobal ? '#a855f7' : color}`,
+      borderLeft: isGlobal ? '4px solid #a855f7' : undefined,
       borderRadius: '5px',
       fontSize: '0.75rem',
-      fontWeight: 500,
-      borderTop: '1px solid rgba(255,255,255,0.1)',
-      borderRight: '1px solid rgba(255,255,255,0.1)',
-      borderBottom: '1px solid rgba(255,255,255,0.1)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-      padding: '1px 3px',
+      fontWeight: 600,
+      boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+      padding: '2px 4px',
       margin: '1px 0',
+      border: '1px solid rgba(255,255,255,0.15)',
     },
-    className: isAcademic ? 'rbc-event-academic' : 'rbc-event-scientific',
+    className: item.source_type === 'academic' ? 'rbc-event-academic' : 'rbc-event-scientific',
   };
 };
 
