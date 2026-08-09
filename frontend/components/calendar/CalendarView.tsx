@@ -260,17 +260,6 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
                     )}
                   </div>
                 )}
-
-                {selectedEvent.source_type === 'academic' && selectedEvent.origin_color && (
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span
-                      className="inline-block w-4 h-4 rounded"
-                      style={{ backgroundColor: selectedEvent.origin_color }}
-                    />
-                    <span className="text-xs text-muted-foreground">Color original del calendario académico</span>
-                  </div>
-                )}
               </div>
 
               <div className="pt-2 flex justify-end">
