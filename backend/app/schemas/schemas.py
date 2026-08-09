@@ -142,6 +142,8 @@ class AcademicActivityBase(BaseModel):
     title: str
     start_date: date
     end_date: date
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     category: Optional[str] = "GENERAL"
     category_id: Optional[int] = None
     origin_color: Optional[str] = None
@@ -154,6 +156,8 @@ class AcademicActivityUpdate(BaseModel):
     title: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     category: Optional[str] = None
     category_id: Optional[int] = None
     origin_color: Optional[str] = None
@@ -192,6 +196,8 @@ class ScientificActivityBase(BaseModel):
     activity_type: ScientificActivityType
     start_date: date
     end_date: date
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     responsible_name: str
     notes: Optional[str] = None
     category_id: Optional[int] = None
@@ -206,6 +212,8 @@ class ScientificActivityUpdate(BaseModel):
     activity_type: Optional[ScientificActivityType] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     responsible_name: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[ScientificActivityStatus] = None
@@ -247,6 +255,8 @@ class MergedCalendarItem(BaseModel):
     title: str
     start_date: date
     end_date: date
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     source_type: str # 'academic' or 'scientific'
     scope: str = "career" # 'global' or 'career'
     career_id: Optional[int] = None
@@ -266,6 +276,8 @@ class ActivityRowValidator(BaseModel):
     title: str
     start_date: date
     end_date: date
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     activity_type: Optional[str] = None
     category: Optional[str] = None
     category_id: Optional[int] = None

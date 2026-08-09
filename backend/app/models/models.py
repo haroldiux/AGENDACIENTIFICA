@@ -103,6 +103,8 @@ class AcademicActivity(Base):
     title = Column(String, index=True, nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+    start_time = Column(String, nullable=True)
+    end_time = Column(String, nullable=True)
     category = Column(String, nullable=False)
     origin_color = Column(String)
 
@@ -135,6 +137,8 @@ class ScientificActivity(Base):
     activity_type = Column(Enum(ScientificActivityType), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+    start_time = Column(String, nullable=True)
+    end_time = Column(String, nullable=True)
     responsible_name = Column(String, nullable=False)
     status = Column(Enum(ScientificActivityStatus), default=ScientificActivityStatus.scheduled, nullable=False)
     evidence_url = Column(String)

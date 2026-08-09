@@ -73,19 +73,35 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const mergedItemToEvent = (item: MergedCalendarItem): CalendarEvent => {
-  const startDate = new Date(`${item.start_date}T00:00:00`);
-  const endDate = new Date(`${item.end_date}T23:59:59`);
+  let startDate: Date;
+  let endDate: Date;
+  let isAllDay = true;
+
+  if (item.start_time) {
+    const sTime = item.start_time.length === 5 ? `${item.start_time}:00` : item.start_time;
+    const eTime = item.end_time ? (item.end_time.length === 5 ? `${item.end_time}:00` : item.end_time) : '23:59:59';
+    startDate = new Date(`${item.start_date}T${sTime}`);
+    endDate = new Date(`${item.end_date}T${eTime}`);
+    isAllDay = false;
+  } else {
+    startDate = new Date(`${item.start_date}T00:00:00`);
+    endDate = new Date(`${item.end_date}T23:59:59`);
+    isAllDay = true;
+  }
 
   let displayTitle = item.title;
+  if (item.start_time) {
+    displayTitle = `[${item.start_time.slice(0, 5)}] ${item.title}`;
+  }
   if (item.source_type === 'academic' && item.career_name) {
-    displayTitle = `${item.title} - ${item.career_name}`;
+    displayTitle = `${displayTitle} - ${item.career_name}`;
   }
 
   return {
     title: displayTitle,
     start: startDate,
     end: endDate,
-    allDay: true,
+    allDay: isAllDay,
     resource: item,
   };
 };
@@ -122,22 +138,32 @@ const eventPropGetter: EventPropGetter<CalendarEvent> = (event) => {
       boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
       padding: '2px 4px',
       margin: '1px 0',
+      border: '1px solid rgba(255,255,255,0.15)',
     },
+    className: item.source_type === 'academic' ? 'rbc-event-academic' : 'rbc-event-scientific',
   };
 };
 
-function formatDateRange(startDate: string, endDate: string): string {
+function formatDateRange(startDate: string, endDate: string, startTime?: string | null, endTime?: string | null): string {
   const start = new Date(`${startDate}T12:00:00`);
   const end = new Date(`${endDate}T12:00:00`);
   const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  let dateStr = '';
   if (startDate === endDate) {
-    return start.toLocaleDateString('es-ES', options);
+    dateStr = start.toLocaleDateString('es-ES', options);
+  } else {
+    dateStr = `${start.toLocaleDateString('es-ES', options)} – ${end.toLocaleDateString('es-ES', options)}`;
   }
-  return `${start.toLocaleDateString('es-ES', options)} – ${end.toLocaleDateString('es-ES', options)}`;
+  if (startTime) {
+    const timeStr = endTime ? `${startTime.slice(0, 5)} a ${endTime.slice(0, 5)}` : `${startTime.slice(0, 5)} hs`;
+    return `${dateStr} (${timeStr})`;
+  }
+  return dateStr;
 }
 
 export default function CalendarView({ items, isLoading, onStatusChange }: CalendarViewProps) {
   const [view, setView] = useState<View>('month');
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<MergedCalendarItem | null>(null);
 
   const [statusModalEvent, setStatusModalEvent] = useState<MergedCalendarItem | null>(null);
@@ -227,6 +253,8 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
           events={events}
           startAccessor="start"
           endAccessor="end"
+          date={currentDate}
+          onNavigate={setCurrentDate}
           view={view}
           onView={setView}
           views={['month', 'week', 'day', 'agenda']}
@@ -277,7 +305,7 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
               <div className="space-y-4 py-4 text-sm text-foreground/90">
                 <div className="flex items-center gap-3">
                   <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span>{formatDateRange(selectedEvent.start_date, selectedEvent.end_date)}</span>
+                  <span>{formatDateRange(selectedEvent.start_date, selectedEvent.end_date, selectedEvent.start_time, selectedEvent.end_time)}</span>
                 </div>
 
                 {selectedEvent.scope === 'global' || selectedEvent.career_id === null ? (

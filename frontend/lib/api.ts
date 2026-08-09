@@ -193,6 +193,8 @@ export interface MergedCalendarItem {
   title: string;
   start_date: string;
   end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
   source_type: SourceType;
   scope: 'global' | 'career';
   career_id?: number | null;
