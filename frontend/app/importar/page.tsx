@@ -86,6 +86,22 @@ export default function ImportarPage() {
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await api.importacion.downloadTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "plantilla_actividades.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Error al descargar la plantilla");
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <Toaster position="top-right" />
@@ -217,14 +233,13 @@ export default function ImportarPage() {
             <h4 className="font-semibold text-slate-200">Plantilla de importación</h4>
             <p className="text-xs text-slate-500 mt-0.5">Descarga el formato en blanco, llénalo y súbelo arriba</p>
           </div>
-          <a
-            href={`${appConfig.apiUrl}/importacion/template/download`}
-            download="plantilla_actividades.xlsx"
+          <button
+            onClick={handleDownloadTemplate}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <Download className="w-4 h-4" />
             Descargar Plantilla .xlsx
-          </a>
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">

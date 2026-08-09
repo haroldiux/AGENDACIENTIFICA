@@ -247,6 +247,12 @@ export const api = {
     getMerged: (params?: MergedCalendarFilters) =>
       apiClient.get<MergedCalendarResponse>('/fusion/', { params }).then((res) => res.data),
   },
+  importacion: {
+    downloadTemplate: () =>
+      apiClient
+        .get<Blob>('/importacion/template/download', { responseType: 'blob' })
+        .then((res) => res.data),
+  },
   academic: {
     upload: (formData: FormData) =>
       apiClient.post('/importacion/upload-excel', formData, {
