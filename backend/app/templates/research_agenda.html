@@ -52,15 +52,21 @@
     
     .month-row-table {
         width: 100%;
-        margin-bottom: 40px;
-        page-break-inside: auto;
+        margin-bottom: 35px;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
         border-collapse: collapse;
+    }
+    .month-row-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
     .month-row-table td {
         vertical-align: top;
     }
     .month-content {
-        /* No flex needed, will flow around float */
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
     .month-image {
         width: 320px;
@@ -69,6 +75,8 @@
         border-radius: 12px;
         background-color: #f1f5f9;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
     
     .month-pill {
@@ -83,6 +91,8 @@
         text-transform: uppercase;
         letter-spacing: 2px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        page-break-after: avoid !important;
+        break-after: avoid !important;
     }
     .month-row.reverse .month-pill {
         background-color: #6B3392;
