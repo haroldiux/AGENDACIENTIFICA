@@ -175,18 +175,18 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
           {selectedEvent && (
             <>
               <DialogHeader>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 pr-6">
                   {selectedEvent.source_type === 'academic' ? (
-                    <BookOpen className="w-5 h-5 text-primary" />
+                    <BookOpen className="w-5 h-5 text-primary shrink-0" />
                   ) : (
-                    <FlaskConical className="w-5 h-5 text-accent" />
+                    <FlaskConical className="w-5 h-5 text-accent shrink-0" />
                   )}
-                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground shrink-0">
                     {selectedEvent.source_type === 'academic' ? 'Académica' : 'Científica'}
                   </span>
                   <Badge
                     variant={selectedEvent.scope === 'global' || selectedEvent.career_id === null ? 'default' : 'outline'}
-                    className={`ml-auto text-xs ${
+                    className={`ml-auto text-xs truncate max-w-[200px] ${
                       selectedEvent.scope === 'global' || selectedEvent.career_id === null
                         ? 'bg-purple-600 text-white hover:bg-purple-700'
                         : 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300'

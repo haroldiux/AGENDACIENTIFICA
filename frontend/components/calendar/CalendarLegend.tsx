@@ -13,14 +13,14 @@ export const CALENDAR_COLORS = {
     seminario: '#0284c7',
     conferencia: '#c026d3',
     'práctica de campo': '#0d9488',
-    default: '#4f46e5',
+    default: '#4338ca',
   },
   scientific: {
-    congreso: '#4f46e5',
+    congreso: '#4338ca',
     webinar: '#0891b2',
     defensa: '#db2777',
-    feria: '#059669',
-    olimpiada: '#0284c7',
+    feria: '#65a30d',
+    olimpiada: '#ca8a04',
     master_class: '#ea580c',
   },
 } as const;
