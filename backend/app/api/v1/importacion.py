@@ -518,12 +518,38 @@ async def upload_excel(
                 })
         except ValidationError as e:
             errors.append({"row": i + 2, "error": str(e)})
-    
-    # Enforce scope-aware permissions before inserting
+
+    # Safe scope permission filter per row
+    def user_can_manage_career(user: User, career_id: int | None) -> bool:
+        allowed_global_roles = {"super_admin", "admin", "vicerrectorado", "director_investigacion"}
+        user_role_str = user.role.value if hasattr(user.role, "value") else str(user.role)
+        if user_role_str in allowed_global_roles:
+            return True
+        user_career_ids = [c.id for c in user.careers]
+        return career_id is not None and career_id in user_career_ids
+
+    permitted_academic = []
     for row in valid_academic:
-        check_activity_scope_permission(current_user, row.get("career_id"))
+        if user_can_manage_career(current_user, row.get("career_id")):
+            permitted_academic.append(row)
+        else:
+            errors.append({
+                "row": "Académicas",
+                "error": f"No tienes permiso para la carrera ID {row.get('career_id')}"
+            })
+
+    permitted_scientific = []
     for row in valid_scientific:
-        check_activity_scope_permission(current_user, row.get("career_id"))
+        if user_can_manage_career(current_user, row.get("career_id")):
+            permitted_scientific.append(row)
+        else:
+            errors.append({
+                "row": "Científicas",
+                "error": f"No tienes permiso para la carrera ID {row.get('career_id')}"
+            })
+
+    valid_academic = permitted_academic
+    valid_scientific = permitted_scientific
 
     # Fetch existing activities to detect duplicates and date overlaps
     existing_academics = db.query(AcademicActivity).all()
