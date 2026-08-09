@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Download, LayoutGrid, List, Search, X } from 'lucide-react';
+import { Download, LayoutGrid, List, Search, X, BookOpen, FlaskConical, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -253,53 +253,54 @@ export default function CalendarioPage() {
         />
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground mr-2">
-            <span className="flex items-center gap-1">
-              <LayoutGrid className="w-3.5 h-3.5" />
+          <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground mr-2">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+              <BookOpen className="w-3.5 h-3.5" />
               {academicCount} académicas
             </span>
-            <span className="flex items-center gap-1">
-              <List className="w-3.5 h-3.5" />
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+              <FlaskConical className="w-3.5 h-3.5" />
               {scientificCount} científicas
             </span>
           </div>
-          <div className="flex items-center bg-muted/50 p-1 rounded-lg shrink-0 border border-border">
+
+          <div className="relative group">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={() => handleExportPDF('agenda-completa')}
               disabled={exporting || gestionId === null}
-              className="text-xs px-2 h-8"
-              title="Completa"
+              className="text-xs h-9 px-3 gap-1.5 font-medium border-border"
             >
-              Completa
+              <Download className="w-3.5 h-3.5 text-primary" />
+              {exporting ? 'Exportando...' : 'Exportar PDF'}
             </Button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleExportPDF('agenda-academica')}
-              disabled={exporting || gestionId === null}
-              className="text-xs px-2 h-8"
-              title="Académica"
-            >
-              Académica
-            </Button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleExportPDF('agenda-cientifica')}
-              disabled={exporting || gestionId === null}
-              className="text-xs px-2 h-8"
-              title="Investigación"
-            >
-              <Download className="w-3 h-3 mr-1" />
-              {exporting ? '...' : 'Investigación'}
-            </Button>
+            <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col bg-popover text-popover-foreground border border-border rounded-lg shadow-lg p-1 min-w-[170px] z-50">
+              <button
+                onClick={() => handleExportPDF('agenda-completa')}
+                disabled={exporting || gestionId === null}
+                className="text-left px-3 py-1.5 text-xs hover:bg-accent rounded-md transition-colors flex items-center gap-2"
+              >
+                <FileText className="w-3.5 h-3.5 text-purple-400" />
+                Agenda Completa
+              </button>
+              <button
+                onClick={() => handleExportPDF('agenda-academica')}
+                disabled={exporting || gestionId === null}
+                className="text-left px-3 py-1.5 text-xs hover:bg-accent rounded-md transition-colors flex items-center gap-2"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                Solo Académicas
+              </button>
+              <button
+                onClick={() => handleExportPDF('agenda-cientifica')}
+                disabled={exporting || gestionId === null}
+                className="text-left px-3 py-1.5 text-xs hover:bg-accent rounded-md transition-colors flex items-center gap-2"
+              >
+                <FlaskConical className="w-3.5 h-3.5 text-pink-400" />
+                Solo Investigación
+              </button>
+            </div>
           </div>
         </div>
       </Card>
@@ -325,17 +326,22 @@ export default function CalendarioPage() {
           )}
         </div>
         <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border shrink-0">
-          {(['all', 'academic', 'scientific'] as const).map((t) => (
+          {[
+            { id: 'all', label: 'Todas', icon: LayoutGrid },
+            { id: 'academic', label: 'Académicas', icon: BookOpen },
+            { id: 'scientific', label: 'Científicas', icon: FlaskConical },
+          ].map(({ id, label, icon: Icon }) => (
             <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                typeFilter === t
-                  ? 'bg-background shadow text-foreground'
+              key={id}
+              onClick={() => setTypeFilter(id as any)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                typeFilter === id
+                  ? 'bg-background shadow text-foreground border border-border'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {t === 'all' ? 'Todas' : t === 'academic' ? 'Académicas' : 'Científicas'}
+              <Icon className="w-3.5 h-3.5" />
+              {label}
             </button>
           ))}
         </div>

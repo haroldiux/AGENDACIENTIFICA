@@ -110,15 +110,20 @@ export default function CalendarLegend({ className = '' }: CalendarLegendProps) 
         </div>
       </div>
 
-      <div className="border-t border-[var(--border)] pt-3 text-xs text-slate-500">
-        <p>
-          <span className="inline-block w-3 h-3 rounded-sm bg-slate-500 mr-1 align-middle" />
-          Fondo sólido = Académica
-        </p>
-        <p className="mt-1">
-          <span className="inline-block w-3 h-3 rounded-full border-2 border-slate-500 mr-1 align-middle" />
-          Borde redondo = Científica
-        </p>
+      <div className="border-t border-border pt-3 space-y-2 text-xs">
+        <span className="font-semibold text-slate-300 block mb-1">Identificadores de Alcance:</span>
+        <div className="flex items-center gap-2 text-slate-300">
+          <span className="w-2.5 h-2.5 rounded-full bg-purple-400 ring-2 ring-purple-500/50 shrink-0" />
+          <span>Global / Vicerrectorado</span>
+        </div>
+        <div className="flex items-center gap-2 text-slate-300">
+          <span className="w-2.5 h-2.5 rounded-full bg-pink-400 ring-1 ring-pink-400/50 shrink-0" />
+          <span>Investigación Científica</span>
+        </div>
+        <div className="flex items-center gap-2 text-slate-300">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+          <span>Académica por Carrera</span>
+        </div>
       </div>
     </div>
   );

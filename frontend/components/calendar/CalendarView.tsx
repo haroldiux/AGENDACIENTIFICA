@@ -51,20 +51,23 @@ const messages = {
 function CalendarEventContent({ event }: { event: CalendarEvent }) {
   const item = event.resource;
   const isGlobal = item.scope === 'global' || item.career_id === null;
+  const isScientific = item.source_type === 'scientific';
 
   return (
-    <div className="flex items-center gap-1.5 overflow-hidden truncate px-1 py-0.5">
+    <div className="flex items-center gap-1.5 overflow-hidden truncate px-1 py-0.5 leading-tight">
       <span
-        className={`text-[9px] px-1 py-0.2 rounded font-semibold uppercase shrink-0 ${
+        className={`w-2 h-2 rounded-full shrink-0 ${
           isGlobal
-            ? 'bg-purple-600 text-white dark:bg-purple-700'
-            : 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-400/30'
+            ? 'bg-purple-400 ring-2 ring-purple-500/50'
+            : isScientific
+            ? 'bg-pink-400 ring-1 ring-pink-400/50'
+            : 'bg-emerald-400'
         }`}
-        title={isGlobal ? 'Global / Vicerrectorado' : `Carrera: ${item.career_name || 'Asignada'}`}
-      >
-        {isGlobal ? 'Global' : 'Carrera'}
+        title={isGlobal ? 'Global / Vicerrectorado' : isScientific ? 'Actividad Científica' : `Carrera: ${item.career_name || 'Asignada'}`}
+      />
+      <span className="truncate text-[11px] font-medium tracking-tight text-white drop-shadow-sm">
+        {item.title}
       </span>
-      <span className="truncate text-xs">{item.title}</span>
     </div>
   );
 }
@@ -87,16 +90,22 @@ const eventPropGetter: EventPropGetter<CalendarEvent> = (event) => {
   const item = event.resource;
   const color = getEventColor(item);
   const isAcademic = item.source_type === 'academic';
+  const isGlobal = item.scope === 'global' || item.career_id === null;
 
   return {
     style: {
-      backgroundColor: isAcademic ? color : `${color}20`,
-      color: isAcademic ? '#ffffff' : color,
-      borderLeft: isAcademic ? undefined : `3px solid ${color}`,
-      borderRadius: isAcademic ? '4px' : '4px 0 0 4px',
+      backgroundColor: isAcademic ? color : '#1e1b4b',
+      color: '#ffffff',
+      borderLeft: `4px solid ${isGlobal ? '#a855f7' : color}`,
+      borderRadius: '5px',
       fontSize: '0.75rem',
       fontWeight: 500,
-      border: isAcademic ? 'none' : `1px solid ${color}40`,
+      borderTop: '1px solid rgba(255,255,255,0.1)',
+      borderRight: '1px solid rgba(255,255,255,0.1)',
+      borderBottom: '1px solid rgba(255,255,255,0.1)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+      padding: '1px 3px',
+      margin: '1px 0',
     },
     className: isAcademic ? 'rbc-event-academic' : 'rbc-event-scientific',
   };
