@@ -125,6 +125,18 @@ export default function ActividadesPage() {
 
   // Comparator
   const sortedActivities = [...activities]
+    .filter((a) => {
+      // 1. Role-based visibility filtering
+      if (!user) return false;
+      if (GLOBAL_ROLES.includes(user.role) || isReadOnlyUser(user)) return true;
+      
+      const userCareerIds = user.careers.map(c => c.id);
+      const isGlobalActivity = a.career_id === null || a.career_id === undefined;
+      const isOwner = a.career_id != null && userCareerIds.includes(a.career_id);
+      const isCollaborator = a.collaboration_career_ids?.some(id => userCareerIds.includes(id)) ?? false;
+      
+      return isOwner || isCollaborator || isGlobalActivity;
+    })
     .filter((a) => !statusFilter || a.status === statusFilter)
     .filter((a) => {
       if (!searchQuery.trim()) return true;
