@@ -249,10 +249,6 @@ def download_template(
     ws_sc.add_data_validation(dv_bool_sc)
     dv_bool_sc.add("H2:H500")
 
-    dv_types = DataValidation(type="list", formula1='"CONGRESO,WEBINAR,DEFENSA,FERIA,OLIMPIADA,MASTER_CLASS"', allow_blank=True)
-    ws_sc.add_data_validation(dv_types)
-    dv_types.add("D2:D500")
-
     if careers:
         career_ref = f"'Referencia'!E3:E{2 + len(careers)}"
         dv_car_ac = DataValidation(type="list", formula1=career_ref, allow_blank=True)
@@ -278,6 +274,14 @@ def download_template(
         dv_cat_ac = DataValidation(type="list", formula1=cat_ref, allow_blank=True)
         ws_ac.add_data_validation(dv_cat_ac)
         dv_cat_ac.add("D2:D500")
+
+        dv_cat_sc = DataValidation(type="list", formula1=cat_ref, allow_blank=True)
+        ws_sc.add_data_validation(dv_cat_sc)
+        dv_cat_sc.add("D2:D500")
+    else:
+        dv_types = DataValidation(type="list", formula1='"CONGRESO,WEBINAR,DEFENSA,FERIA,OLIMPIADA,MASTER_CLASS"', allow_blank=True)
+        ws_sc.add_data_validation(dv_types)
+        dv_types.add("D2:D500")
 
     # ---- Stream ----
     buffer = BytesIO()
