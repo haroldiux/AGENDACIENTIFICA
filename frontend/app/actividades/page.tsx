@@ -1,10 +1,11 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, Activity } from "lucide-react";
+import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, Activity, FileText } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
 import StatusUpdateModal from "@/components/agenda/StatusUpdateModal";
+import ActivityDetailReportModal from "@/components/agenda/ActivityDetailReportModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,7 @@ export default function ActividadesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ScientificActivity | null>(null);
   const [statusModalActivity, setStatusModalActivity] = useState<ScientificActivity | null>(null);
+  const [reportModalActivity, setReportModalActivity] = useState<ScientificActivity | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -317,58 +319,62 @@ export default function ActividadesPage() {
             No hay actividades con los filtros seleccionados.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="w-full overflow-hidden">
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead
-                    className="w-[300px] cursor-pointer select-none hover:text-foreground"
+                    className="w-[28%] cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("nombre")}
                   >
                     Nombre <SortIcon col="nombre" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none hover:text-foreground"
+                    className="w-[16%] cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("fecha")}
                   >
                     Fecha <SortIcon col="fecha" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none hover:text-foreground"
+                    className="w-[13%] cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("tipo")}
                   >
                     Tipo <SortIcon col="tipo" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none hover:text-foreground"
+                    className="w-[16%] cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("carrera")}
                   >
                     Carrera <SortIcon col="carrera" />
                   </TableHead>
                   <TableHead
-                    className="cursor-pointer select-none hover:text-foreground"
+                    className="w-[13%] cursor-pointer select-none hover:text-foreground"
                     onClick={() => handleSort("estado")}
                   >
                     Estado <SortIcon col="estado" />
                   </TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="w-[14%] text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visibleActivities.map((activity) => (
                   <TableRow key={activity.id}>
-                    <TableCell className="font-medium">{activity.title}</TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="font-medium text-xs py-2.5 truncate" title={activity.title}>
+                      {activity.title}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap py-2.5">
                       {formatDateRange(activity.start_date, activity.end_date)}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                    <TableCell className="py-2.5">
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] px-2 py-0.5 whitespace-nowrap">
                         {activityTypeLabels[activity.activity_type] ??
                           activity.activity_type}
                       </Badge>
                     </TableCell>
-                    <TableCell>{careerName(activity.career_id)}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs text-muted-foreground truncate py-2.5" title={careerName(activity.career_id)}>
+                      {careerName(activity.career_id)}
+                    </TableCell>
+                    <TableCell className="py-2.5">
                       {canManageActivity(user, activity) ? (
                         <button
                           type="button"
@@ -378,7 +384,7 @@ export default function ActividadesPage() {
                         >
                           <Badge
                             variant="secondary"
-                            className={`${activityStatusClasses[activity.status] ?? ""} group-hover:scale-105 transition-transform cursor-pointer shadow-sm`}
+                            className={`${activityStatusClasses[activity.status] ?? ""} text-[11px] px-2 py-0.5 group-hover:scale-105 transition-transform cursor-pointer shadow-sm whitespace-nowrap`}
                           >
                             {activityStatusLabels[activity.status] ?? activity.status} ✎
                           </Badge>
@@ -386,51 +392,65 @@ export default function ActividadesPage() {
                       ) : (
                         <Badge
                           variant="secondary"
-                          className={`${activityStatusClasses[activity.status] ?? ""}`}
+                          className={`${activityStatusClasses[activity.status] ?? ""} text-[11px] px-2 py-0.5 whitespace-nowrap`}
                         >
                           {activityStatusLabels[activity.status] ?? activity.status}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      {canManageActivity(user, activity) ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setStatusModalActivity(activity)}
-                            className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30 text-xs mr-2 font-medium"
-                          >
-                            <Activity className="w-3.5 h-3.5 mr-1 text-emerald-400" />
-                            Cambiar Estado
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditModal(activity)}
-                            className="text-muted-foreground hover:text-foreground mr-2"
-                          >
-                            <Pencil className="w-3.5 h-3.5 mr-1" />
-                            Editar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(activity)}
-                            disabled={deletingId === activity.id}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            {deletingId === activity.id ? (
-                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-3.5 h-3.5 mr-1" />
-                            )}
-                            Eliminar
-                          </Button>
-                        </>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Solo lectura</span>
-                      )}
+                    <TableCell className="text-right whitespace-nowrap py-2.5">
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Ver Informe Individual */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setReportModalActivity(activity)}
+                          title="Ver informe individual de la actividad"
+                          className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </Button>
+
+                        {canManageActivity(user, activity) && (
+                          <>
+                            {/* Cambiar Estado */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setStatusModalActivity(activity)}
+                              title="Cambiar estado, agregar observaciones o subir evidencia"
+                              className="h-8 w-8 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                            >
+                              <Activity className="w-4 h-4" />
+                            </Button>
+                            {/* Editar */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditModal(activity)}
+                              title="Editar actividad"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            {/* Eliminar */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(activity)}
+                              disabled={deletingId === activity.id}
+                              title="Eliminar actividad"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            >
+                              {deletingId === activity.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -452,6 +472,13 @@ export default function ActividadesPage() {
         onClose={() => setStatusModalActivity(null)}
         onSuccess={loadActivities}
         activity={statusModalActivity}
+      />
+
+      <ActivityDetailReportModal
+        isOpen={!!reportModalActivity}
+        onClose={() => setReportModalActivity(null)}
+        activity={reportModalActivity}
+        careers={careers}
       />
     </div>
   );

@@ -117,6 +117,8 @@ export interface ScientificActivity {
   activity_type: ScientificActivityType;
   start_date: string;
   end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
   responsible_name: string;
   notes?: string | null;
   career_id?: number | null;
@@ -127,6 +129,8 @@ export interface ScientificActivity {
   category_id?: number | null;
   activity_category?: ActivityCategory | null;
   collaboration_career_ids?: number[];
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface ScientificActivityFilters {

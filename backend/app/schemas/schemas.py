@@ -247,6 +247,8 @@ class ScientificActivityResponse(ScientificActivityBase):
     evidences: List[ScientificActivityEvidenceResponse] = []
     activity_category: Optional[ActivityCategoryResponse] = None
     collaboration_career_ids: List[int] = []
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
 # --- Fusion Schemas ---
