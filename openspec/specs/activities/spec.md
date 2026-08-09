@@ -57,6 +57,33 @@ The system MUST provide dedicated endpoints (`POST`, `GET`, `DELETE`) for upload
 - GIVEN a user attempting to upload an evidence file
 - WHEN the file exceeds 10MB or has an unapproved MIME type (e.g. EXE)
 - THEN the system MUST reject the request with HTTP status 400 Bad Request and display an error message
+### Requirement: Table View Status & Evidence Quick Management
+The system MUST provide a dedicated "Cambiar Estado" action button and interactive badge in the `/actividades` table view, allowing users to update status, write notes/motives, and upload/delete evidence files without opening the full Edit modal.
+#### Scenario: Change status from table view
+- GIVEN an authorized user viewing the scientific activities table
+- WHEN clicking the "Cambiar Estado" button or status badge for a row
+- THEN the system displays the Status & Evidence sub-dialog pre-populated with current values and uploaded files
+
+### Requirement: Individual Activity Printable Report Sheet (1-Page A4)
+The system MUST provide a "Ver Informe" action button for every activity row that opens an individual activity report sheet modal containing complete activity metadata, start/end time, responsible, collaborator careers, uploaded evidences, and user-attributed audit timeline, with an institutional UNITEPC header and print CSS rules enforcing exactly 1 single A4 page print output.
+#### Scenario: Printing activity report sheet
+- GIVEN a user viewing an individual activity report sheet modal
+- WHEN clicking "Imprimir Ficha PDF"
+- THEN the browser print dialog MUST render exactly 1 single A4 page without background table leaks or dark theme artifacts
+
+### Requirement: Field-Level Audit Trail and User Attribution
+The system MUST record detailed audit events (`scientific_activity_audits`) in PostgreSQL for creation, status changes, main field edits with specific value diffs (`Old Value ➔ New Value`), and evidence file uploads/deletions, capturing the timestamp and user ID/role.
+#### Scenario: Recording field diff audit
+- GIVEN a user editing a scientific activity
+- WHEN changing fields (e.g. title, dates, times, responsible, status)
+- THEN the system records an audit entry containing exact field diff strings and the user's name and role
+
+### Requirement: Role-Tailored Interactive Onboarding Tutorials
+The system MUST provide an interactive step-by-step onboarding tutorial (`OnboardingTutorialModal.tsx`) that dynamically detects the authenticated user's role (`super_admin`, `carrera_director`, `read_only`) and assigned careers, displaying a customized walkthrough track with specific tips for their permission level.
+#### Scenario: Opening role-tailored tutorial
+- GIVEN a user logged in with a specific role
+- WHEN opening the tutorial via sidebar or floating button
+- THEN the system displays the tutorial track specifically tailored to their role and assigned career count
 #### Scenario: Deleting activity evidence
 - GIVEN an authorized user and an existing activity evidence attachment
 - WHEN sending a deletion request for the attachment ID
