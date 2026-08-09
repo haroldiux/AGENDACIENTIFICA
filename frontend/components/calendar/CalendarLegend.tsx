@@ -4,24 +4,24 @@ import { BookOpen, FlaskConical } from 'lucide-react';
 
 export const CALENDAR_COLORS = {
   academic: {
-    examen: '#ef4444',
-    receso: '#6b7280',
-    reunion: '#3b82f6',
-    curso: '#10b981',
-    'clase magistral': '#8b5cf6',
-    taller: '#f59e0b',
-    seminario: '#06b6d4',
-    conferencia: '#ec4899',
-    'práctica de campo': '#14b8a6',
-    default: '#6366f1',
+    examen: '#e11d48',
+    receso: '#64748b',
+    reunion: '#2563eb',
+    curso: '#059669',
+    'clase magistral': '#7c3aed',
+    taller: '#d97706',
+    seminario: '#0284c7',
+    conferencia: '#c026d3',
+    'práctica de campo': '#0d9488',
+    default: '#4f46e5',
   },
   scientific: {
-    congreso: '#f59e0b',
-    webinar: '#06b6d4',
-    defensa: '#ec4899',
-    feria: '#8b5cf6',
-    olimpiada: '#14b8a6',
-    master_class: '#f97316',
+    congreso: '#4f46e5',
+    webinar: '#0891b2',
+    defensa: '#db2777',
+    feria: '#059669',
+    olimpiada: '#0284c7',
+    master_class: '#ea580c',
   },
 } as const;
 
@@ -62,24 +62,24 @@ interface CalendarLegendProps {
 export default function CalendarLegend({ className = '' }: CalendarLegendProps) {
   return (
     <div className={`bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl space-y-4 ${className}`}>
-      <h4 className="text-sm font-semibold text-slate-300">Leyenda</h4>
+      <h4 className="text-sm font-semibold text-foreground">Leyenda</h4>
 
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <BookOpen className="w-4 h-4 text-slate-300" />
-          <span className="font-medium">Actividades Académicas</span>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <BookOpen className="w-4 h-4 text-foreground" />
+          <span className="font-semibold text-foreground">Actividades Académicas</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(CALENDAR_COLORS.academic).map(([key, color]) => (
             <div
               key={key}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 border border-border"
             >
               <span
                 className="w-3 h-3 rounded-sm shrink-0"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-xs text-slate-400 capitalize">
+              <span className="text-xs text-muted-foreground font-medium capitalize">
                 {key === 'default' ? 'Otra' : key}
               </span>
             </div>
@@ -87,22 +87,22 @@ export default function CalendarLegend({ className = '' }: CalendarLegendProps) 
         </div>
       </div>
 
-      <div className="border-t border-[var(--border)] pt-3 space-y-3">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <FlaskConical className="w-4 h-4 text-slate-300" />
-          <span className="font-medium">Actividades Científicas</span>
+      <div className="border-t border-border pt-3 space-y-3">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <FlaskConical className="w-4 h-4 text-foreground" />
+          <span className="font-semibold text-foreground">Actividades Científicas</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {Object.entries(CALENDAR_COLORS.scientific).map(([key, color]) => (
             <div
               key={key}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 border border-border"
             >
               <span
-                className="w-3 h-3 rounded-full shrink-0 border-2 border-white/20"
+                className="w-3 h-3 rounded-full shrink-0 border border-white/20"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-xs text-slate-400 capitalize">
+              <span className="text-xs text-muted-foreground font-medium capitalize">
                 {key.replace('_', ' ')}
               </span>
             </div>
@@ -111,18 +111,18 @@ export default function CalendarLegend({ className = '' }: CalendarLegendProps) 
       </div>
 
       <div className="border-t border-border pt-3 space-y-2 text-xs">
-        <span className="font-semibold text-slate-300 block mb-1">Identificadores de Alcance:</span>
-        <div className="flex items-center gap-2 text-slate-300">
-          <span className="w-2.5 h-2.5 rounded-full bg-purple-400 ring-2 ring-purple-500/50 shrink-0" />
-          <span>Global / Vicerrectorado</span>
+        <span className="font-semibold text-foreground block mb-1">Identificadores de Alcance:</span>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span className="w-2.5 h-2.5 rounded-full bg-purple-500 ring-2 ring-purple-400/50 shrink-0" />
+          <span className="font-medium">Global / Vicerrectorado</span>
         </div>
-        <div className="flex items-center gap-2 text-slate-300">
-          <span className="w-2.5 h-2.5 rounded-full bg-pink-400 ring-1 ring-pink-400/50 shrink-0" />
-          <span>Investigación Científica</span>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span className="w-2.5 h-2.5 rounded-full bg-pink-500 ring-1 ring-white/60 shrink-0" />
+          <span className="font-medium">Investigación Científica</span>
         </div>
-        <div className="flex items-center gap-2 text-slate-300">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
-          <span>Académica por Carrera</span>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+          <span className="font-medium">Académica por Carrera</span>
         </div>
       </div>
     </div>
