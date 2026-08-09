@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle, X, Loader2, Download } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle, AlertTriangle, X, Loader2, Download, CopyX } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { api } from "@/lib/api";
 import PageHeader from "@/components/layout/PageHeader";
@@ -9,7 +9,14 @@ import { config as appConfig } from "@/lib/config";
 
 interface UploadResult {
   inserted_count: number;
+  duplicate_count?: number;
   errors: { row: number; error: string }[];
+  conflicts?: {
+    activity_title: string;
+    conflicting_title: string;
+    dates: string;
+    career_id: number;
+  }[];
 }
 
 export default function ImportarPage() {
@@ -197,16 +204,36 @@ export default function ImportarPage() {
             Resultado de la importación
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
               <p className="text-2xl font-bold text-green-400">{result.inserted_count}</p>
               <p className="text-sm text-slate-400">Actividades insertadas</p>
+            </div>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+              <p className="text-2xl font-bold text-amber-400">{result.duplicate_count ?? 0}</p>
+              <p className="text-sm text-slate-400">Duplicados omitidos</p>
             </div>
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
               <p className="text-2xl font-bold text-red-400">{result.errors?.length ?? 0}</p>
               <p className="text-sm text-slate-400">Errores</p>
             </div>
           </div>
+
+          {result.conflicts && result.conflicts.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              <p className="text-sm font-medium text-amber-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                Choques de fechas detectados con la carrera ({result.conflicts.length}):
+              </p>
+              <div className="max-h-48 overflow-y-auto space-y-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+                {result.conflicts.map((c, idx) => (
+                  <div key={idx} className="text-xs text-amber-200 leading-relaxed">
+                    • <span className="font-semibold text-amber-100">{c.activity_title}</span> se cruza en fechas ({c.dates}) con la actividad <span className="font-semibold text-amber-100">"{c.conflicting_title}"</span>.
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {result.errors && result.errors.length > 0 && (
             <div className="space-y-2">

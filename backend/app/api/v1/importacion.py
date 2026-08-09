@@ -525,14 +525,92 @@ async def upload_excel(
     for row in valid_scientific:
         check_activity_scope_permission(current_user, row.get("career_id"))
 
+    # Fetch existing activities to detect duplicates and date overlaps
+    existing_academics = db.query(AcademicActivity).all()
+    existing_scientifics = db.query(ScientificActivity).filter(
+        ScientificActivity.status != ScientificActivityStatus.cancelled
+    ).all()
+
+    existing_keys = set()
+    for a in existing_academics:
+        existing_keys.add((a.title.strip().upper(), a.start_date, a.end_date, a.career_id, a.gestion_id))
+    for s in existing_scientifics:
+        existing_keys.add((s.title.strip().upper(), s.start_date, s.end_date, s.career_id, s.gestion_id))
+
+    def overlaps(start_a, end_a, start_b, end_b):
+        return start_a <= end_b and start_b <= end_a
+
+    duplicate_count = 0
+    conflicts_detected = []
+    filtered_academic = []
+    filtered_scientific = []
+
+    # Process Academic rows for duplicates & conflicts
+    for row in valid_academic:
+        key = (row["title"].strip().upper(), row["start_date"], row["end_date"], row["career_id"], row["gestion_id"])
+        if key in existing_keys:
+            duplicate_count += 1
+            continue
+        existing_keys.add(key)
+        filtered_academic.append(row)
+
+        c_id = row["career_id"]
+        g_id = row["gestion_id"]
+        if c_id and g_id:
+            for ex in existing_academics:
+                if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
+                    conflicts_detected.append({
+                        "activity_title": row["title"],
+                        "conflicting_title": ex.title,
+                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "career_id": c_id,
+                    })
+            for ex in existing_scientifics:
+                if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
+                    conflicts_detected.append({
+                        "activity_title": row["title"],
+                        "conflicting_title": ex.title,
+                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "career_id": c_id,
+                    })
+
+    # Process Scientific rows for duplicates & conflicts
+    for row in valid_scientific:
+        key = (row["title"].strip().upper(), row["start_date"], row["end_date"], row["career_id"], row["gestion_id"])
+        if key in existing_keys:
+            duplicate_count += 1
+            continue
+        existing_keys.add(key)
+        filtered_scientific.append(row)
+
+        c_id = row["career_id"]
+        g_id = row["gestion_id"]
+        if c_id and g_id:
+            for ex in existing_academics:
+                if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
+                    conflicts_detected.append({
+                        "activity_title": row["title"],
+                        "conflicting_title": ex.title,
+                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "career_id": c_id,
+                    })
+            for ex in existing_scientifics:
+                if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
+                    conflicts_detected.append({
+                        "activity_title": row["title"],
+                        "conflicting_title": ex.title,
+                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "career_id": c_id,
+                    })
+
     inserted_count = 0
     try:
-        if valid_academic:
-            db.bulk_insert_mappings(AcademicActivity, valid_academic)
-            inserted_count += len(valid_academic)
-        if valid_scientific:
-            db.bulk_insert_mappings(ScientificActivity, valid_scientific)
-            inserted_count += len(valid_scientific)
+        if filtered_academic:
+            db.bulk_insert_mappings(AcademicActivity, filtered_academic)
+            inserted_count += len(filtered_academic)
+        if filtered_scientific:
+            db.bulk_insert_mappings(ScientificActivity, filtered_scientific)
+            inserted_count += len(filtered_scientific)
         
         db.commit()
     except Exception as e:
@@ -541,5 +619,7 @@ async def upload_excel(
     
     return {
         "inserted_count": inserted_count,
-        "errors": errors
+        "duplicate_count": duplicate_count,
+        "errors": errors,
+        "conflicts": conflicts_detected,
     }
