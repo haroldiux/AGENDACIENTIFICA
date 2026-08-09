@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,11 +22,11 @@ import {
   CheckCircle2,
   Globe,
   BookOpen,
-  ShieldCheck,
-  Tag,
   Activity,
   PlusCircle,
   Pencil,
+  GraduationCap,
+  ShieldCheck,
 } from "lucide-react";
 import {
   api,
@@ -127,31 +125,51 @@ export default function ActivityDetailReportModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      {/* Embedded CSS for clean 1-page printing */}
+      {/* Strict CSS for 1 Single Page Printing + Clean Header */}
       <style jsx global>{`
         @media print {
           @page {
             size: A4 portrait;
-            margin: 10mm 12mm;
+            margin: 0 !important;
           }
-          body {
+          html, body {
+            height: 100vh !important;
+            max-height: 100vh !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
             background-color: #ffffff !important;
             color: #0f172a !important;
-            font-family: inherit;
           }
-          /* Hide non-modal UI components */
-          [role="dialog"] > button[aria-label="Close"],
+          /* Hide everything in body EXCEPT Radix Portal */
+          body > *:not([data-radix-portal]) {
+            display: none !important;
+          }
+          /* Hide Radix Close 'X' button and non-export elements */
+          button[aria-label="Close"],
           .print-no-export {
             display: none !important;
           }
-          .printable-modal-sheet {
-            background: #ffffff !important;
-            color: #0f172a !important;
-            border: none !important;
+          /* Remove dark backdrop background */
+          [data-radix-portal] > div {
+            background: transparent !important;
+            backdrop-filter: none !important;
+          }
+          /* Force Dialog container to occupy exact single A4 page */
+          div[role="dialog"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            margin: 0 !important;
+            padding: 10mm 12mm !important;
             box-shadow: none !important;
-            padding: 0 !important;
-            max-width: 100% !important;
-            width: 100% !important;
+            border: none !important;
+            background: #ffffff !important;
+            overflow: hidden !important;
           }
           .printable-card {
             border: 1px solid #cbd5e1 !important;
@@ -164,54 +182,72 @@ export default function ActivityDetailReportModal({
         }
       `}</style>
 
-      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto printable-modal-sheet">
-        <div className="space-y-5 p-1">
-          {/* Institutional Print Header */}
-          <div className="border-b border-border pb-4">
-            <div className="flex items-center justify-between gap-4 mb-2">
-              <div>
-                <span className="text-[10px] font-bold tracking-wider text-primary uppercase block">
-                  UNIVERSIDAD TÉCNICA PRIVADA COSMOPOLITA · UNITEPC
-                </span>
-                <span className="text-xs text-muted-foreground font-medium">
-                  Agenda Científica e Investigativa · Ficha Individual de Actividad
-                </span>
+      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto print:max-h-none p-0 overflow-hidden border-border shadow-2xl">
+        <div className="p-6 space-y-4 text-xs">
+          {/* OFFICIAL INSTITUTIONAL UNITEPC PRINT HEADER */}
+          <div className="border border-primary/30 bg-primary/5 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3 border-b border-primary/20 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-md shrink-0">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-extrabold text-sm tracking-tight text-foreground uppercase leading-none">
+                    UNIVERSIDAD TÉCNICA PRIVADA COSMOPOLITA
+                  </p>
+                  <p className="text-[11px] font-semibold text-primary tracking-wide leading-tight mt-0.5">
+                    UNITEPC · VICERRECTORADO ACADÉMICO Y DE INVESTIGACIÓN
+                  </p>
+                </div>
               </div>
+              <div className="text-right shrink-0">
+                <Badge variant="outline" className="bg-background text-foreground border-primary/30 text-[10px] font-mono font-bold">
+                  REGISTRO #ACT-{activity.id}
+                </Badge>
+                <p className="text-[9px] text-muted-foreground mt-0.5">
+                  Ficha Técnica de Actividad
+                </p>
+              </div>
+            </div>
+
+            {/* Activity Title & Main Status Badges */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div>
+                <h2 className="text-lg font-extrabold text-foreground leading-tight">
+                  {activity.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] font-semibold">
+                    Actividad Científica
+                  </Badge>
+                  {activity.career_id === null ? (
+                    <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[11px] gap-1 font-semibold">
+                      <Globe className="w-3 h-3" /> Global / Vicerrectorado
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[11px] gap-1 font-semibold">
+                      <Building2 className="w-3 h-3" /> {careerName(activity.career_id)}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
               <Badge
                 variant="secondary"
-                className={`text-xs px-3 py-1 font-semibold whitespace-nowrap ${activityStatusClasses[activity.status] ?? ""}`}
+                className={`text-xs px-3 py-1 font-bold whitespace-nowrap ${activityStatusClasses[activity.status] ?? ""}`}
               >
                 {activityStatusLabels[activity.status] ?? activity.status}
               </Badge>
             </div>
-
-            <DialogTitle className="text-xl font-bold text-foreground mt-1">
-              {activity.title}
-            </DialogTitle>
-
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                Actividad Científica
-              </Badge>
-              {activity.career_id === null ? (
-                <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-xs gap-1">
-                  <Globe className="w-3.5 h-3.5" /> Global / Vicerrectorado
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs gap-1">
-                  <Building2 className="w-3.5 h-3.5" /> {careerName(activity.career_id)}
-                </Badge>
-              )}
-            </div>
           </div>
 
-          {/* Main Activity Info Grid */}
+          {/* Main Info Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="bg-muted/30 border border-border p-3 rounded-xl space-y-1 printable-card">
               <span className="text-muted-foreground font-medium flex items-center gap-1.5 text-[11px] printable-text-muted">
                 <Calendar className="w-3.5 h-3.5 text-primary" /> Fechas y Horario
               </span>
-              <p className="font-semibold text-foreground text-sm">
+              <p className="font-semibold text-foreground text-xs">
                 {formatDateRange(activity.start_date, activity.end_date, activity.start_time, activity.end_time)}
               </p>
               {activity.start_time && (
@@ -225,7 +261,7 @@ export default function ActivityDetailReportModal({
               <span className="text-muted-foreground font-medium flex items-center gap-1.5 text-[11px] printable-text-muted">
                 <BookOpen className="w-3.5 h-3.5 text-primary" /> Tipo / Formato
               </span>
-              <p className="font-semibold text-foreground text-sm">
+              <p className="font-semibold text-foreground text-xs">
                 {activityTypeLabels[activity.activity_type] ?? activity.activity_type}
               </p>
             </div>
@@ -234,7 +270,7 @@ export default function ActivityDetailReportModal({
               <span className="text-muted-foreground font-medium flex items-center gap-1.5 text-[11px] printable-text-muted">
                 <User className="w-3.5 h-3.5 text-primary" /> Responsable Asignado
               </span>
-              <p className="font-semibold text-foreground text-sm">
+              <p className="font-semibold text-foreground text-xs">
                 {activity.responsible_name || "Sin responsable asignado"}
               </p>
             </div>
@@ -243,7 +279,7 @@ export default function ActivityDetailReportModal({
               <span className="text-muted-foreground font-medium flex items-center gap-1.5 text-[11px] printable-text-muted">
                 <Building2 className="w-3.5 h-3.5 text-primary" /> Carrera Principal
               </span>
-              <p className="font-semibold text-foreground text-sm">
+              <p className="font-semibold text-foreground text-xs">
                 {careerName(activity.career_id)}
               </p>
             </div>
@@ -265,13 +301,13 @@ export default function ActivityDetailReportModal({
             </div>
           )}
 
-          {/* Observations & Status Motive */}
-          <div className="bg-muted/30 border border-border p-3.5 rounded-xl space-y-1.5 text-xs printable-card">
+          {/* Observations & Motive */}
+          <div className="bg-muted/30 border border-border p-3 rounded-xl space-y-1.5 text-xs printable-card">
             <span className="text-muted-foreground font-semibold flex items-center gap-1.5 text-xs printable-text-muted">
-              <MessageSquare className="w-4 h-4 text-primary" /> Observaciones y Motivo de Cambio de Estado
+              <MessageSquare className="w-3.5 h-3.5 text-primary" /> Observaciones y Motivo de Estado
             </span>
             {activity.notes ? (
-              <p className="text-foreground bg-background p-2.5 rounded-lg border border-border whitespace-pre-wrap leading-relaxed text-xs">
+              <p className="text-foreground bg-background p-2 rounded-lg border border-border whitespace-pre-wrap leading-relaxed text-xs">
                 {activity.notes}
               </p>
             ) : (
@@ -281,10 +317,10 @@ export default function ActivityDetailReportModal({
             )}
           </div>
 
-          {/* Uploaded Evidences & Attachments */}
-          <div className="bg-muted/30 border border-border p-3.5 rounded-xl space-y-2 text-xs printable-card">
+          {/* Evidences */}
+          <div className="bg-muted/30 border border-border p-3 rounded-xl space-y-1.5 text-xs printable-card">
             <span className="text-muted-foreground font-semibold flex items-center gap-1.5 text-xs printable-text-muted">
-              <Paperclip className="w-4 h-4 text-primary" /> Evidencias y Archivos Adjuntos ({evidences.length})
+              <Paperclip className="w-3.5 h-3.5 text-primary" /> Evidencias y Archivos Adjuntos ({evidences.length})
             </span>
 
             {isLoading ? (
@@ -294,14 +330,14 @@ export default function ActivityDetailReportModal({
                 Esta actividad no cuenta con evidencias digitales adjuntas.
               </p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {evidences.map((ev) => (
                   <div
                     key={ev.id}
-                    className="flex flex-wrap items-center justify-between gap-2 bg-background p-2 rounded-lg border border-border"
+                    className="flex flex-wrap items-center justify-between gap-2 bg-background p-1.5 px-2.5 rounded-lg border border-border"
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
                       <div className="truncate">
                         <p className="font-medium text-foreground text-xs truncate">{ev.filename}</p>
                         <p className="text-[10px] text-muted-foreground printable-text-muted">
@@ -313,7 +349,7 @@ export default function ActivityDetailReportModal({
                       href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}${ev.file_path}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="print-no-export inline-flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                      className="print-no-export inline-flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary px-2 py-0.5 rounded text-[11px] font-medium transition-colors"
                     >
                       <Download className="w-3 h-3" /> Descargar
                     </a>
@@ -323,26 +359,22 @@ export default function ActivityDetailReportModal({
             )}
           </div>
 
-          {/* HISTORIAL COMPLETO DE MODIFICACIONES (AUDIT LOG TIMELINE) */}
-          <div className="bg-muted/30 border border-border p-3.5 rounded-xl space-y-2 text-xs printable-card">
+          {/* AUDIT LOG TIMELINE */}
+          <div className="bg-muted/30 border border-border p-3 rounded-xl space-y-1.5 text-xs printable-card">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground font-semibold flex items-center gap-1.5 text-xs printable-text-muted">
-                <History className="w-4 h-4 text-primary" /> Historial Completo de Trazabilidad y Modificaciones ({audits.length})
-              </span>
-              <span className="text-[10px] text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded font-medium printable-no-export">
-                Vista de Auditoría de Gestión
+                <History className="w-3.5 h-3.5 text-primary" /> Historial Completo de Trazabilidad y Auditoría ({audits.length})
               </span>
             </div>
 
             {isLoading ? (
               <p className="text-muted-foreground italic text-xs printable-text-muted">Cargando historial de cambios...</p>
             ) : audits.length === 0 ? (
-              <div className="text-muted-foreground text-xs space-y-1 printable-text-muted">
-                <p>• Registro de Creación: <strong>{formatTimestamp(activity.created_at || activity.start_date)}</strong></p>
-                <p>• Última Actualización: <strong>{formatTimestamp(activity.updated_at || activity.created_at)}</strong></p>
+              <div className="text-muted-foreground text-xs space-y-0.5 printable-text-muted">
+                <p>• Creación: <strong>{formatTimestamp(activity.created_at || activity.start_date)}</strong></p>
               </div>
             ) : (
-              <div className="space-y-2 pt-1">
+              <div className="space-y-1.5 pt-0.5">
                 {audits.map((aud) => {
                   const actorName = aud.user
                     ? `${aud.user.full_name || aud.user.username} (${aud.user.role})`
@@ -351,15 +383,15 @@ export default function ActivityDetailReportModal({
                   return (
                     <div
                       key={aud.id}
-                      className="flex items-start gap-2.5 bg-background p-2.5 rounded-lg border border-border text-xs"
+                      className="flex items-start gap-2 bg-background p-2 rounded-lg border border-border text-[11px]"
                     >
                       {ACTION_ICONS[aud.action] || <History className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />}
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0 space-y-0.5">
+                        <div className="flex flex-wrap items-center justify-between gap-1">
+                          <div className="flex items-center gap-1.5">
                             <Badge
                               variant="outline"
-                              className={`text-[10px] px-1.5 py-0 font-semibold ${ACTION_BADGES[aud.action] || ""}`}
+                              className={`text-[9px] px-1 py-0 font-bold ${ACTION_BADGES[aud.action] || ""}`}
                             >
                               {aud.action.replace("_", " ")}
                             </Badge>
@@ -372,7 +404,7 @@ export default function ActivityDetailReportModal({
                             {formatTimestamp(aud.timestamp)}
                           </span>
                         </div>
-                        <p className="text-foreground text-xs font-normal leading-relaxed bg-muted/20 p-1.5 rounded border border-border/50">
+                        <p className="text-foreground text-[11px] font-normal leading-tight">
                           {aud.description}
                         </p>
                       </div>
@@ -384,18 +416,18 @@ export default function ActivityDetailReportModal({
           </div>
 
           {/* Printable Action Footer */}
-          <div className="flex justify-end gap-3 pt-3 border-t border-border print-no-export">
+          <div className="flex justify-end gap-3 pt-2 border-t border-border print-no-export">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handlePrint}
-              className="gap-1.5"
+              className="gap-1.5 text-xs font-semibold"
             >
               <Printer className="w-3.5 h-3.5" />
-              Imprimir Ficha PDF (1 Página)
+              Imprimir Ficha (1 Hoja)
             </Button>
-            <Button type="button" size="sm" onClick={onClose}>
+            <Button type="button" size="sm" onClick={onClose} className="text-xs">
               Cerrar
             </Button>
           </div>
