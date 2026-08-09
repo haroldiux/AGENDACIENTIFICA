@@ -19,6 +19,7 @@ import {
   Tag,
   LogOut,
   User,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -196,8 +197,19 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Theme Toggle */}
-      <div className={cn("p-3 border-t border-border hidden md:flex items-center justify-center", !user && "mt-auto")}>
+      {/* Theme & Onboarding Guide Toggle */}
+      <div className={cn("p-3 border-t border-border hidden md:flex flex-col gap-1 items-center justify-center", !user && "mt-auto")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => window.dispatchEvent(new CustomEvent("open-unitepc-onboarding"))}
+          className={cn("w-full flex items-center gap-2 text-xs text-primary hover:text-primary hover:bg-primary/10 font-semibold", collapsed ? "justify-center px-0" : "justify-start px-2.5")}
+          title="Ver Guía y Tutorial del Sistema"
+        >
+          <Sparkles className="w-4 h-4 shrink-0 text-primary animate-pulse" />
+          {!collapsed && <span>Guía del Sistema</span>}
+        </Button>
+
         {mounted && (
           <Button
             variant="ghost"
