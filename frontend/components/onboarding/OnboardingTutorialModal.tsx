@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +22,13 @@ import {
   Activity,
   Printer,
   HelpCircle,
-  X,
-  BookOpen,
+  ShieldCheck,
+  Tag,
+  Eye,
+  UserCheck,
+  Building2,
 } from "lucide-react";
+import { useUser } from "@/context/AuthContext";
 
 interface StepData {
   title: string;
@@ -37,76 +39,184 @@ interface StepData {
   tip?: string;
 }
 
-const TUTORIAL_STEPS: StepData[] = [
+// --- TRACK 1: ADMINS & AUTORIDADES (super_admin, admin, vicerrectorado) ---
+const ADMIN_STEPS: StepData[] = [
   {
-    title: "¡Bienvenido a la Agenda Científica UNITEPC!",
-    badge: "Introducción y Objetivo",
-    icon: <GraduationCap className="w-8 h-8 text-primary" />,
+    title: "¡Bienvenido, Autoridad / Administrador!",
+    badge: "Guía Institucional · Admin",
+    icon: <ShieldCheck className="w-8 h-8 text-purple-400" />,
     description:
-      "Este sistema está diseñado para organizar, planificar y dar seguimiento a las actividades de investigación e interacción social de todas las carreras de la Universidad Técnica Privada Cosmopolita.",
+      "Como Administrador o Vicerrectorado, tenés acceso global para supervisar, auditar y controlar toda la planificación científica e investigativa de la UNITEPC.",
     highlights: [
-      "📌 Gestión unificada de actividades académicas y científicas por gestión académica.",
-      "🎯 Control de cumplimiento e hitos institucionales por carrera y ámbito global.",
-      "📁 Resguardo digital de respaldos y evidencias de cada evento ejecutado.",
+      "🏛️ Visión Global: Monitoreo de actividades de todas las carreras y sedes académicas.",
+      "🛡️ Auditoría Integral: Registro histórico con fecha, hora y usuario exacto de cada modificación.",
+      "📊 Reportes Ejecutivos: Descarga de agendas institucionalmente formateadas y métricas de cumplimiento.",
     ],
-    tip: "Podés volver a abrir esta guía interactiva en cualquier momento desde el menú lateral haciendo clic en 'Guía del Sistema'.",
+    tip: "Esta guía está personalizada según tu rol de Administrador. Podés volver a abrirla desde el menú lateral 'Guía del Sistema'.",
   },
   {
-    title: "Módulo Calendario: Vistas y Navegación",
+    title: "Gestión de Categorías y paleta de colores",
+    badge: "Paso 1 de 4",
+    icon: <Tag className="w-8 h-8 text-primary" />,
+    description:
+      "Administrá los tipos y categorías de eventos científicos en la sección '/configuracion/categorias'.",
+    highlights: [
+      "🎨 Teoría del Color: Asignación de colores contrastantes por tipo de evento para evitar confusiones en el calendario.",
+      "⚙️ Ámbito Personalizado: Definición de categorías académicas, científicas o mixtas.",
+    ],
+    tip: "Mantener colores diferenciados ayuda a que los directores identifiquen de un vistazo sus eventos.",
+  },
+  {
+    title: "Auditoría de Cambios y Trazabilidad por Usuario",
+    badge: "Paso 2 de 4",
+    icon: <Activity className="w-8 h-8 text-emerald-400" />,
+    description:
+      "Cada acción en el sistema guarda una marca indeleble en el Historial de Auditoría.",
+    highlights: [
+      "📄 Botón 'Ver Informe': Abre la ficha individual con el historial completo de quién modificó qué campo y cuándo.",
+      "👤 Identificación de Actor: Nombre completo, correo y rol del usuario que ejecutó la edición o subida de evidencia.",
+      "📝 Diffs Detallados: Registro específico de cambios de fecha, horarios, estado o responsables.",
+    ],
+    tip: "Haciendo clic en la ficha individual podés verificar la validez de las evidencias cargadas.",
+  },
+  {
+    title: "Reporte de Seguimiento y Cumplimiento %",
+    badge: "Paso 3 de 4",
+    icon: <FileBarChart className="w-8 h-8 text-blue-400" />,
+    description:
+      "Evaluá la tasa de cumplimiento efectivo de actividades por carrera en tiempo real.",
+    highlights: [
+      "📈 Porcentaje de Avance: Cálculo automático de actividades completadas vs canceladas/postpuestas.",
+      "📑 Exportación en PDF y Excel: Reportes oficiales para la junta académica o dirección de sede.",
+      "👁️ Visor Interactivo: Inspección instantánea de porcentajes antes de generar el documento.",
+    ],
+    tip: "Al entrar a '/reportes', el sistema selecciona automáticamente la gestión académica activa.",
+  },
+];
+
+// --- TRACK 2: DIRECTORES DE INVESTIGACIÓN Y CARRERA (director_investigacion, carrera_director, docente) ---
+const MANAGER_STEPS: StepData[] = [
+  {
+    title: "¡Bienvenido, Director de Carrera / Investigación!",
+    badge: "Guía de Gestión de Carrera",
+    icon: <GraduationCap className="w-8 h-8 text-primary" />,
+    description:
+      "Tu rol te permite planificar, ejecutar, actualizar estados y adjuntar los respaldos de las actividades investigativas de tu carrera.",
+    highlights: [
+      "📅 Planificación de Eventos: Asignación de fechas, horas, responsables y tipos de evento.",
+      "⚡ Actualización de Estado: Registro de avance (En progreso, Completada, Cancelada) con justificaciones.",
+      "📎 Resguardo de Evidencias: Subida de actas, fotos, afiches e informes en PDF, Word o Imagen.",
+    ],
+    tip: "Esta guía te orientará en el flujo diario para mantener la agenda de tu carrera al día.",
+  },
+  {
+    title: "Calendario Interactivo y Horarios",
     badge: "Paso 1 de 4",
     icon: <Calendar className="w-8 h-8 text-emerald-400" />,
     description:
-      "Visualizá la planificación completa por Mes, Semana o Día con códigos de colores diferenciados para evitar confusiones entre tipos de actividades.",
+      "Organizá tu calendario mensual, semanal o diario y navegá con 'Hoy', 'Anterior' y 'Siguiente'.",
     highlights: [
-      "🗓️ Botones de Navegación: 'Hoy', 'Anterior' y 'Siguiente' para desplazarte fluidamente.",
-      "⏱️ Horarios Precisos: Las actividades cuentan con fecha y rango de horas de ejecución.",
-      "⚡ Estado en Vivo: Hacé clic sobre cualquier actividad en el calendario para cambiar de estado o ver sus detalles.",
+      "🗓️ Vistas Personalizadas: Cambiá entre vista de Mes, Semana y Día segun tu necesidad.",
+      "⏱️ Horario Específico: Cada evento cuenta con hora de inicio y fin para evitar cruces en el mismo día.",
+      "⚡ Estado Rápido: Hacé clic sobre la tarjeta de un evento en el calendario para cambiar su estado.",
     ],
-    tip: "Las actividades globales de Vicerrectorado se destacan con un distintivo morado.",
+    tip: "Tus eventos se destacan según el color del tipo de actividad seleccionado.",
   },
   {
-    title: "Módulo Actividades: Tabla y Control de Avance",
+    title: "Tabla sin Scroll y Botón 'Cambiar Estado'",
     badge: "Paso 2 de 4",
     icon: <FlaskConical className="w-8 h-8 text-blue-400" />,
     description:
-      "Un listado adaptativo que entra 100% en tu pantalla sin necesidad de hacer scroll horizontal.",
+      "En '/actividades' tenés un listado limpio que entra 100% en tu pantalla.",
     highlights: [
-      "⚡ Cambiar Estado: Botón verde para actualizar el estado (Programada, En progreso, Completada, Cancelada), agregar observaciones y subir archivos de evidencia (PDF, Imagen, Word).",
-      "📄 Ver Informe / Ficha Individual: Botón azul para ver la ficha completa de la actividad con trazabilidad histórica de cambios, responsable y usuario que editó.",
-      "🖨️ Exportación PDF Limpia: Generación de ficha impresas en 1 sola hoja sin elementos innecesarios.",
+      "⚡ Botón 'Cambiar Estado': Cambiá a 'Completada' o 'Cancelada', escribí observaciones y subí respaldos digitales (PDF, Imagen, DOCX hasta 10MB).",
+      "📄 Botón 'Ver Informe': Ficha individual con historial de cambios y botón para imprimir en 1 hoja limpia.",
+      "✏️ Edición Rápida: Actualizá responsables, fechas o títulos en cualquier momento.",
     ],
-    tip: "Hacé clic en el encabezado de cualquier columna (Nombre, Fecha, Tipo) para ordenar la lista.",
+    tip: "Los respaldos cargados quedan asociados para siempre a la actividad como evidencia oficial.",
   },
   {
-    title: "Importación Masiva y Carga Excel",
+    title: "Carga Masiva mediante Excel y Reportes",
     badge: "Paso 3 de 4",
     icon: <Upload className="w-8 h-8 text-amber-400" />,
     description:
-      "Cargá múltiples actividades en segundos subiendo un archivo Excel estandarizado.",
+      "Optimizá tu tiempo cargando múltiples actividades mediante la plantilla Excel oficial.",
     highlights: [
-      "📥 Plantilla Oficial: Descargá la plantilla Excel pre-formateada desde el módulo 'Importar'.",
-      "✅ Validación Automática: El sistema verifica carreras, gestiones y fechas antes de guardar.",
+      "📥 Plantilla Excel: Descargá el formato oficial desde la sección '/importar'.",
+      "📄 Exportación de Agendas: Descargá la agenda de tu carrera en PDF o Excel desde '/reportes'.",
     ],
-    tip: "Si tu carrera es 'Global / Vicerrectorado', dejá el campo de carrera en blanco en la plantilla.",
+    tip: "La plantilla valida automáticamente las fechas y gestiones para evitar errores.",
+  },
+];
+
+// --- TRACK 3: USUARIOS DE SOLO LECTURA (read_only) ---
+const READ_ONLY_STEPS: StepData[] = [
+  {
+    title: "¡Bienvenido a la Consulta de Agenda!",
+    badge: "Guía de Consulta · Solo Lectura",
+    icon: <Eye className="w-8 h-8 text-blue-400" />,
+    description:
+      "Tu cuenta te permite consultar, revisar y descargar toda la programación científica e investigativa de la UNITEPC.",
+    highlights: [
+      "🔍 Visor en Tiempo Real: Consulta de eventos por carrera, gestión y tipo de actividad.",
+      "📄 Fichas Informativas: Acceso a los detalles de cada evento y sus archivos adjuntos públicos.",
+      "📑 Descarga de Agendas: Exportación de reportes institucionales en PDF y Excel.",
+    ],
+    tip: "Tenés permisos de consulta. Para modificar eventos contactá a tu Director de Carrera o Administrador.",
   },
   {
-    title: "Reportes Institucionales y Seguimiento",
-    badge: "Paso 4 de 4",
-    icon: <FileBarChart className="w-8 h-8 text-purple-400" />,
+    title: "Navegación del Calendario",
+    badge: "Paso 1 de 3",
+    icon: <Calendar className="w-8 h-8 text-emerald-400" />,
     description:
-      "Generá agendas en PDF y Excel para presentación a autoridades y realizá el seguimiento de cumplimiento porcentual por carrera.",
+      "Explorá las actividades planificadas utilizando las vistas de Mes, Semana y Día.",
     highlights: [
-      "📊 Reportes Filtrados: Exportá agendas completas o filtradas por estado (Completadas, Canceladas, En progreso).",
-      "📈 Reporte de Seguimiento: Medí el porcentaje de cumplimiento de actividades de cada carrera.",
-      "👁️ Visor Interactivo: Inspeccioná métricas en tiempo real antes de exportar.",
+      "🗓️ Filtros por Carrera: Seleccioná tu carrera o la opción 'Todas las Carreras' para ver el panorama general.",
+      "⏱️ Rangos de Horario: Hacé clic en cualquier evento para ver sus horarios exactos.",
     ],
-    tip: "Al entrar a Reportes, la gestión activa y tu carrera se seleccionan automáticamente.",
+    tip: "Las actividades globales del Vicerrectorado están disponibles para todas las carreras.",
+  },
+  {
+    title: "Ficha Informativa y Descarga de Reportes",
+    badge: "Paso 2 de 3",
+    icon: <FileText className="w-8 h-8 text-purple-400" />,
+    description:
+      "Accedé a los informes individuales y descargá los respaldos disponibles.",
+    highlights: [
+      "📄 Ficha Individual (Icono Hoja): Ver observaciones, respaldos subidos y descargar la ficha en PDF.",
+      "📑 Exportación en Reportes: Descargá agendas institucionales completas en Excel o PDF.",
+    ],
+    tip: "Podés volver a consultar esta guía en cualquier momento desde el menú lateral 'Guía del Sistema'.",
   },
 ];
 
 export default function OnboardingTutorialModal() {
+  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Select appropriate tutorial track based on user role
+  const getTutorialTrack = (): { trackName: string; steps: StepData[] } => {
+    if (!user) {
+      return { trackName: "General", steps: MANAGER_STEPS };
+    }
+
+    if (["super_admin", "admin", "vicerrectorado"].includes(user.role)) {
+      return { trackName: "Administrador / Vicerrectorado", steps: ADMIN_STEPS };
+    }
+
+    if (["director_investigacion", "carrera_director", "docente"].includes(user.role)) {
+      return { trackName: "Director de Carrera", steps: MANAGER_STEPS };
+    }
+
+    if (user.role === "read_only") {
+      return { trackName: "Consulta / Solo Lectura", steps: READ_ONLY_STEPS };
+    }
+
+    return { trackName: "General", steps: MANAGER_STEPS };
+  };
+
+  const { trackName, steps } = getTutorialTrack();
 
   useEffect(() => {
     // Check if user has already completed or dismissed onboarding
@@ -125,7 +235,7 @@ export default function OnboardingTutorialModal() {
   }, []);
 
   const handleNext = () => {
-    if (currentStep < TUTORIAL_STEPS.length - 1) {
+    if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
       handleComplete();
@@ -143,7 +253,7 @@ export default function OnboardingTutorialModal() {
     setIsOpen(false);
   };
 
-  const step = TUTORIAL_STEPS[currentStep];
+  const step = steps[currentStep] || steps[0];
 
   return (
     <>
@@ -154,7 +264,7 @@ export default function OnboardingTutorialModal() {
           setCurrentStep(0);
           setIsOpen(true);
         }}
-        title="Ver Guía y Tutorial del Sistema"
+        title={`Ver Guía y Tutorial del Sistema (${trackName})`}
         className="fixed bottom-5 right-5 z-40 bg-primary text-primary-foreground p-3 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2 text-xs font-semibold"
       >
         <Sparkles className="w-4 h-4 animate-pulse" />
@@ -163,17 +273,22 @@ export default function OnboardingTutorialModal() {
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl p-0 overflow-hidden border-border shadow-2xl">
-          {/* Top Banner with Progress Bar */}
+          {/* Top Banner with Role Track Indicator & Progress Bar */}
           <div className="bg-primary/10 border-b border-border p-5 relative">
-            <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-background border border-border rounded-xl shadow-sm">
                   {step.icon}
                 </div>
                 <div>
-                  <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30 text-[11px] mb-1">
-                    {step.badge}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                    <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30 text-[11px]">
+                      {step.badge}
+                    </Badge>
+                    <Badge variant="secondary" className="bg-background/80 text-muted-foreground border-border text-[10px] gap-1">
+                      <UserCheck className="w-3 h-3 text-primary" /> Rol: {trackName}
+                    </Badge>
+                  </div>
                   <h3 className="text-base font-bold text-foreground leading-tight">
                     {step.title}
                   </h3>
@@ -182,8 +297,8 @@ export default function OnboardingTutorialModal() {
             </div>
 
             {/* Step Progress Dots */}
-            <div className="flex items-center gap-1.5 pt-2">
-              {TUTORIAL_STEPS.map((_, idx) => (
+            <div className="flex items-center gap-1.5 pt-3">
+              {steps.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentStep(idx)}
@@ -206,7 +321,7 @@ export default function OnboardingTutorialModal() {
 
             <div className="space-y-2 bg-muted/30 border border-border p-3.5 rounded-xl">
               <span className="font-semibold text-foreground text-xs block mb-1">
-                Puntos Clave del Módulo:
+                Aspectos Clave para tu Rol ({trackName}):
               </span>
               {step.highlights.map((hl, i) => (
                 <div key={i} className="flex items-start gap-2 text-muted-foreground leading-relaxed">
@@ -220,7 +335,7 @@ export default function OnboardingTutorialModal() {
               <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg flex items-start gap-2.5 text-blue-400">
                 <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span className="text-xs leading-normal">
-                  <strong>Tip Recomendado:</strong> {step.tip}
+                  <strong>Tip para tu Rol:</strong> {step.tip}
                 </span>
               </div>
             )}
@@ -249,7 +364,7 @@ export default function OnboardingTutorialModal() {
                 </Button>
               )}
               <Button size="sm" onClick={handleNext} className="gap-1 text-xs font-semibold">
-                {currentStep === TUTORIAL_STEPS.length - 1 ? (
+                {currentStep === steps.length - 1 ? (
                   <>
                     ¡Entendido, Empezar! <CheckCircle2 className="w-4 h-4 ml-1" />
                   </>
