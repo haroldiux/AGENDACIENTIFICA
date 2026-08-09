@@ -216,6 +216,7 @@ class ScientificActivityUpdate(BaseModel):
 class ScientificActivityStatusUpdate(BaseModel):
     status: ScientificActivityStatus
     evidence_url: Optional[str] = None
+    notes: Optional[str] = None
 
 class ScientificActivityFilterParams(BaseModel):
     career_id: Optional[int] = Field(default=None, ge=1)

@@ -169,6 +169,8 @@ def update_scientific_status(
     db_activity.status = status_update.status
     if status_update.evidence_url is not None:
         db_activity.evidence_url = status_update.evidence_url
+    if status_update.notes is not None:
+        db_activity.notes = status_update.notes
         
     db.commit()
     db.refresh(db_activity)

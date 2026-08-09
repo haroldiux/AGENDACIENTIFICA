@@ -267,8 +267,8 @@ export const api = {
       apiClient.post('/scientific/', data).then((res) => res.data),
     update: (id: number, data: Record<string, unknown>) =>
       apiClient.put(`/scientific/${id}`, data).then((res) => res.data),
-    updateStatus: (id: number, status: ScientificActivityStatus, evidence_url?: string) =>
-      apiClient.put(`/scientific/${id}/status`, { status, evidence_url }).then((res) => res.data),
+    updateStatus: (id: number, status: ScientificActivityStatus, evidence_url?: string, notes?: string) =>
+      apiClient.put(`/scientific/${id}/status`, { status, evidence_url, notes }).then((res) => res.data),
     delete: (id: number) => apiClient.delete(`/scientific/${id}`).then((res) => res.data),
     uploadEvidence: (activityId: number, file: File) => {
       const formData = new FormData();
