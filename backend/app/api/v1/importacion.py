@@ -347,11 +347,30 @@ async def upload_excel(
     
     try:
         contents = await file.read()
-        df = pd.read_excel(BytesIO(contents))
+        excel_sheets = pd.read_excel(BytesIO(contents), sheet_name=None)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading Excel file: {str(e)}")
         
-    records = df.to_dict('records')
+    raw_records = []
+    for sheet_name, df in excel_sheets.items():
+        if sheet_name.strip().lower() in ["referencia", "reference"]:
+            continue
+        sheet_recs = df.to_dict('records')
+        for rec in sheet_recs:
+            # Skip warning / example hint rows
+            title_val = str(rec.get("titulo", rec.get("title", "")) or "")
+            if "bórrala antes de importar" in title_val.lower() or "⚠" in title_val:
+                continue
+            
+            # Infer is_scientific from sheet name if not specified
+            if "es_cientifica" not in rec and "is_scientific" not in rec:
+                if "científica" in sheet_name.lower() or "cientifica" in sheet_name.lower():
+                    rec["es_cientifica"] = True
+                elif "académica" in sheet_name.lower() or "academica" in sheet_name.lower():
+                    rec["es_cientifica"] = False
+            raw_records.append(rec)
+
+    records = raw_records
 
     # Accept Spanish column names (from the downloadable template)
     COLUMN_MAP = {
