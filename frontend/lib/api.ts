@@ -139,7 +139,33 @@ export interface ScientificActivityFilters {
 // --- Reports ---
 
 export type ReportFormat = 'pdf' | 'excel';
-export type ReportType = 'table' | 'research-agenda' | 'conflict' | 'agenda-completa' | 'agenda-academica' | 'agenda-cientifica';
+export type ReportType = 'table' | 'research-agenda' | 'conflict' | 'agenda-completa' | 'agenda-academica' | 'agenda-cientifica' | 'seguimiento-cumplimiento' | 'seguimiento';
+
+export interface SeguimientoCareerStat {
+  career_id: number | null;
+  career_name: string;
+  total: number;
+  scheduled: number;
+  in_progress: number;
+  completed: number;
+  cancelled: number;
+  completion_rate: number;
+}
+
+export interface SeguimientoStatsResponse {
+  gestion_name: string;
+  career_name: string;
+  now_str: string;
+  careers_summary: SeguimientoCareerStat[];
+  totals: {
+    total: number;
+    scheduled: number;
+    in_progress: number;
+    completed: number;
+    cancelled: number;
+    completion_rate: number;
+  };
+}
 
 export interface ReportGenerateRequest {
   career_id: number | null;
@@ -343,6 +369,12 @@ export const api = {
     download: (taskId: string) =>
       apiClient
         .get<Blob>(`/reports/${taskId}/download`, { responseType: 'blob' })
+        .then((res) => res.data),
+    getSeguimientoStats: (gestion_id: number, career_id?: number | null) =>
+      apiClient
+        .get<SeguimientoStatsResponse>('/reports/seguimiento/stats', {
+          params: { gestion_id, career_id },
+        })
         .then((res) => res.data),
   },
   conflicts: {

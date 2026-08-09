@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+from sqlalchemy.orm import Session
 from app.schemas.schemas import ReportRequest
 from app.workers.reports_worker import generate_pdf_report_task, generate_excel_report_task
 from app.core.celery_app import celery_app
-from app.api.deps import require_read_only_get
+from app.api.deps import require_read_only_get, get_db
 from app.models.models import User
 from celery.result import AsyncResult
 from kombu.exceptions import OperationalError
@@ -79,3 +80,14 @@ def download_report(
         raise HTTPException(status_code=404, detail="File not found")
         
     return FileResponse(path=file_path, filename=file_name)
+
+
+@router.get("/seguimiento/stats")
+def get_seguimiento_stats(
+    gestion_id: int,
+    career_id: Optional[int] = None,
+    current_user: User = Depends(require_read_only_get),
+    db: Session = Depends(get_db),
+):
+    from app.workers.reports_worker import build_seguimiento_data
+    return build_seguimiento_data(db, career_id, gestion_id)

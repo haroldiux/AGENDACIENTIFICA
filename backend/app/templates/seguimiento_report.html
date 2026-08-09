@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Seguimiento y Cumplimiento{% endblock %}
+{% block header_title %}Reporte de Seguimiento y Cumplimiento de Agenda{% endblock %}
+
+{% block content %}
+<style>
+    .kpi-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    .kpi-card {
+        flex: 1;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+    .kpi-value {
+        font-size: 20px;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+    .kpi-label {
+        font-size: 10px;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+    .progress-bar-bg {
+        background-color: #e2e8f0;
+        border-radius: 6px;
+        height: 10px;
+        width: 100%;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    .progress-bar-fill {
+        background-color: #059669;
+        height: 100%;
+    }
+    .badge-status {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .badge-completed { background-color: #d1fae5; color: #065f46; }
+    .badge-in_progress { background-color: #dbeafe; color: #1e40af; }
+    .badge-cancelled { background-color: #ffe4e6; color: #9f1239; }
+    .badge-scheduled { background-color: #f3f4f6; color: #374151; }
+</style>
+
+<div style="margin-bottom: 15px; font-size: 11px; color: #475569;">
+    <b>Gestión:</b> {{ gestion_name }} &nbsp;|&nbsp; 
+    <b>Filtro Carrera:</b> {{ career_name }} &nbsp;|&nbsp; 
+    <b>Fecha de Emisión:</b> {{ now_str }}
+</div>
+
+<h3 style="color: #009E96; margin-bottom: 12px;">1. Resumen Estadístico por Carrera</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Carrera / Alcance</th>
+            <th style="text-align: center;">Total</th>
+            <th style="text-align: center;">Programadas</th>
+            <th style="text-align: center;">En Desarrollo</th>
+            <th style="text-align: center;">Completadas</th>
+            <th style="text-align: center;">Canceladas</th>
+            <th style="text-align: center;">% Cumplimiento</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in careers_summary %}
+        <tr>
+            <td><b>{{ row.career_name }}</b></td>
+            <td style="text-align: center;">{{ row.total }}</td>
+            <td style="text-align: center;">{{ row.scheduled }}</td>
+            <td style="text-align: center; color: #1d4ed8; font-weight: 600;">{{ row.in_progress }}</td>
+            <td style="text-align: center; color: #047857; font-weight: 700;">{{ row.completed }}</td>
+            <td style="text-align: center; color: #b91c1c; font-weight: 600;">{{ row.cancelled }}</td>
+            <td style="text-align: center;">
+                <span style="font-weight: 700; color: #047857;">{{ row.completion_rate }}%</span>
+            </td>
+        </tr>
+        {% endfor %}
+        <tr style="background-color: #f1f5f9; font-weight: 700;">
+            <td>TOTAL INSTITUCIONAL</td>
+            <td style="text-align: center;">{{ totals.total }}</td>
+            <td style="text-align: center;">{{ totals.scheduled }}</td>
+            <td style="text-align: center;">{{ totals.in_progress }}</td>
+            <td style="text-align: center;">{{ totals.completed }}</td>
+            <td style="text-align: center;">{{ totals.cancelled }}</td>
+            <td style="text-align: center; color: #047857;">{{ totals.completion_rate }}%</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3 style="color: #6B3392; margin-top: 30px; margin-bottom: 12px;">2. Detalle de Actividades por Estado</h3>
+
+{% if not detailed_activities %}
+    <p style="font-style: italic; color: #64748b;">No hay actividades registradas para esta selección.</p>
+{% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>Actividad</th>
+                <th>Carrera</th>
+                <th>Fechas</th>
+                <th>Tipo / Categoría</th>
+                <th style="text-align: center;">Estado</th>
+                <th>Observaciones / Evidencias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for act in detailed_activities %}
+            <tr>
+                <td><b>{{ act.title }}</b></td>
+                <td>{{ act.career_name }}</td>
+                <td style="font-size: 9px; white-space: nowrap;">{{ act.dates }}</td>
+                <td style="font-size: 9px;">{{ act.type_label }}</td>
+                <td style="text-align: center;">
+                    <span class="badge-status badge-{{ act.status }}">
+                        {{ act.status_label }}
+                    </span>
+                </td>
+                <td style="font-size: 9px; color: #475569;">
+                    {% if act.notes %}
+                        <div><b>Notas:</b> {{ clamp_notes(act.notes) }}</div>
+                    {% endif %}
+                    {% if act.has_evidence %}
+                        <div style="color: #047857; font-weight: 600;">✓ Evidencia adjunta</div>
+                    {% endif %}
+                    {% if not act.notes and not act.has_evidence %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+{% endblock %}

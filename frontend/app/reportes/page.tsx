@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Download, Eye, X } from 'lucide-react';
+import { FileText, Download, Eye, X, BarChart3, TrendingUp, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import PageHeader from '@/components/layout/PageHeader';
 import {
@@ -11,6 +11,7 @@ import {
   type ReportFormat,
   type ReportType,
   type ConflictItem,
+  type SeguimientoStatsResponse,
 } from '@/lib/api';
 
 import { useUser } from '@/context/AuthContext';
@@ -25,6 +26,11 @@ export default function ReportesPage() {
   const [conflicts, setConflicts] = useState<ConflictItem[]>([]);
   const [conflictsOpen, setConflictsOpen] = useState(false);
   const [loadingConflicts, setLoadingConflicts] = useState(false);
+
+  const [seguimientoData, setSeguimientoData] = useState<SeguimientoStatsResponse | null>(null);
+  const [seguimientoOpen, setSeguimientoOpen] = useState(false);
+  const [loadingSeguimiento, setLoadingSeguimiento] = useState(false);
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -171,6 +177,24 @@ export default function ReportesPage() {
     }
   };
 
+  const handleLoadSeguimiento = async () => {
+    if (gestionId === null) return;
+
+    setLoadingSeguimiento(true);
+    setSeguimientoOpen(true);
+
+    try {
+      const data = await api.reports.getSeguimientoStats(gestionId, careerId);
+      setSeguimientoData(data);
+    } catch (err) {
+      console.error('Error loading seguimiento stats:', err);
+      toast.error('Error cargando métricas de seguimiento');
+      setSeguimientoData(null);
+    } finally {
+      setLoadingSeguimiento(false);
+    }
+  };
+
   const selectorsDisabled = exporting !== null;
   const selectionMissing = gestionId === null;
 
@@ -227,6 +251,64 @@ export default function ReportesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
+          <div className="w-10 h-10 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <BarChart3 className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="font-medium text-lg">Seguimiento y Cumplimiento</h4>
+            <p className="text-sm text-slate-400 mt-1">
+              Estadísticas de avance por carrera: Completadas, En Desarrollo, Canceladas y % de ejecución.
+            </p>
+          </div>
+          <div className="mt-auto flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                handleExport(
+                  'seguimiento-pdf',
+                  'pdf',
+                  'seguimiento-cumplimiento',
+                  'Reporte de seguimiento PDF exportado correctamente'
+                )
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar reporte de seguimiento en PDF'}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full font-medium"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'seguimiento-pdf' ? 'Generando PDF...' : 'Exportar PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleExport(
+                  'seguimiento-excel',
+                  'excel',
+                  'seguimiento-cumplimiento',
+                  'Reporte de seguimiento Excel exportado correctamente'
+                )
+              }
+              disabled={exporting !== null || selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Exportar reporte de seguimiento en Excel'}
+              className="bg-emerald-700/80 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full font-medium"
+            >
+              <Download className="w-4 h-4" />
+              {exporting === 'seguimiento-excel' ? 'Generando Excel...' : 'Exportar Excel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleLoadSeguimiento}
+              disabled={selectionMissing}
+              title={selectionMissing ? 'Seleccione opciones' : 'Ver métricas de avance por carrera'}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors w-full font-medium"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Ver métricas de avance
+            </button>
+          </div>
+        </div>
+
         <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
           <div className="w-10 h-10 rounded bg-primary/20 text-primary flex items-center justify-center">
             <FileText className="w-5 h-5" />
@@ -433,6 +515,113 @@ export default function ReportesPage() {
                     </li>
                   ))}
                 </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seguimiento y Cumplimiento Metrics Modal */}
+      {seguimientoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-card text-card-foreground border border-border shadow-lg w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-muted/40">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-emerald-400" />
+                <h3 className="font-semibold text-lg">Métricas de Avance y Cumplimiento</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSeguimientoOpen(false)}
+                className="p-1 rounded hover:bg-white/10"
+                aria-label="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-6">
+              {loadingSeguimiento ? (
+                <p className="text-sm text-slate-400 text-center py-8">Cargando métricas de avance por carrera...</p>
+              ) : !seguimientoData ? (
+                <p className="text-sm text-slate-400 text-center py-8">No se pudieron cargar los datos de avance.</p>
+              ) : (
+                <>
+                  {/* Institutional Summary KPIs */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div className="bg-muted/30 border border-border p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-foreground">{seguimientoData.totals.total}</div>
+                      <div className="text-xs text-muted-foreground font-medium uppercase mt-0.5">Total Actividades</div>
+                    </div>
+                    <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-blue-400">{seguimientoData.totals.in_progress}</div>
+                      <div className="text-xs text-blue-400/80 font-medium uppercase mt-0.5">En Desarrollo</div>
+                    </div>
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-emerald-400">{seguimientoData.totals.completed}</div>
+                      <div className="text-xs text-emerald-400/80 font-medium uppercase mt-0.5">Completadas</div>
+                    </div>
+                    <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-center">
+                      <div className="text-xl font-bold text-rose-400">{seguimientoData.totals.cancelled}</div>
+                      <div className="text-xs text-rose-400/80 font-medium uppercase mt-0.5">Canceladas</div>
+                    </div>
+                    <div className="bg-purple-500/10 border border-purple-500/20 p-3 rounded-lg text-center col-span-2 sm:col-span-1">
+                      <div className="text-xl font-bold text-purple-400">{seguimientoData.totals.completion_rate}%</div>
+                      <div className="text-xs text-purple-400/80 font-medium uppercase mt-0.5">% Cumplimiento</div>
+                    </div>
+                  </div>
+
+                  {/* Careers Breakdown List */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      Avance por Carrera / Alcance
+                    </h4>
+
+                    <div className="space-y-3">
+                      {seguimientoData.careers_summary.map((row) => (
+                        <div key={row.career_name} className="bg-muted/20 border border-border p-4 rounded-xl space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-sm text-foreground">{row.career_name}</span>
+                            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                              {row.completion_rate}% Completado
+                            </span>
+                          </div>
+
+                          {/* Progress bar */}
+                          <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden flex">
+                            <div
+                              style={{ width: `${row.total > 0 ? (row.completed / row.total) * 100 : 0}%` }}
+                              className="bg-emerald-500 h-full"
+                              title={`Completadas: ${row.completed}`}
+                            />
+                            <div
+                              style={{ width: `${row.total > 0 ? (row.in_progress / row.total) * 100 : 0}%` }}
+                              className="bg-blue-500 h-full"
+                              title={`En Desarrollo: ${row.in_progress}`}
+                            />
+                            <div
+                              style={{ width: `${row.total > 0 ? (row.cancelled / row.total) * 100 : 0}%` }}
+                              className="bg-rose-500 h-full"
+                              title={`Canceladas: ${row.cancelled}`}
+                            />
+                          </div>
+
+                          {/* Stat Badges */}
+                          <div className="flex flex-wrap items-center justify-between text-xs text-muted-foreground pt-1">
+                            <div className="flex items-center gap-4">
+                              <span>Total: <strong className="text-foreground">{row.total}</strong></span>
+                              <span className="text-blue-400 font-medium">En Desarrollo: <strong>{row.in_progress}</strong></span>
+                              <span className="text-emerald-400 font-medium">Completadas: <strong>{row.completed}</strong></span>
+                              <span className="text-rose-400 font-medium">Canceladas: <strong>{row.cancelled}</strong></span>
+                            </div>
+                            <span className="text-slate-400">Programadas: {row.scheduled}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -269,6 +269,142 @@ def _build_table_report(filepath, career_id, gestion_id, db):
     _get_weasyprint_html()(string=html_out).write_pdf(filepath)
 
 
+def build_seguimiento_data(db, career_id, gestion_id):
+    careers_all = db.query(Career).all()
+    gestion = db.query(Gestion).filter(Gestion.id == gestion_id).first() if gestion_id else None
+    gestion_name = gestion.name if gestion else "Gestión actual"
+
+    if career_id:
+        c_list = [c for c in careers_all if c.id == career_id]
+        career_name = c_list[0].name if c_list else f"Carrera {career_id}"
+    else:
+        c_list = careers_all
+        career_name = "Todas las carreras"
+
+    ac_query = db.query(AcademicActivity)
+    sc_query = db.query(ScientificActivity)
+
+    if career_id is not None:
+        ac_query = ac_query.filter(AcademicActivity.career_id == career_id)
+        sc_query = sc_query.filter(ScientificActivity.career_id == career_id)
+    if gestion_id is not None:
+        ac_query = ac_query.filter(AcademicActivity.gestion_id == gestion_id)
+        sc_query = sc_query.filter(ScientificActivity.gestion_id == gestion_id)
+
+    ac_items = ac_query.all()
+    sc_items = sc_query.all()
+
+    ac_by_career = defaultdict(list)
+    for a in ac_items:
+        ac_by_career[a.career_id].append(a)
+
+    sc_by_career = defaultdict(list)
+    for s in sc_items:
+        sc_by_career[s.career_id].append(s)
+
+    all_targets = [None] + [c.id for c in c_list] if career_id is None else [c.id for c in c_list]
+    career_id_to_name = {c.id: c.name for c in careers_all}
+    career_id_to_name[None] = "Global / Vicerrectorado"
+
+    careers_summary = []
+    tot_total = 0
+    tot_completed = 0
+    tot_in_progress = 0
+    tot_cancelled = 0
+    tot_scheduled = 0
+
+    for cid in all_targets:
+        c_name = career_id_to_name.get(cid, "Otra")
+        c_ac = ac_by_career.get(cid, [])
+        c_sc = sc_by_career.get(cid, [])
+
+        tot = len(c_ac) + len(c_sc)
+        if tot == 0 and career_id is None:
+            continue
+
+        comp = sum(1 for s in c_sc if _enum_value(s.status) == "completed")
+        inp = sum(1 for s in c_sc if _enum_value(s.status) == "in_progress")
+        canc = sum(1 for s in c_sc if _enum_value(s.status) == "cancelled")
+        sched = len(c_ac) + sum(1 for s in c_sc if _enum_value(s.status) == "scheduled")
+
+        rate = round((comp / tot * 100), 1) if tot > 0 else 0.0
+
+        tot_total += tot
+        tot_completed += comp
+        tot_in_progress += inp
+        tot_cancelled += canc
+        tot_scheduled += sched
+
+        careers_summary.append({
+            "career_id": cid,
+            "career_name": c_name,
+            "total": tot,
+            "scheduled": sched,
+            "in_progress": inp,
+            "completed": comp,
+            "cancelled": canc,
+            "completion_rate": rate,
+        })
+
+    tot_rate = round((tot_completed / tot_total * 100), 1) if tot_total > 0 else 0.0
+    totals = {
+        "total": tot_total,
+        "scheduled": tot_scheduled,
+        "in_progress": tot_in_progress,
+        "completed": tot_completed,
+        "cancelled": tot_cancelled,
+        "completion_rate": tot_rate,
+    }
+
+    detailed = []
+    for s in sc_items:
+        cname = career_id_to_name.get(s.career_id, "Global / Vicerrectorado")
+        st_val = _enum_value(s.status)
+        detailed.append({
+            "title": s.title,
+            "career_name": cname,
+            "dates": _format_date_range(s.start_date, s.end_date),
+            "type_label": get_activity_label(s.activity_type),
+            "status": st_val,
+            "status_label": get_status_label(s.status),
+            "notes": s.notes,
+            "has_evidence": len(s.evidences) > 0 or bool(s.evidence_url),
+        })
+
+    for a in ac_items:
+        cname = career_id_to_name.get(a.career_id, "Global / Vicerrectorado")
+        detailed.append({
+            "title": a.title,
+            "career_name": cname,
+            "dates": _format_date_range(a.start_date, a.end_date),
+            "type_label": a.category or "Académica",
+            "status": "scheduled",
+            "status_label": "Programada",
+            "notes": None,
+            "has_evidence": False,
+        })
+
+    return {
+        "gestion_name": gestion_name,
+        "career_name": career_name,
+        "now_str": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "careers_summary": careers_summary,
+        "totals": totals,
+        "detailed_activities": detailed,
+    }
+
+
+def build_seguimiento_pdf(filepath, career_id, gestion_id, db):
+    data = build_seguimiento_data(db, career_id, gestion_id)
+    context = {
+        **DEFAULT_CONTEXT,
+        **data,
+    }
+    template = jinja_env.get_template("seguimiento_report.html")
+    html_out = template.render(**context)
+    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
+
+
 @celery_app.task
 def generate_pdf_report_task(
     career_id: int = None, gestion_id: int = None, report_type: str = "table"
@@ -278,7 +414,9 @@ def generate_pdf_report_task(
         filename = f"report_{uuid.uuid4().hex}.pdf"
         filepath = os.path.join(REPORTS_DIR, filename)
 
-        if report_type == "conflict":
+        if report_type in ["seguimiento", "seguimiento-cumplimiento"]:
+            build_seguimiento_pdf(filepath, career_id, gestion_id, db)
+        elif report_type == "conflict":
             conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
             build_conflict_pdf(filepath, conflicts, career_id, gestion_id)
         elif report_type in ["agenda-completa", "agenda-academica", "agenda-cientifica", "research-agenda"]:
@@ -355,9 +493,64 @@ def generate_excel_report_task(
             return build_conflict_excel(conflicts, career_id, gestion_id)
 
         from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
         filename = f"report_{uuid.uuid4().hex}.xlsx"
         filepath = os.path.join(REPORTS_DIR, filename)
+
+        if report_type in ["seguimiento", "seguimiento-cumplimiento"]:
+            data = build_seguimiento_data(db, career_id, gestion_id)
+            wb = Workbook()
+            
+            # Sheet 1: Resumen Cumplimiento
+            ws_summary = wb.active
+            ws_summary.title = "Resumen por Carrera"
+            
+            headers = ["Carrera / Alcance", "Total Actividades", "Programadas", "En Desarrollo", "Completadas", "Canceladas", "% Cumplimiento"]
+            ws_summary.append(headers)
+            
+            for row in data["careers_summary"]:
+                ws_summary.append([
+                    row["career_name"],
+                    row["total"],
+                    row["scheduled"],
+                    row["in_progress"],
+                    row["completed"],
+                    row["cancelled"],
+                    f"{row['completion_rate']}%"
+                ])
+                
+            tot = data["totals"]
+            ws_summary.append([
+                "TOTAL INSTITUCIONAL",
+                tot["total"],
+                tot["scheduled"],
+                tot["in_progress"],
+                tot["completed"],
+                tot["cancelled"],
+                f"{tot['completion_rate']}%"
+            ])
+            
+            # Sheet 2: Detalle Actividades
+            ws_detail = wb.create_sheet("Detalle Actividades")
+            ws_detail.append(["Título", "Carrera", "Fechas", "Tipo / Categoría", "Estado", "Observaciones / Evidencias"])
+            for act in data["detailed_activities"]:
+                obs = []
+                if act["notes"]:
+                    obs.append(f"Notas: {act['notes']}")
+                if act["has_evidence"]:
+                    obs.append("Evidencia adjunta")
+                ws_detail.append([
+                    act["title"],
+                    act["career_name"],
+                    act["dates"],
+                    act["type_label"],
+                    act["status_label"],
+                    " | ".join(obs) if obs else "—"
+                ])
+                
+            wb.save(filepath)
+            return {"status": "completed", "file_path": filepath, "file_name": filename}
 
         ac_query = db.query(AcademicActivity)
         sc_query = db.query(ScientificActivity)

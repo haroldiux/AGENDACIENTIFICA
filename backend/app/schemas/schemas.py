@@ -309,6 +309,15 @@ class ReportRequest(BaseModel):
     career_id: Optional[int] = None
     gestion_id: int
     format: str
-    report_type: Literal["table", "research-agenda", "conflict", "agenda-completa", "agenda-academica", "agenda-cientifica"] = "table"
+    report_type: Literal[
+        "table",
+        "research-agenda",
+        "conflict",
+        "agenda-completa",
+        "agenda-academica",
+        "agenda-cientifica",
+        "seguimiento-cumplimiento",
+        "seguimiento",
+    ] = "table"
 
 
