@@ -122,6 +122,23 @@ export default function ActivityModal({
         } else {
           setIsGlobal(false);
           setEvidences([]);
+          
+          let defaultGestionId = "";
+          if (g.length > 0) {
+            const today = new Date();
+            const activeGestion = g.find((gestion) => {
+              const start = new Date(gestion.start_date);
+              const end = new Date(gestion.end_date);
+              return today >= start && today <= end;
+            });
+            if (activeGestion) {
+              defaultGestionId = String(activeGestion.id);
+            } else {
+              const mostRecent = [...g].sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())[0];
+              defaultGestionId = String(mostRecent.id);
+            }
+          }
+
           setFormData({
             title: "",
             start_date: "",
@@ -129,7 +146,7 @@ export default function ActivityModal({
             activity_type: "",
             responsible_name: "",
             career_id: defaultCareerId,
-            gestion_id: g.length > 0 ? String(g[0].id) : "",
+            gestion_id: defaultGestionId,
             status: "scheduled",
             category_id: "",
             collaboration_career_ids: [],
