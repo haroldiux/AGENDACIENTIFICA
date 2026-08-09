@@ -1,9 +1,10 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, Activity } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
+import StatusUpdateModal from "@/components/agenda/StatusUpdateModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,7 @@ export default function ActividadesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ScientificActivity | null>(null);
+  const [statusModalActivity, setStatusModalActivity] = useState<ScientificActivity | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -367,16 +369,41 @@ export default function ActividadesPage() {
                     </TableCell>
                     <TableCell>{careerName(activity.career_id)}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={`${activityStatusClasses[activity.status] ?? ""}`}
-                      >
-                        {activityStatusLabels[activity.status] ?? activity.status}
-                      </Badge>
+                      {canManageActivity(user, activity) ? (
+                        <button
+                          type="button"
+                          onClick={() => setStatusModalActivity(activity)}
+                          title="Haz clic para cambiar de estado, agregar observaciones o subir evidencia"
+                          className="group focus:outline-none"
+                        >
+                          <Badge
+                            variant="secondary"
+                            className={`${activityStatusClasses[activity.status] ?? ""} group-hover:scale-105 transition-transform cursor-pointer shadow-sm`}
+                          >
+                            {activityStatusLabels[activity.status] ?? activity.status} ✎
+                          </Badge>
+                        </button>
+                      ) : (
+                        <Badge
+                          variant="secondary"
+                          className={`${activityStatusClasses[activity.status] ?? ""}`}
+                        >
+                          {activityStatusLabels[activity.status] ?? activity.status}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       {canManageActivity(user, activity) ? (
                         <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setStatusModalActivity(activity)}
+                            className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30 text-xs mr-2 font-medium"
+                          >
+                            <Activity className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+                            Cambiar Estado
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -418,6 +445,13 @@ export default function ActividadesPage() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={loadActivities}
         activity={editingActivity}
+      />
+
+      <StatusUpdateModal
+        isOpen={!!statusModalActivity}
+        onClose={() => setStatusModalActivity(null)}
+        onSuccess={loadActivities}
+        activity={statusModalActivity}
       />
     </div>
   );
