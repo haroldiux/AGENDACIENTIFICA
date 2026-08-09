@@ -274,6 +274,15 @@ export interface DashboardStats {
 
 // --- API namespaces ---
 
+export interface ScientificActivityAudit {
+  id: number;
+  scientific_activity_id: number;
+  user_id?: number | null;
+  action: string;
+  description: string;
+  timestamp: string;
+}
+
 export const api = {
   fusion: {
     getMerged: (params?: MergedCalendarFilters) =>
@@ -315,6 +324,8 @@ export const api = {
       apiClient.get<ScientificActivityEvidence[]>(`/scientific/${activityId}/evidence`).then((res) => res.data),
     deleteEvidence: (evidenceId: number) =>
       apiClient.delete(`/scientific/evidence/${evidenceId}`).then((res) => res.data),
+    listAudits: (activityId: number) =>
+      apiClient.get<ScientificActivityAudit[]>(`/scientific/${activityId}/audits`).then((res) => res.data),
   },
   categories: {
     list: (scope?: string, include_inactive: boolean = false) =>

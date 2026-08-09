@@ -143,10 +143,13 @@ class ScientificActivity(Base):
     status = Column(Enum(ScientificActivityStatus), default=ScientificActivityStatus.scheduled, nullable=False)
     evidence_url = Column(String)
     notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     career = relationship("Career", back_populates="scientific_activities")
     gestion = relationship("Gestion", back_populates="scientific_activities")
     evidences = relationship("ScientificActivityEvidence", back_populates="scientific_activity", cascade="all, delete-orphan")
+    audits = relationship("ScientificActivityAudit", back_populates="scientific_activity", cascade="all, delete-orphan")
     activity_category = relationship("ActivityCategory")
     collaboration_careers = relationship("Career", secondary=scientific_activity_collaboration_careers, viewonly=False)
 
@@ -168,4 +171,17 @@ class ScientificActivityEvidence(Base):
 
     scientific_activity = relationship("ScientificActivity", back_populates="evidences")
     uploaded_by = relationship("User")
+
+class ScientificActivityAudit(Base):
+    __tablename__ = "scientific_activity_audits"
+
+    id = Column(Integer, primary_key=True, index=True)
+    scientific_activity_id = Column(Integer, ForeignKey("scientific_activities.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    action = Column(String, nullable=False)  # 'CREACION', 'EDICION', 'CAMBIO_ESTADO', 'SUBIDA_EVIDENCIA', 'ELIMINACION_EVIDENCIA'
+    description = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    scientific_activity = relationship("ScientificActivity", back_populates="audits")
+    user = relationship("User")
 

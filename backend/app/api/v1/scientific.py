@@ -7,7 +7,15 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.api.deps import require_read_only_get, check_activity_scope_permission
-from app.models.models import ScientificActivity, ScientificActivityEvidence, Career, Gestion, User, ActivityCategory
+from app.models.models import (
+    ScientificActivity,
+    ScientificActivityEvidence,
+    ScientificActivityAudit,
+    Career,
+    Gestion,
+    User,
+    ActivityCategory,
+)
 from app.schemas.schemas import (
     ScientificActivityCreate,
     ScientificActivityUpdate,
@@ -15,6 +23,7 @@ from app.schemas.schemas import (
     ScientificActivityResponse,
     ScientificActivityFilterParams,
     ScientificActivityEvidenceResponse,
+    ScientificActivityAuditResponse,
     RoleEnum,
 )
 from app.services.scientific_service import list_scientific_activities
@@ -29,6 +38,22 @@ ALLOWED_MIME_TYPES = {
 }
 ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".docx"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+STATUS_LABELS_ES = {
+    "scheduled": "Programada",
+    "in_progress": "En progreso",
+    "completed": "Completada",
+    "cancelled": "Cancelada",
+}
+
+def record_audit(db: Session, activity_id: int, user_id: Optional[int], action: str, description: str):
+    audit = ScientificActivityAudit(
+        scientific_activity_id=activity_id,
+        user_id=user_id,
+        action=action,
+        description=description,
+    )
+    db.add(audit)
 
 @router.get("/", response_model=List[ScientificActivityResponse])
 def get_scientific_activities(
@@ -96,6 +121,14 @@ def create_scientific_activity(
     else:
         db_activity.collaboration_careers = []
 
+    record_audit(
+        db,
+        db_activity.id,
+        current_user.id,
+        "CREACION",
+        f"Actividad creada originalmente: '{db_activity.title}' (Responsable: {db_activity.responsible_name})"
+    )
+
     db.commit()
     db.refresh(db_activity)
     return db_activity
@@ -132,6 +165,14 @@ def update_scientific_activity(
             db.query(Career).filter(Career.id.in_(collab_ids)).all()
             if collab_ids else []
         )
+
+    record_audit(
+        db,
+        db_activity.id,
+        current_user.id,
+        "EDICION",
+        f"Modificación de datos generales de la actividad (Título: '{db_activity.title}')"
+    )
 
     db.commit()
     db.refresh(db_activity)
@@ -172,6 +213,15 @@ def update_scientific_status(
     if status_update.notes is not None:
         db_activity.notes = status_update.notes
         
+    st_label = STATUS_LABELS_ES.get(status_update.status, status_update.status)
+    record_audit(
+        db,
+        db_activity.id,
+        current_user.id,
+        "CAMBIO_ESTADO",
+        f"Estado modificado a '{st_label}'. Observaciones/Motivo: '{status_update.notes or 'Sin observaciones'}'"
+    )
+
     db.commit()
     db.refresh(db_activity)
     return db_activity
@@ -223,6 +273,15 @@ async def upload_scientific_activity_evidence(
         uploaded_by_id=current_user.id,
     )
     db.add(evidence)
+
+    record_audit(
+        db,
+        id,
+        current_user.id,
+        "SUBIDA_EVIDENCIA",
+        f"Evidencia digital adjuntada: '{file.filename}' ({(len(content)/1024):.1f} KB)"
+    )
+
     db.commit()
     db.refresh(evidence)
     return evidence
@@ -257,7 +316,34 @@ def delete_scientific_activity_evidence(
         except OSError:
             pass
 
+    act_id = evidence.scientific_activity_id
+    fn = evidence.filename
+
     db.delete(evidence)
+
+    if act_id:
+        record_audit(
+            db,
+            act_id,
+            current_user.id,
+            "ELIMINACION_EVIDENCIA",
+            f"Evidencia digital eliminada: '{fn}'"
+        )
+
     db.commit()
     return None
+
+@router.get("/{id}/audits", response_model=List[ScientificActivityAuditResponse])
+def list_scientific_activity_audits(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_read_only_get),
+):
+    db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
+    if not db_activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    audits = db.query(ScientificActivityAudit).filter(
+        ScientificActivityAudit.scientific_activity_id == id
+    ).order_by(ScientificActivityAudit.timestamp.desc()).all()
+    return audits
 

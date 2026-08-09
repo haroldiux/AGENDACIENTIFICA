@@ -238,6 +238,16 @@ class ScientificActivityFilterParams(BaseModel):
             raise ValueError('start_date cannot be after end_date')
         return self
 
+class ScientificActivityAuditResponse(BaseModel):
+    id: int
+    scientific_activity_id: int
+    user_id: Optional[int] = None
+    action: str
+    description: str
+    timestamp: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 class ScientificActivityResponse(ScientificActivityBase):
     id: int
     career_id: Optional[int] = None
@@ -245,6 +255,7 @@ class ScientificActivityResponse(ScientificActivityBase):
     status: ScientificActivityStatus
     evidence_url: Optional[str] = None
     evidences: List[ScientificActivityEvidenceResponse] = []
+    audits: List[ScientificActivityAuditResponse] = []
     activity_category: Optional[ActivityCategoryResponse] = None
     collaboration_career_ids: List[int] = []
     created_at: Optional[datetime] = None
