@@ -195,25 +195,52 @@ export default function OnboardingTutorialModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Select appropriate tutorial track based on user role
+  // Dynamically select the tutorial track based on precise user permissions and role
   const getTutorialTrack = (): { trackName: string; steps: StepData[] } => {
     if (!user) {
-      return { trackName: "General", steps: MANAGER_STEPS };
+      return { trackName: "Invitado / General", steps: MANAGER_STEPS };
     }
 
-    if (["super_admin", "admin", "vicerrectorado"].includes(user.role)) {
-      return { trackName: "Administrador / Vicerrectorado", steps: ADMIN_STEPS };
+    const role = (user.role || "").toLowerCase();
+
+    // 1. Global Admin / Vicerrectorado (Supervision, Audits, Color Categories, Executive Reports)
+    if (["super_admin", "admin", "vicerrectorado"].includes(role)) {
+      return {
+        trackName: `Administrador (${role.replace(/_/g, " ").toUpperCase()})`,
+        steps: ADMIN_STEPS,
+      };
     }
 
-    if (["director_investigacion", "carrera_director", "docente"].includes(user.role)) {
-      return { trackName: "Director de Carrera", steps: MANAGER_STEPS };
+    // 2. Academic / Research Managers (Director de Investigación, Director de Carrera, Docente Coordinador)
+    if (["director_investigacion", "carrera_director", "docente", "coordinador"].includes(role)) {
+      const careerCount = user.careers?.length || 0;
+      const careerLabel = careerCount > 0 ? `${careerCount} carrera(s)` : "Gestión de Carrera";
+      return {
+        trackName: `Director de Carrera (${careerLabel})`,
+        steps: MANAGER_STEPS,
+      };
     }
 
-    if (user.role === "read_only") {
-      return { trackName: "Consulta / Solo Lectura", steps: READ_ONLY_STEPS };
+    // 3. Read Only / Consultation Users
+    if (role === "read_only") {
+      return {
+        trackName: "Consulta / Solo Lectura",
+        steps: READ_ONLY_STEPS,
+      };
     }
 
-    return { trackName: "General", steps: MANAGER_STEPS };
+    // Fallback: Check if user has assigned careers (Management capabilities)
+    if (user.careers && user.careers.length > 0) {
+      return {
+        trackName: `Gestor de Carrera (${user.careers.length} carreras)`,
+        steps: MANAGER_STEPS,
+      };
+    }
+
+    return {
+      trackName: "Consulta Institucional",
+      steps: READ_ONLY_STEPS,
+    };
   };
 
   const { trackName, steps } = getTutorialTrack();
