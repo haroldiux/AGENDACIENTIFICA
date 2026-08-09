@@ -10,7 +10,8 @@ import { config as appConfig } from "@/lib/config";
 interface UploadResult {
   inserted_count: number;
   duplicate_count?: number;
-  errors: { row: number; error: string }[];
+  duplicates?: { row: number; title: string }[];
+  errors: { row: number | string; error: string }[];
   conflicts?: {
     activity_title: string;
     conflicting_title: string;
@@ -218,6 +219,22 @@ export default function ImportarPage() {
               <p className="text-sm text-slate-400">Errores</p>
             </div>
           </div>
+
+          {result.duplicates && result.duplicates.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              <p className="text-sm font-medium text-amber-400 flex items-center gap-2">
+                <CopyX className="w-4 h-4 text-amber-400 shrink-0" />
+                Detalle de actividades omitidas por duplicación ({result.duplicates.length}):
+              </p>
+              <div className="max-h-40 overflow-y-auto space-y-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+                {result.duplicates.map((d, idx) => (
+                  <div key={idx} className="text-xs text-amber-200">
+                    • <span className="font-semibold text-amber-100">{d.title}</span> {d.row ? `(Fila ${d.row})` : ''} ya se encuentra registrada en la base de datos.
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {result.conflicts && result.conflicts.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-border">

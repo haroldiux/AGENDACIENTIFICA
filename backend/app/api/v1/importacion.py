@@ -580,6 +580,7 @@ async def upload_excel(
         return start_a <= end_b and start_b <= end_a
 
     duplicate_count = 0
+    duplicates_detected = []
     conflicts_detected = []
     filtered_academic = []
     filtered_scientific = []
@@ -589,6 +590,10 @@ async def upload_excel(
         key = (row["title"].strip().upper(), row["start_date"], row["end_date"], row["career_id"], row["gestion_id"])
         if key in existing_keys:
             duplicate_count += 1
+            duplicates_detected.append({
+                "row": row.get("_excel_row", 0),
+                "title": row["title"],
+            })
             continue
         existing_keys.add(key)
         filtered_academic.append(row)
@@ -618,6 +623,10 @@ async def upload_excel(
         key = (row["title"].strip().upper(), row["start_date"], row["end_date"], row["career_id"], row["gestion_id"])
         if key in existing_keys:
             duplicate_count += 1
+            duplicates_detected.append({
+                "row": row.get("_excel_row", 0),
+                "title": row["title"],
+            })
             continue
         existing_keys.add(key)
         filtered_scientific.append(row)
@@ -661,6 +670,7 @@ async def upload_excel(
     return {
         "inserted_count": inserted_count,
         "duplicate_count": duplicate_count,
+        "duplicates": duplicates_detected,
         "errors": errors,
         "conflicts": conflicts_detected,
     }
