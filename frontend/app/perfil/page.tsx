@@ -249,7 +249,7 @@ export default function ProfilePage() {
 
   const copyTelegramInstructions = () => {
     const text =
-      "1) Abrí Telegram y buscá a @BotFather.\n2) Creá un bot nuevo y copiá el token en el panel de administración del sistema.\n3) Buscá tu bot y enviale cualquier mensaje.\n4) Abrí https://t.me/userinfobot y copiá tu *Chat ID*.\n5) Pegá el Chat ID acá y guardá los cambios.";
+      "1) Abrí Telegram y buscá a @userinfobot (https://t.me/userinfobot).\n2) Copiá tu *Chat ID* de Telegram.\n3) Pegalo en tu perfil de la Agenda Científica y guardá los cambios.";
     navigator.clipboard.writeText(text).then(
       () => toast.success("Instrucciones copiadas al portapapeles"),
       () => toast.error("No se pudo copiar")
@@ -434,23 +434,24 @@ export default function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <ol className="list-decimal list-inside space-y-2">
-                <li>Abrí Telegram y buscá a @BotFather.</li>
-                <li>Creá un bot y copiá el token en la configuración del sistema.</li>
-                <li>Buscá tu bot y enviale cualquier mensaje.</li>
+              <ol className="list-decimal list-inside space-y-2 text-foreground/90">
                 <li>
-                  Abrí{" "}
+                  Abrí Telegram y buscá a{" "}
                   <a
                     href="https://t.me/userinfobot"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline"
+                    className="text-primary font-semibold hover:underline"
                   >
                     @userinfobot
-                  </a>{" "}
-                  y copiá tu <strong>Chat ID</strong>.
+                  </a>.
                 </li>
-                <li>Pegá el Chat ID arriba y guardá los cambios.</li>
+                <li>
+                  Copiá tu <strong>Chat ID</strong> de Telegram (número personal).
+                </li>
+                <li>
+                  Pegalo en el campo <strong>Telegram Chat ID</strong> arriba a la izquierda y guardá los cambios.
+                </li>
               </ol>
 
               <Button
