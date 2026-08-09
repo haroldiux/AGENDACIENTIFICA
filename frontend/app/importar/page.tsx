@@ -271,22 +271,22 @@ export default function ImportarPage() {
                 <td className="py-2">Fecha de fin (YYYY-MM-DD)</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4 font-mono text-slate-300">career_id</td>
-                <td className="py-2 pr-4">número</td>
+                <td className="py-2 pr-4 font-mono text-slate-300">carrera</td>
+                <td className="py-2 pr-4">desplegable / texto</td>
                 <td className="py-2 pr-4 text-green-400">Sí</td>
-                <td className="py-2">ID de la carrera</td>
+                <td className="py-2">Nombre de la carrera o ID (desplegable en Excel)</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4 font-mono text-slate-300">gestion_id</td>
-                <td className="py-2 pr-4">número</td>
+                <td className="py-2 pr-4 font-mono text-slate-300">gestion</td>
+                <td className="py-2 pr-4">desplegable / texto</td>
                 <td className="py-2 pr-4 text-green-400">Sí</td>
-                <td className="py-2">ID de la gestión</td>
+                <td className="py-2">Nombre de la gestión (ej. 2-2026) o ID</td>
               </tr>
               <tr>
-                <td className="py-2 pr-4 font-mono text-slate-300">is_scientific</td>
-                <td className="py-2 pr-4">booleano</td>
+                <td className="py-2 pr-4 font-mono text-slate-300">es_cientifica</td>
+                <td className="py-2 pr-4">desplegable</td>
                 <td className="py-2 pr-4 text-amber-400">No</td>
-                <td className="py-2">true = científica, false/omitido = académica</td>
+                <td className="py-2">SI = científica, NO = académica</td>
               </tr>
               <tr>
                 <td className="py-2 pr-4 font-mono text-slate-300">category</td>

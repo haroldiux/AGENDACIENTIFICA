@@ -49,6 +49,8 @@ def _add_example_row(ws, values: list):
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
 
+from openpyxl.worksheet.datavalidation import DataValidation
+
 # ---------------------------------------------------------------------------
 # Template Download
 # ---------------------------------------------------------------------------
@@ -58,7 +60,7 @@ def download_template(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_read_only_get),
 ):
-    """Return a bilingual blank Excel template with career/gestion/category reference."""
+    """Return a bilingual blank Excel template with career/gestion/category reference and combobox data validation."""
     wb = openpyxl.Workbook()
 
     # ---- fetch live data ----
@@ -74,8 +76,8 @@ def download_template(
         "fecha_inicio",
         "fecha_fin",
         "categoria",
-        "id_carrera",
-        "id_gestion",
+        "carrera",
+        "gestion",
         "es_cientifica",
     ]
     _style_header_row(ws_ac, academic_headers, "009E96")
@@ -83,10 +85,10 @@ def download_template(
         "Inicio de clases",
         "2026-02-11",
         "2026-02-11",
-        "GENERAL",
-        careers[0].id if careers else 1,
-        gestiones[0].id if gestiones else 1,
-        "FALSE",
+        categories[0].name if categories else "GENERAL",
+        careers[0].name if careers else "Tec. Superior Prótesis Dental",
+        gestiones[0].name if gestiones else "2-2026",
+        "NO",
     ])
     ws_ac.cell(row=3, column=1, value="⚠ La fila 2 es ejemplo – bórrala antes de importar")
     ws_ac.cell(row=3, column=1).font = Font(color="EF4444", bold=True, size=9)
@@ -99,8 +101,8 @@ def download_template(
         "fecha_fin",
         "tipo_actividad",
         "nombre_responsable",
-        "id_carrera",
-        "id_gestion",
+        "carrera",
+        "gestion",
         "es_cientifica",
     ]
     _style_header_row(ws_sc, scientific_headers, "6B3392")
@@ -110,9 +112,9 @@ def download_template(
         "2026-03-17",
         "CONGRESO",
         "Dr. Juan Pérez",
-        careers[0].id if careers else 1,
-        gestiones[0].id if gestiones else 1,
-        "TRUE",
+        careers[0].name if careers else "Tec. Superior Prótesis Dental",
+        gestiones[0].name if gestiones else "2-2026",
+        "SI",
     ])
     ws_sc.cell(row=3, column=1, value="⚠ La fila 2 es ejemplo – bórrala antes de importar")
     ws_sc.cell(row=3, column=1).font = Font(color="EF4444", bold=True, size=9)
@@ -158,12 +160,12 @@ def download_template(
         ("titulo", "Nombre de la actividad (texto libre, requerido)"),
         ("fecha_inicio", "Fecha inicio: formato YYYY-MM-DD, p.ej. 2026-02-11"),
         ("fecha_fin", "Fecha fin: formato YYYY-MM-DD  (igual a inicio si dura 1 día)"),
-        ("categoria", "Solo académicas: código o nombre de categoría (ver tabla Categorías ▶)"),
-        ("tipo_actividad", "Solo científicas: código de categoría/tipo (ver tabla Categorías ▶)"),
+        ("categoria", "Solo académicas: selecciona de la lista desplegable o escribe la categoría"),
+        ("tipo_actividad", "Solo científicas: selecciona del desplegable (CONGRESO, WEBINAR, etc.)"),
         ("nombre_responsable", "Solo científicas: nombre del docente o investigador responsable"),
-        ("id_carrera", "Número entero – ver tabla 'Carreras' a la derecha ▶"),
-        ("id_gestion", "Número entero – ver tabla 'Gestiones' a la derecha ▶"),
-        ("es_cientifica", "FALSE para actividades académicas  |  TRUE para científicas"),
+        ("carrera", "Selecciona el nombre de la carrera de la lista desplegable"),
+        ("gestion", "Selecciona la gestión de la lista desplegable (ej. 2-2026)"),
+        ("es_cientifica", "Selecciona SI para científicas | NO para académicas"),
     ]
     for r_off, (col_a, col_b) in enumerate(field_rows, start=3):
         row = r_off
@@ -176,7 +178,7 @@ def download_template(
             cb.fill = alt_fill
 
     # --- Careers table (column D-F) ---
-    ws_ref.cell(row=1, column=4, value="🎓 Carreras (id_carrera)").font = white_bold
+    ws_ref.cell(row=1, column=4, value="🎓 Carreras").font = white_bold
     ws_ref.cell(row=1, column=4).fill = green_fill
     ws_ref.cell(row=1, column=4).alignment = center
     ws_ref.merge_cells("D1:F1")
@@ -197,7 +199,7 @@ def download_template(
                 c.fill = alt_fill
 
     # --- Gestiones table (column H-I) ---
-    ws_ref.cell(row=1, column=8, value="📅 Gestiones (id_gestion)").font = white_bold
+    ws_ref.cell(row=1, column=8, value="📅 Gestiones").font = white_bold
     ws_ref.cell(row=1, column=8).fill = purple_fill
     ws_ref.cell(row=1, column=8).alignment = center
     ws_ref.merge_cells("H1:I1")
@@ -237,6 +239,45 @@ def download_template(
             c.alignment = Alignment(horizontal="center" if col in (11, 13) else "left", vertical="center")
             if r_off % 2 == 0:
                 c.fill = alt_fill
+
+    # ---- Add Data Validations (Comboboxes) ----
+    dv_bool_ac = DataValidation(type="list", formula1='"SI,NO"', allow_blank=True)
+    ws_ac.add_data_validation(dv_bool_ac)
+    dv_bool_ac.add("G2:G500")
+
+    dv_bool_sc = DataValidation(type="list", formula1='"SI,NO"', allow_blank=True)
+    ws_sc.add_data_validation(dv_bool_sc)
+    dv_bool_sc.add("H2:H500")
+
+    dv_types = DataValidation(type="list", formula1='"CONGRESO,WEBINAR,DEFENSA,FERIA,OLIMPIADA,MASTER_CLASS"', allow_blank=True)
+    ws_sc.add_data_validation(dv_types)
+    dv_types.add("D2:D500")
+
+    if careers:
+        career_ref = f"'Referencia'!E3:E{2 + len(careers)}"
+        dv_car_ac = DataValidation(type="list", formula1=career_ref, allow_blank=True)
+        ws_ac.add_data_validation(dv_car_ac)
+        dv_car_ac.add("E2:E500")
+
+        dv_car_sc = DataValidation(type="list", formula1=career_ref, allow_blank=True)
+        ws_sc.add_data_validation(dv_car_sc)
+        dv_car_sc.add("F2:F500")
+
+    if gestiones:
+        gestion_ref = f"'Referencia'!I3:I{2 + len(gestiones)}"
+        dv_ges_ac = DataValidation(type="list", formula1=gestion_ref, allow_blank=True)
+        ws_ac.add_data_validation(dv_ges_ac)
+        dv_ges_ac.add("F2:F500")
+
+        dv_ges_sc = DataValidation(type="list", formula1=gestion_ref, allow_blank=True)
+        ws_sc.add_data_validation(dv_ges_sc)
+        dv_ges_sc.add("G2:G500")
+
+    if categories:
+        cat_ref = f"'Referencia'!L3:L{2 + len(categories)}"
+        dv_cat_ac = DataValidation(type="list", formula1=cat_ref, allow_blank=True)
+        ws_ac.add_data_validation(dv_cat_ac)
+        dv_cat_ac.add("D2:D500")
 
     # ---- Stream ----
     buffer = BytesIO()
@@ -279,15 +320,59 @@ async def upload_excel(
         "tipo_actividad": "activity_type",
         "nombre_responsable": "responsible_name",
         "id_carrera": "career_id",
+        "carrera": "career_id",
         "id_gestion": "gestion_id",
+        "gestion": "gestion_id",
         "es_cientifica": "is_scientific",
     }
+
+    # Build Carrera lookup dictionary
+    careers_all = db.query(Career).all()
+    career_map = {}
+    for c in careers_all:
+        career_map[str(c.id)] = c.id
+        career_map[c.name.strip().upper()] = c.id
+        career_map[f"{c.id} - {c.name}".strip().upper()] = c.id
+        career_map[f"{c.name} ({c.id})".strip().upper()] = c.id
+
+    # Build Gestion lookup dictionary
+    gestiones_all = db.query(Gestion).all()
+    gestion_map = {}
+    for g in gestiones_all:
+        gestion_map[str(g.id)] = g.id
+        gestion_map[g.name.strip().upper()] = g.id
+        gestion_map[f"{g.id} - {g.name}".strip().upper()] = g.id
+        gestion_map[f"{g.name} ({g.id})".strip().upper()] = g.id
+
     renamed_records = []
     for record in records:
-        renamed = {COLUMN_MAP.get(k, k): v for k, v in record.items()}
-        # normalize is_scientific: accept "TRUE"/"FALSE" strings
-        if "is_scientific" in renamed and isinstance(renamed["is_scientific"], str):
-            renamed["is_scientific"] = renamed["is_scientific"].strip().upper() == "TRUE"
+        renamed = {COLUMN_MAP.get(str(k).strip().lower(), k): v for k, v in record.items()}
+
+        # Normalize career_id / carrera
+        if "career_id" in renamed and pd.notnull(renamed["career_id"]):
+            raw = str(renamed["career_id"]).strip().upper()
+            if raw.endswith(".0"):
+                raw = raw[:-2]
+            if raw in career_map:
+                renamed["career_id"] = career_map[raw]
+
+        # Normalize gestion_id / gestion
+        if "gestion_id" in renamed and pd.notnull(renamed["gestion_id"]):
+            raw = str(renamed["gestion_id"]).strip().upper()
+            if raw.endswith(".0"):
+                raw = raw[:-2]
+            if raw in gestion_map:
+                renamed["gestion_id"] = gestion_map[raw]
+
+        # Normalize is_scientific
+        if "is_scientific" in renamed and pd.notnull(renamed["is_scientific"]):
+            raw_b = renamed["is_scientific"]
+            if isinstance(raw_b, bool):
+                renamed["is_scientific"] = raw_b
+            else:
+                val = str(raw_b).strip().upper()
+                renamed["is_scientific"] = val in ["TRUE", "SI", "SÍ", "1", "YES"]
+
         renamed_records.append(renamed)
     records = renamed_records
 
