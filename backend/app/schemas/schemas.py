@@ -265,7 +265,7 @@ class ActivityRowValidator(BaseModel):
     title: str
     start_date: date
     end_date: date
-    activity_type: Optional[ScientificActivityType] = None
+    activity_type: Optional[str] = None
     category: Optional[str] = None
     category_id: Optional[int] = None
     responsible_name: Optional[str] = None

@@ -440,6 +440,10 @@ async def upload_excel(
                 val = str(raw_b).strip().upper()
                 renamed["is_scientific"] = val in ["TRUE", "SI", "SÍ", "1", "YES"]
 
+        # Normalize activity_type (convert CONGRESO, MASTER_CLASS to lowercase congreso, master_class)
+        if "activity_type" in renamed and pd.notnull(renamed["activity_type"]):
+            renamed["activity_type"] = str(renamed["activity_type"]).strip().lower().replace(" ", "_")
+
         renamed_records.append(renamed)
     records = renamed_records
 
