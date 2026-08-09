@@ -350,29 +350,39 @@ export default function ActivityModal({
             </div>
           </div>
 
-          {/* Req 1C — Collaboration careers multi-select */}
+          {/* Req 1C — Collaboration careers checkboxes */}
           <div>
             <label className="block text-sm font-medium mb-1">Carreras en Colaboración</label>
-            <select
-              multiple
-              size={4}
-              value={formData.collaboration_career_ids.map(String)}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions).map((o) =>
-                  Number(o.value)
-                );
-                setFormData((prev) => ({ ...prev, collaboration_career_ids: selected }));
-              }}
-              className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-            >
-              {effectiveCareers
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg custom-scrollbar">
+              {careers
                 .filter((c) => c.id !== Number(formData.career_id))
-                .map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-            </select>
+                .map((c) => {
+                  const isSelected = formData.collaboration_career_ids.includes(c.id);
+                  return (
+                    <label
+                      key={c.id}
+                      className="flex items-center gap-2 cursor-pointer text-sm text-slate-200 hover:text-white transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          setFormData((prev) => {
+                            const newIds = e.target.checked
+                              ? [...prev.collaboration_career_ids, c.id]
+                              : prev.collaboration_career_ids.filter((id) => id !== c.id);
+                            return { ...prev, collaboration_career_ids: newIds };
+                          });
+                        }}
+                        className="w-4 h-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-slate-800 cursor-pointer"
+                      />
+                      <span className="truncate" title={c.name}>{c.name}</span>
+                    </label>
+                  );
+                })}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Mantén Ctrl (o Cmd en Mac) para seleccionar varias carreras.
+              Selecciona las carreras que colaborarán en esta actividad.
             </p>
           </div>
 
@@ -459,8 +469,8 @@ export default function ActivityModal({
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                      handleFileUpload(e.dataTransfer.files[0]);
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                      Array.from(e.dataTransfer.files).forEach((file) => handleFileUpload(file));
                     }
                   }}
                   className="border-2 border-dashed border-slate-700 hover:border-blue-500 bg-[#0f172a]/40 p-4 rounded-lg text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5"
@@ -468,10 +478,11 @@ export default function ActivityModal({
                   <input
                     ref={fileInputRef}
                     type="file"
+                    multiple
                     accept=".pdf,.png,.jpg,.jpeg,.docx"
                     onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        handleFileUpload(e.target.files[0]);
+                      if (e.target.files && e.target.files.length > 0) {
+                        Array.from(e.target.files).forEach((file) => handleFileUpload(file));
                       }
                     }}
                     className="hidden"
