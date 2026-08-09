@@ -241,7 +241,7 @@ def build_research_agenda_pdf(filepath, activities, career_name, gestion_name, r
     _get_weasyprint_html()(string=html_out).write_pdf(filepath)
 
 
-def _build_table_report(filepath, career_id, gestion_id, db):
+def _build_table_report(filepath, career_id, gestion_id, db, status_filter=None):
     ac_query = db.query(AcademicActivity)
     sc_query = db.query(ScientificActivity)
 
@@ -253,15 +253,28 @@ def _build_table_report(filepath, career_id, gestion_id, db):
         ac_query = ac_query.filter(AcademicActivity.gestion_id == gestion_id)
         sc_query = sc_query.filter(ScientificActivity.gestion_id == gestion_id)
 
-    academic_activities = ac_query.all()
+    if status_filter:
+        sc_query = sc_query.filter(ScientificActivity.status == status_filter)
+        if status_filter != 'scheduled':
+            academic_activities = []
+        else:
+            academic_activities = ac_query.all()
+    else:
+        academic_activities = ac_query.all()
+
     scientific_activities = sc_query.all()
+
+    status_filter_label = None
+    if status_filter:
+        status_filter_label = get_status_label(status_filter)
 
     context = {
         **DEFAULT_CONTEXT,
         "academic_activities": academic_activities,
         "scientific_activities": scientific_activities,
+        "status_filter_label": status_filter_label,
         "current_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "subtitle": f"Carrera ID: {career_id} — Gestión ID: {gestion_id}"
+        "subtitle": f"Carrera ID: {career_id or 'Todas'} — Gestión ID: {gestion_id}"
     }
 
     template = jinja_env.get_template("activity_report.html")
@@ -407,7 +420,7 @@ def build_seguimiento_pdf(filepath, career_id, gestion_id, db):
 
 @celery_app.task
 def generate_pdf_report_task(
-    career_id: int = None, gestion_id: int = None, report_type: str = "table"
+    career_id: int = None, gestion_id: int = None, report_type: str = "table", status_filter: str = None
 ):
     db = SessionLocal()
     try:
@@ -440,10 +453,12 @@ def generate_pdf_report_task(
                     query_sc = query_sc.filter(ScientificActivity.career_id == career_id)
                 if gestion_id is not None:
                     query_sc = query_sc.filter(ScientificActivity.gestion_id == gestion_id)
+                if status_filter:
+                    query_sc = query_sc.filter(ScientificActivity.status == status_filter)
                 activities_sc = query_sc.all()
 
             activities_ac = []
-            if report_type in ["agenda-completa", "agenda-academica"]:
+            if report_type in ["agenda-completa", "agenda-academica"] and (not status_filter or status_filter == 'scheduled'):
                 query_ac = db.query(AcademicActivity)
                 if career_id is not None:
                     query_ac = query_ac.filter(AcademicActivity.career_id == career_id)
@@ -471,7 +486,7 @@ def generate_pdf_report_task(
 
             build_research_agenda_pdf(filepath, activities, career_name, gestion_name, r_title)
         else:
-            _build_table_report(filepath, career_id, gestion_id, db)
+            _build_table_report(filepath, career_id, gestion_id, db, status_filter)
 
         return {"status": "completed", "file_path": filepath, "file_name": filename}
     except Exception as e:
@@ -484,7 +499,7 @@ def generate_pdf_report_task(
 
 @celery_app.task
 def generate_excel_report_task(
-    career_id: int = None, gestion_id: int = None, report_type: str = "table"
+    career_id: int = None, gestion_id: int = None, report_type: str = "table", status_filter: str = None
 ):
     db = SessionLocal()
     try:
@@ -561,29 +576,35 @@ def generate_excel_report_task(
         if gestion_id is not None:
             ac_query = ac_query.filter(AcademicActivity.gestion_id == gestion_id)
             sc_query = sc_query.filter(ScientificActivity.gestion_id == gestion_id)
+        if status_filter:
+            sc_query = sc_query.filter(ScientificActivity.status == status_filter)
 
-        academic_activities = ac_query.all()
+        academic_activities = ac_query.all() if (not status_filter or status_filter == 'scheduled') else []
         scientific_activities = sc_query.all()
 
         wb = Workbook()
 
         # Academic sheet
-        ws_ac = wb.active
-        ws_ac.title = "Académicas"
-        ws_ac.append(["Título", "Fecha inicio", "Fecha fin", "Categoría", "Carrera ID"])
-        for act in academic_activities:
-            ws_ac.append([
-                act.title,
-                act.start_date.isoformat() if act.start_date else "",
-                act.end_date.isoformat() if act.end_date else "",
-                act.category or "",
-                act.career_id,
-            ])
+        if academic_activities:
+            ws_ac = wb.active
+            ws_ac.title = "Académicas"
+            ws_ac.append(["Título", "Fecha inicio", "Fecha fin", "Categoría", "Carrera ID"])
+            for act in academic_activities:
+                ws_ac.append([
+                    act.title,
+                    act.start_date.isoformat() if act.start_date else "",
+                    act.end_date.isoformat() if act.end_date else "",
+                    act.category or "",
+                    act.career_id,
+                ])
+            ws_sc = wb.create_sheet("Científicas")
+        else:
+            ws_sc = wb.active
+            ws_sc.title = "Científicas"
 
-        # Scientific sheet
-        ws_sc = wb.create_sheet("Científicas")
-        ws_sc.append(["Título", "Fecha inicio", "Fecha fin", "Tipo", "Estado", "Responsable", "Carrera ID"])
+        ws_sc.append(["Título", "Fecha inicio", "Fecha fin", "Tipo", "Estado", "Responsable", "Evidencias / Respaldos", "Observaciones / Justificación", "Carrera ID"])
         for act in scientific_activities:
+            has_ev = (len(act.evidences) > 0 or bool(act.evidence_url)) if hasattr(act, 'evidences') else False
             ws_sc.append([
                 act.title,
                 act.start_date.isoformat() if act.start_date else "",
@@ -591,6 +612,8 @@ def generate_excel_report_task(
                 get_activity_label(act.activity_type),
                 get_status_label(act.status),
                 act.responsible_name or "",
+                f"✓ Con evidencia ({len(act.evidences)} archivos)" if (hasattr(act, 'evidences') and len(act.evidences) > 0) else ("✓ Con evidencia" if has_ev else "Sin evidencia"),
+                act.notes or "—",
                 act.career_id,
             ])
 

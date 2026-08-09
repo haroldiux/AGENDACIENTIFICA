@@ -37,9 +37,9 @@ def generate_report(
 ):
     _check_celery_broker()
     if request.format == "pdf":
-        task = generate_pdf_report_task.delay(request.career_id, request.gestion_id, request.report_type)
+        task = generate_pdf_report_task.delay(request.career_id, request.gestion_id, request.report_type, request.status_filter)
     elif request.format == "excel":
-        task = generate_excel_report_task.delay(request.career_id, request.gestion_id, request.report_type)
+        task = generate_excel_report_task.delay(request.career_id, request.gestion_id, request.report_type, request.status_filter)
     else:
         raise HTTPException(status_code=400, detail="Invalid format. Must be 'pdf' or 'excel'")
 

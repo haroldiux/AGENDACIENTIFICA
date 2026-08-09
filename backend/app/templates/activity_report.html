@@ -4,57 +4,81 @@
 {% block header_title %}Reporte General de Actividades{% endblock %}
 
 {% block content %}
-    <h2 class="text-primary" style="margin-top: 20px;">Actividades Académicas</h2>
-    {% if academic_activities %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Título</th>
-                    <th>Fecha Inicio</th>
-                    <th>Fecha Fin</th>
-                    <th>Categoría</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for act in academic_activities %}
-                <tr>
-                    <td>{{ act.title }}</td>
-                    <td>{{ act.start_date }}</td>
-                    <td>{{ act.end_date }}</td>
-                    <td>{{ act.category }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No hay actividades académicas.</p>
+    {% if status_filter_label %}
+        <div style="margin-bottom: 15px; font-size: 11px; color: #475569; background: #f1f5f9; padding: 8px 12px; border-radius: 6px;">
+            <b>Filtro de Estado Aplicado:</b> {{ status_filter_label }}
+        </div>
     {% endif %}
 
-    <h2 class="text-primary" style="margin-top: 30px;">Actividades Científicas</h2>
+    {% if academic_activities %}
+    <h2 class="text-primary" style="margin-top: 20px;">Actividades Académicas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Categoría</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for act in academic_activities %}
+            <tr>
+                <td><b>{{ act.title }}</b></td>
+                <td>{{ act.start_date }}</td>
+                <td>{{ act.end_date }}</td>
+                <td>{{ act.category or "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <h2 class="text-primary" style="margin-top: 25px;">Actividades Científicas</h2>
     {% if scientific_activities %}
         <table>
             <thead>
                 <tr>
                     <th>Título</th>
                     <th>Tipo</th>
-                    <th>Fecha Inicio</th>
-                    <th>Fecha Fin</th>
+                    <th>Fechas</th>
                     <th>Estado</th>
+                    <th>Evidencias / Respaldos</th>
+                    <th>Observaciones / Justificación</th>
                 </tr>
             </thead>
             <tbody>
                 {% for act in scientific_activities %}
                 <tr>
-                    <td>{{ act.title }}</td>
-                    <td>{{ get_activity_label(act.activity_type) }}</td>
-                    <td>{{ act.start_date }}</td>
-                    <td>{{ act.end_date }}</td>
-                    <td>{{ get_status_label(act.status) }}</td>
+                    <td><b>{{ act.title }}</b></td>
+                    <td style="font-size: 9pt;">{{ get_activity_label(act.activity_type) }}</td>
+                    <td style="font-size: 9pt; white-space: nowrap;">{{ act.start_date }} al {{ act.end_date }}</td>
+                    <td>
+                        <span style="font-weight: 700; font-size: 8.5pt;">
+                            {{ get_status_label(act.status) }}
+                        </span>
+                    </td>
+                    <td style="font-size: 9pt;">
+                        {% if act.evidences and act.evidences|length > 0 %}
+                            <span style="color: #047857; font-weight: 700;">✓ Con evidencia ({{ act.evidences|length }} archivo/s)</span>
+                        {% elif act.evidence_url %}
+                            <span style="color: #047857; font-weight: 700;">✓ Con evidencia</span>
+                        {% else %}
+                            <span style="color: #94a3b8;">Sin evidencia</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 9pt; color: #334155;">
+                        {% if act.notes %}
+                            {{ clamp_notes(act.notes) }}
+                        {% else %}
+                            <span style="color: #94a3b8;">—</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     {% else %}
-        <p>No hay actividades científicas.</p>
+        <p style="font-style: italic; color: #64748b;">No hay actividades científicas para el estado seleccionado.</p>
     {% endif %}
 {% endblock %}

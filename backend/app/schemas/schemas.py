@@ -319,5 +319,6 @@ class ReportRequest(BaseModel):
         "seguimiento-cumplimiento",
         "seguimiento",
     ] = "table"
+    status_filter: Optional[str] = None
 
 

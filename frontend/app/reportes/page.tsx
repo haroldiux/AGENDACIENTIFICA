@@ -92,6 +92,8 @@ export default function ReportesPage() {
     };
   }, []);
 
+  const [statusFilter, setStatusFilter] = useState<string>('');
+
   const handleExport = async (
     exportKey: string,
     format: ReportFormat,
@@ -111,6 +113,7 @@ export default function ReportesPage() {
         gestion_id: gestionId,
         format,
         report_type: reportType,
+        status_filter: statusFilter || undefined,
       });
 
       const pollStatus = async (taskId: string, attempt: number): Promise<void> => {
@@ -246,6 +249,25 @@ export default function ReportesPage() {
                 {gestion.name}
               </option>
             ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1 flex-1">
+          <label htmlFor="report-status" className="text-xs text-slate-400">
+            Filtrar por Estado (Opcional)
+          </label>
+          <select
+            id="report-status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            disabled={selectorsDisabled}
+            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          >
+            <option value="">Todos los estados</option>
+            <option value="scheduled">Programadas</option>
+            <option value="in_progress">En desarrollo</option>
+            <option value="completed">Completadas</option>
+            <option value="cancelled">Canceladas</option>
           </select>
         </div>
       </div>
