@@ -13,7 +13,7 @@ import {
   type ReportType,
 } from '@/lib/api';
 import CalendarView from '@/components/calendar/CalendarView';
-import CalendarLegend from '@/components/calendar/CalendarLegend';
+import CalendarLegend, { type ActiveLegendFilter } from '@/components/calendar/CalendarLegend';
 import PageHeader from '@/components/layout/PageHeader';
 import AgendaFilterBar from '@/components/agenda/AgendaFilterBar';
 import AgendaNoCareerSelected from '@/components/agenda/AgendaNoCareerSelected';
@@ -37,6 +37,7 @@ export default function CalendarioPage() {
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'academic' | 'scientific'>('all');
+  const [activeLegendFilter, setActiveLegendFilter] = useState<ActiveLegendFilter | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -228,6 +229,20 @@ export default function CalendarioPage() {
       const q = searchQuery.toLowerCase();
       if (!item.title.toLowerCase().includes(q)) return false;
     }
+    if (activeLegendFilter) {
+      const { group, key } = activeLegendFilter;
+      if (group === 'academic') {
+        const itemCat = (item.category || 'default').toLowerCase();
+        if (itemCat !== key) return false;
+      } else if (group === 'scientific') {
+        const itemType = (item.activity_type || 'congreso').toLowerCase();
+        if (itemType !== key) return false;
+      } else if (group === 'scope') {
+        if (key === 'global' && !(item.scope === 'global' || item.career_id === null)) return false;
+        if (key === 'scientific' && item.source_type !== 'scientific') return false;
+        if (key === 'career' && (item.scope === 'global' || item.career_id === null || item.source_type !== 'academic')) return false;
+      }
+    }
     return true;
   });
 
@@ -359,7 +374,10 @@ export default function CalendarioPage() {
             <CalendarView items={filteredItems} isLoading={isLoading} onStatusChange={isReadOnly ? undefined : handleStatusChange} />
           </div>
           <div className="xl:w-72 shrink-0">
-            <CalendarLegend />
+            <CalendarLegend
+              activeFilter={activeLegendFilter}
+              onFilterChange={setActiveLegendFilter}
+            />
           </div>
         </div>
       )}
