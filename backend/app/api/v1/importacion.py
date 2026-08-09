@@ -487,6 +487,7 @@ async def upload_excel(
                     act_type_val = ScientificActivityType.congreso.value
 
                 valid_scientific.append({
+                    "_excel_row": i + 2,
                     "title": validated.title,
                     "start_date": validated.start_date,
                     "end_date": validated.end_date,
@@ -512,6 +513,7 @@ async def upload_excel(
                     category_code = validated.category
 
                 valid_academic.append({
+                    "_excel_row": i + 2,
                     "title": validated.title,
                     "start_date": validated.start_date,
                     "end_date": validated.end_date,
@@ -522,6 +524,9 @@ async def upload_excel(
                 })
         except ValidationError as e:
             errors.append({"row": i + 2, "error": str(e)})
+
+    # Build career ID to Name lookup map
+    career_id_to_name = {c.id: c.name for c in careers_all}
 
     # Safe scope permission filter per row
     def user_can_manage_career(user: User, career_id: int | None) -> bool:
@@ -534,22 +539,26 @@ async def upload_excel(
 
     permitted_academic = []
     for row in valid_academic:
-        if user_can_manage_career(current_user, row.get("career_id")):
+        c_id = row.get("career_id")
+        if user_can_manage_career(current_user, c_id):
             permitted_academic.append(row)
         else:
+            c_name = career_id_to_name.get(c_id, f"ID {c_id}")
             errors.append({
-                "row": "Académicas",
-                "error": f"No tienes permiso para la carrera ID {row.get('career_id')}"
+                "row": row.get("_excel_row", "Académicas"),
+                "error": f"No tienes permisos para registrar actividades en la carrera '{c_name}'"
             })
 
     permitted_scientific = []
     for row in valid_scientific:
-        if user_can_manage_career(current_user, row.get("career_id")):
+        c_id = row.get("career_id")
+        if user_can_manage_career(current_user, c_id):
             permitted_scientific.append(row)
         else:
+            c_name = career_id_to_name.get(c_id, f"ID {c_id}")
             errors.append({
-                "row": "Científicas",
-                "error": f"No tienes permiso para la carrera ID {row.get('career_id')}"
+                "row": row.get("_excel_row", "Científicas"),
+                "error": f"No tienes permisos para registrar actividades en la carrera '{c_name}'"
             })
 
     valid_academic = permitted_academic
@@ -636,10 +645,12 @@ async def upload_excel(
     inserted_count = 0
     try:
         if filtered_academic:
-            db.bulk_insert_mappings(AcademicActivity, filtered_academic)
+            academic_db_rows = [{k: v for k, v in r.items() if k != "_excel_row"} for r in filtered_academic]
+            db.bulk_insert_mappings(AcademicActivity, academic_db_rows)
             inserted_count += len(filtered_academic)
         if filtered_scientific:
-            db.bulk_insert_mappings(ScientificActivity, filtered_scientific)
+            scientific_db_rows = [{k: v for k, v in r.items() if k != "_excel_row"} for r in filtered_scientific]
+            db.bulk_insert_mappings(ScientificActivity, scientific_db_rows)
             inserted_count += len(filtered_scientific)
         
         db.commit()
