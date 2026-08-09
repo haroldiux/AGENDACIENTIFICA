@@ -11,7 +11,7 @@ from openpyxl.utils import get_column_letter
 
 from app.db.session import get_db
 from app.api.deps import require_read_only_get, check_activity_scope_permission
-from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, ActivityCategory, User
+from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, ActivityCategory, User, ScientificActivityStatus
 from app.schemas.schemas import ActivityRowValidator, ScientificActivityType
 
 router = APIRouter()
@@ -528,7 +528,7 @@ async def upload_excel(
     # Fetch existing activities to detect duplicates and date overlaps
     existing_academics = db.query(AcademicActivity).all()
     existing_scientifics = db.query(ScientificActivity).filter(
-        ScientificActivity.status != ScientificActivityStatus.cancelled
+        ScientificActivity.status != "cancelled"
     ).all()
 
     existing_keys = set()
