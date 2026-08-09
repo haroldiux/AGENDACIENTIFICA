@@ -4,7 +4,7 @@ from typing import List, Optional
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 from pydantic import ValidationError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.db.session import get_db
 from app.api.deps import require_read_only_get, check_activity_scope_permission
 from app.models.models import (
@@ -157,6 +157,23 @@ def update_scientific_activity(
 
     collab_ids = update_data.pop('collaboration_career_ids', None)
 
+    # Compute specific field diffs
+    diffs = []
+    if "title" in update_data and update_data["title"] != db_activity.title:
+        diffs.append(f"Título: '{db_activity.title}' ➔ '{update_data['title']}'")
+    if "responsible_name" in update_data and update_data["responsible_name"] != db_activity.responsible_name:
+        diffs.append(f"Responsable: '{db_activity.responsible_name}' ➔ '{update_data['responsible_name']}'")
+    if "start_date" in update_data and str(update_data["start_date"]) != str(db_activity.start_date):
+        diffs.append(f"Fecha Inicio: '{db_activity.start_date}' ➔ '{update_data['start_date']}'")
+    if "end_date" in update_data and str(update_data["end_date"]) != str(db_activity.end_date):
+        diffs.append(f"Fecha Fin: '{db_activity.end_date}' ➔ '{update_data['end_date']}'")
+    if "start_time" in update_data and update_data["start_time"] != db_activity.start_time:
+        diffs.append(f"Hora Inicio: '{db_activity.start_time or 'No definida'}' ➔ '{update_data['start_time']}'")
+    if "end_time" in update_data and update_data["end_time"] != db_activity.end_time:
+        diffs.append(f"Hora Fin: '{db_activity.end_time or 'No definida'}' ➔ '{update_data['end_time']}'")
+    if "activity_type" in update_data and update_data["activity_type"] != db_activity.activity_type:
+        diffs.append(f"Tipo: '{db_activity.activity_type}' ➔ '{update_data['activity_type']}'")
+
     for key, value in update_data.items():
         setattr(db_activity, key, value)
 
@@ -166,12 +183,13 @@ def update_scientific_activity(
             if collab_ids else []
         )
 
+    desc = f"Campos modificados: {'; '.join(diffs)}" if diffs else f"Actualización de datos de la actividad '{db_activity.title}'"
     record_audit(
         db,
         db_activity.id,
         current_user.id,
         "EDICION",
-        f"Modificación de datos generales de la actividad (Título: '{db_activity.title}')"
+        desc
     )
 
     db.commit()
@@ -342,8 +360,12 @@ def list_scientific_activity_audits(
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
-    audits = db.query(ScientificActivityAudit).filter(
-        ScientificActivityAudit.scientific_activity_id == id
-    ).order_by(ScientificActivityAudit.timestamp.desc()).all()
+    audits = (
+        db.query(ScientificActivityAudit)
+        .options(joinedload(ScientificActivityAudit.user))
+        .filter(ScientificActivityAudit.scientific_activity_id == id)
+        .order_by(ScientificActivityAudit.timestamp.desc())
+        .all()
+    )
     return audits
 

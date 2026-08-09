@@ -238,10 +238,18 @@ class ScientificActivityFilterParams(BaseModel):
             raise ValueError('start_date cannot be after end_date')
         return self
 
+class UserMinResponse(BaseModel):
+    id: int
+    username: str
+    full_name: Optional[str] = None
+    role: str
+    model_config = ConfigDict(from_attributes=True)
+
 class ScientificActivityAuditResponse(BaseModel):
     id: int
     scientific_activity_id: int
     user_id: Optional[int] = None
+    user: Optional[UserMinResponse] = None
     action: str
     description: str
     timestamp: datetime

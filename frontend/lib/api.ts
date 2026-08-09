@@ -278,6 +278,12 @@ export interface ScientificActivityAudit {
   id: number;
   scientific_activity_id: number;
   user_id?: number | null;
+  user?: {
+    id: number;
+    username: string;
+    full_name?: string | null;
+    role: string;
+  } | null;
   action: string;
   description: string;
   timestamp: string;

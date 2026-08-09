@@ -325,9 +325,14 @@ export default function ActivityDetailReportModal({
 
           {/* HISTORIAL COMPLETO DE MODIFICACIONES (AUDIT LOG TIMELINE) */}
           <div className="bg-muted/30 border border-border p-3.5 rounded-xl space-y-2 text-xs printable-card">
-            <span className="text-muted-foreground font-semibold flex items-center gap-1.5 text-xs printable-text-muted">
-              <History className="w-4 h-4 text-primary" /> Historial Completo de Trazabilidad y Modificaciones ({audits.length})
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground font-semibold flex items-center gap-1.5 text-xs printable-text-muted">
+                <History className="w-4 h-4 text-primary" /> Historial Completo de Trazabilidad y Modificaciones ({audits.length})
+              </span>
+              <span className="text-[10px] text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded font-medium printable-no-export">
+                Vista de Auditoría de Gestión
+              </span>
+            </div>
 
             {isLoading ? (
               <p className="text-muted-foreground italic text-xs printable-text-muted">Cargando historial de cambios...</p>
@@ -338,30 +343,42 @@ export default function ActivityDetailReportModal({
               </div>
             ) : (
               <div className="space-y-2 pt-1">
-                {audits.map((aud) => (
-                  <div
-                    key={aud.id}
-                    className="flex items-start gap-2.5 bg-background p-2.5 rounded-lg border border-border text-xs"
-                  >
-                    {ACTION_ICONS[aud.action] || <History className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />}
-                    <div className="flex-1 min-w-0 space-y-0.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] px-1.5 py-0 font-medium ${ACTION_BADGES[aud.action] || ""}`}
-                        >
-                          {aud.action.replace("_", " ")}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground printable-text-muted font-medium">
-                          {formatTimestamp(aud.timestamp)}
-                        </span>
+                {audits.map((aud) => {
+                  const actorName = aud.user
+                    ? `${aud.user.full_name || aud.user.username} (${aud.user.role})`
+                    : "Sistema / Registro Inicial";
+
+                  return (
+                    <div
+                      key={aud.id}
+                      className="flex items-start gap-2.5 bg-background p-2.5 rounded-lg border border-border text-xs"
+                    >
+                      {ACTION_ICONS[aud.action] || <History className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] px-1.5 py-0 font-semibold ${ACTION_BADGES[aud.action] || ""}`}
+                            >
+                              {aud.action.replace("_", " ")}
+                            </Badge>
+                            <span className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                              <User className="w-3 h-3 text-primary shrink-0" />
+                              {actorName}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground printable-text-muted font-medium">
+                            {formatTimestamp(aud.timestamp)}
+                          </span>
+                        </div>
+                        <p className="text-foreground text-xs font-normal leading-relaxed bg-muted/20 p-1.5 rounded border border-border/50">
+                          {aud.description}
+                        </p>
                       </div>
-                      <p className="text-foreground text-xs font-normal leading-normal">
-                        {aud.description}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
