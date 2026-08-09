@@ -20,9 +20,12 @@ import AgendaNoCareerSelected from '@/components/agenda/AgendaNoCareerSelected';
 import AgendaSkeleton from '@/components/agenda/AgendaSkeleton';
 import AgendaErrorState from '@/components/agenda/AgendaErrorState';
 import { useUser } from '@/context/AuthContext';
+const READ_ONLY_ROLES = ['read_only'];
 
 export default function CalendarioPage() {
   const { user } = useUser();
+  const isReadOnly = !!user && READ_ONLY_ROLES.includes(user.role);
+
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
@@ -188,7 +191,7 @@ export default function CalendarioPage() {
       timeoutRef.current = setTimeout(() => pollStatus(task_id, 1), 2000);
     } catch (err) {
       setExporting(false);
-      toast.error('Error iniciando la exportación del PDF');
+      toast.error('Error exportando el PDF');
     }
   };
 
@@ -347,7 +350,7 @@ export default function CalendarioPage() {
       ) : (
         <div className="flex flex-col xl:flex-row gap-6">
           <div className="flex-1 min-w-0">
-            <CalendarView items={filteredItems} isLoading={isLoading} onStatusChange={handleStatusChange} />
+            <CalendarView items={filteredItems} isLoading={isLoading} onStatusChange={isReadOnly ? undefined : handleStatusChange} />
           </div>
           <div className="xl:w-72 shrink-0">
             <CalendarLegend />

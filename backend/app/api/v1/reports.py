@@ -4,13 +4,37 @@ from typing import Dict, Any
 from app.schemas.schemas import ReportRequest
 from app.workers.reports_worker import generate_pdf_report_task, generate_excel_report_task
 from app.core.celery_app import celery_app
+from app.api.deps import require_read_only_get
+from app.models.models import User
 from celery.result import AsyncResult
+from kombu.exceptions import OperationalError
 import os
 
 router = APIRouter()
 
+
+def _check_celery_broker() -> None:
+    """Raise 503 if the Celery broker is not reachable.
+
+    This prevents the endpoint from hanging when Redis/Celery is down,
+    giving the UI a clear failure path instead of a timeout.
+    """
+    try:
+        with celery_app.broker_connection() as conn:
+            conn.ensure_connection(max_retries=0, timeout=2)
+    except (OperationalError, Exception):
+        raise HTTPException(
+            status_code=503,
+            detail="PDF generation service is currently unavailable. Please try again later.",
+        )
+
+
 @router.post("/generate")
-def generate_report(request: ReportRequest):
+def generate_report(
+    request: ReportRequest,
+    current_user: User = Depends(require_read_only_get),
+):
+    _check_celery_broker()
     if request.format == "pdf":
         task = generate_pdf_report_task.delay(request.career_id, request.gestion_id, request.report_type)
     elif request.format == "excel":
@@ -21,7 +45,10 @@ def generate_report(request: ReportRequest):
     return {"task_id": task.id}
 
 @router.get("/{task_id}/status")
-def get_report_status(task_id: str):
+def get_report_status(
+    task_id: str,
+    current_user: User = Depends(require_read_only_get),
+):
     task_result = AsyncResult(task_id, app=celery_app)
     if task_result.state == "PENDING":
         return {"status": "pending"}
@@ -36,7 +63,10 @@ def get_report_status(task_id: str):
         return {"status": task_result.state}
 
 @router.get("/{task_id}/download")
-def download_report(task_id: str):
+def download_report(
+    task_id: str,
+    current_user: User = Depends(require_read_only_get),
+):
     task_result = AsyncResult(task_id, app=celery_app)
     if task_result.state != "SUCCESS":
         raise HTTPException(status_code=400, detail="Report not ready or task failed")

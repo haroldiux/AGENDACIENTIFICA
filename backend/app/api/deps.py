@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
@@ -105,4 +105,20 @@ def check_category_manage_permission(user: User) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to manage activity categories",
         )
+
+
+def require_read_only_get(
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """
+    Dependency that allows read_only users to perform GET requests only.
+    Any non-GET method performed by a read_only user is rejected with 403.
+    """
+    if current_user.role == RoleEnum.read_only and request.method != "GET":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Read-only users are only allowed to perform GET requests",
+        )
+    return current_user
 

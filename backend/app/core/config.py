@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Agenda Cientifica UNITEPC"
@@ -7,9 +8,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     
     POSTGRES_SERVER: str = "db"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "agenda_db"
+    POSTGRES_USER: str = "user"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_DB: str = "agenda"
     POSTGRES_PORT: str = "5432"
     
     DATABASE_URL: str | None = None
@@ -21,10 +22,19 @@ class Settings(BaseSettings):
     NOTIFICATION_DAYS_AHEAD: int = 7
     WHATSAPP_API_TOKEN: str | None = None
     WHATSAPP_PHONE_ID: str | None = None
+    TELEGRAM_BOT_TOKEN: str | None = None
     SMTP_HOST: str | None = None
     SMTP_PORT: int | None = None
     SMTP_USER: str | None = None
     SMTP_PASSWORD: str | None = None
+
+    @field_validator("SMTP_PORT", mode="before")
+    @classmethod
+    def _empty_smtp_port(cls, value):
+        if value == "" or value is None:
+            return None
+        return value
+
     class Config:
         env_file = ".env"
 

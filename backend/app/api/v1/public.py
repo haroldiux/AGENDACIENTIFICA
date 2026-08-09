@@ -1,13 +1,22 @@
 from typing import Optional
 from datetime import date
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.db.session import get_db
 from app.models.models import AcademicActivity, ScientificActivity, Career
 from app.schemas.schemas import MergedCalendarResponse, MergedCalendarItem, CareerResponse
 
 router = APIRouter()
+
+@router.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ok", "message": "Service is healthy"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Database connection failed")
 
 @router.get("/fusion", response_model=MergedCalendarResponse)
 def get_public_fusion_calendar(

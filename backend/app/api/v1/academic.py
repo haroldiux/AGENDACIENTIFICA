@@ -2,14 +2,19 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.deps import get_current_active_user, check_activity_scope_permission
+from app.api.deps import require_read_only_get, check_activity_scope_permission
 from app.models.models import AcademicActivity, Career, Gestion, User, ActivityCategory
 from app.schemas.schemas import AcademicActivityCreate, AcademicActivityUpdate, AcademicActivityResponse
 
 router = APIRouter()
 
 @router.get("/", response_model=List[AcademicActivityResponse])
-def get_academic_activities(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_academic_activities(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_read_only_get),
+):
     activities = db.query(AcademicActivity).offset(skip).limit(limit).all()
     return activities
 
@@ -17,7 +22,7 @@ def get_academic_activities(skip: int = 0, limit: int = 100, db: Session = Depen
 def create_academic_activity(
     activity: AcademicActivityCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     check_activity_scope_permission(current_user, activity.career_id)
 
@@ -49,7 +54,7 @@ def update_academic_activity(
     id: int,
     activity_update: AcademicActivityUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     db_activity = db.query(AcademicActivity).filter(AcademicActivity.id == id).first()
     if not db_activity:
@@ -77,7 +82,7 @@ def update_academic_activity(
 def delete_academic_activity(
     id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     db_activity = db.query(AcademicActivity).filter(AcademicActivity.id == id).first()
     if not db_activity:
@@ -93,7 +98,7 @@ def delete_academic_activity(
 def batch_import_academic_activities(
     activities: List[AcademicActivityCreate],
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     for activity in activities:
         check_activity_scope_permission(current_user, activity.career_id)

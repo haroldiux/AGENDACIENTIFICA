@@ -7,7 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "Agenda Científica",
+  title: "Agenda Científica UNITEPC",
   description: "Sistema de gestión de actividades científicas",
 };
 

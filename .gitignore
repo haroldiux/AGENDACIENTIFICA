@@ -36,3 +36,13 @@ Thumbs.db
 .vscode/
 *.tsbuildinfo
 next-env.d.ts
+# Local AI runtime state
+.atl/
+
+# Local AI harness configuration (machine-specific paths)
+.agents/mcp_config.json
+.agents/bin/
+.agents/activate
+.agents/activate.cmd
+.gemini/settings.json
+.gentle-ai-backup/

@@ -9,10 +9,20 @@ from app.models.models import AcademicActivity, ScientificActivity, Career, Gest
 from app.schemas.schemas import ConflictItem
 from app.services import conflict_service
 
-from weasyprint import HTML
 from jinja2 import Environment, FileSystemLoader
 import base64
 import urllib.request
+
+
+def _get_weasyprint_html():
+    """Lazy import of WeasyPrint so the backend can start without GTK libs."""
+    try:
+        from weasyprint import HTML
+        return HTML
+    except OSError as exc:
+        raise RuntimeError(
+            "WeasyPrint dependencies are missing. Install GTK/Pango or run inside Docker."
+        ) from exc
 
 CAREER_IMAGES = {
     "Ingeniería de Sistemas": "https://picsum.photos/seed/sistemas/800/500",
@@ -149,7 +159,7 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id):
 
     template = jinja_env.get_template("conflict_report.html")
     html_out = template.render(**context)
-    HTML(string=html_out).write_pdf(filepath)
+    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
 
 
 def build_conflict_excel(conflicts, career_id, gestion_id):
@@ -228,7 +238,7 @@ def build_research_agenda_pdf(filepath, activities, career_name, gestion_name, r
 
     template = jinja_env.get_template("research_agenda.html")
     html_out = template.render(**context)
-    HTML(string=html_out).write_pdf(filepath)
+    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
 
 
 def _build_table_report(filepath, career_id, gestion_id, db):
@@ -256,7 +266,7 @@ def _build_table_report(filepath, career_id, gestion_id, db):
 
     template = jinja_env.get_template("activity_report.html")
     html_out = template.render(**context)
-    HTML(string=html_out).write_pdf(filepath)
+    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
 
 
 @celery_app.task
@@ -344,19 +354,54 @@ def generate_excel_report_task(
             conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
             return build_conflict_excel(conflicts, career_id, gestion_id)
 
-        import time
+        from openpyxl import Workbook
 
-        # Simulate Excel generation for legacy report types
-        time.sleep(2)
-        filename = f"report_{career_id}_{gestion_id}.xlsx"
+        filename = f"report_{uuid.uuid4().hex}.xlsx"
         filepath = os.path.join(REPORTS_DIR, filename)
 
-        with open(filepath, "w") as f:
-            f.write(
-                "Simulated Excel content for career {} and gestion {}".format(
-                    career_id, gestion_id
-                )
-            )
+        ac_query = db.query(AcademicActivity)
+        sc_query = db.query(ScientificActivity)
+
+        if career_id is not None:
+            ac_query = ac_query.filter(AcademicActivity.career_id == career_id)
+            sc_query = sc_query.filter(ScientificActivity.career_id == career_id)
+        if gestion_id is not None:
+            ac_query = ac_query.filter(AcademicActivity.gestion_id == gestion_id)
+            sc_query = sc_query.filter(ScientificActivity.gestion_id == gestion_id)
+
+        academic_activities = ac_query.all()
+        scientific_activities = sc_query.all()
+
+        wb = Workbook()
+
+        # Academic sheet
+        ws_ac = wb.active
+        ws_ac.title = "Académicas"
+        ws_ac.append(["Título", "Fecha inicio", "Fecha fin", "Categoría", "Carrera ID"])
+        for act in academic_activities:
+            ws_ac.append([
+                act.title,
+                act.start_date.isoformat() if act.start_date else "",
+                act.end_date.isoformat() if act.end_date else "",
+                act.category or "",
+                act.career_id,
+            ])
+
+        # Scientific sheet
+        ws_sc = wb.create_sheet("Científicas")
+        ws_sc.append(["Título", "Fecha inicio", "Fecha fin", "Tipo", "Estado", "Responsable", "Carrera ID"])
+        for act in scientific_activities:
+            ws_sc.append([
+                act.title,
+                act.start_date.isoformat() if act.start_date else "",
+                act.end_date.isoformat() if act.end_date else "",
+                get_activity_label(act.activity_type),
+                get_status_label(act.status),
+                act.responsible_name or "",
+                act.career_id,
+            ])
+
+        wb.save(filepath)
 
         return {"status": "completed", "file_path": filepath, "file_name": filename}
     except Exception as e:

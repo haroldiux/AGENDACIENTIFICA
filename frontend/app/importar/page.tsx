@@ -5,6 +5,7 @@ import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle, X, Loader2, Dow
 import toast, { Toaster } from "react-hot-toast";
 import { api } from "@/lib/api";
 import PageHeader from "@/components/layout/PageHeader";
+import { config as appConfig } from "@/lib/config";
 
 interface UploadResult {
   inserted_count: number;
@@ -217,7 +218,7 @@ export default function ImportarPage() {
             <p className="text-xs text-slate-500 mt-0.5">Descarga el formato en blanco, llénalo y súbelo arriba</p>
           </div>
           <a
-            href={`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')}/importacion/template/download`}
+            href={`${appConfig.apiUrl}/importacion/template/download`}
             download="plantilla_actividades.xlsx"
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >

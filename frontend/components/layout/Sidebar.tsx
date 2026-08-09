@@ -18,6 +18,7 @@ import {
   Sun,
   Tag,
   LogOut,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const BASE_NAV_ITEMS = [
   { href: "/actividades", label: "Actividades", icon: FlaskConical },
   { href: "/importar", label: "Importar", icon: FileUp },
   { href: "/reportes", label: "Reportes", icon: FileBarChart },
+  { href: "/perfil", label: "Mi Perfil", icon: User },
 ];
 
 const CATEGORY_ALLOWED_ROLES = [
@@ -65,6 +67,7 @@ export default function Sidebar() {
       : []),
     BASE_NAV_ITEMS[3],
     BASE_NAV_ITEMS[4],
+    BASE_NAV_ITEMS[5],
   ];
 
   const isActive = (href: string) =>

@@ -8,6 +8,7 @@ export interface User {
   email: string;
   full_name?: string | null;
   phone_number?: string | null;
+  telegram_chat_id?: string | null;
   is_active: boolean;
   role: string;
   careers: { id: number; name: string }[];

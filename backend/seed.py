@@ -6,7 +6,7 @@ Uso (dentro del contenedor backend):
 
 Crea:
 - 3 sedes
-- 22 carreras agrupadas por facultad
+- 24 carreras oficiales de UNITEPC agrupadas por facultad
 - 3 gestiones (2024, 2025, 2026)
 - ~50 actividades científicas distribuidas entre carreras y gestiones
 - Algunas actividades incluyen caracteres especiales (&, <, >) para validar
@@ -29,9 +29,11 @@ from app.models.models import (
     Gestion,
     Sede,
     ScientificActivity,
+    ScientificActivityEvidence,
     ScientificActivityStatus,
     ScientificActivityType,
     sede_career_association,
+    user_career_association,
 )
 
 
@@ -48,35 +50,34 @@ GESTIONES = [
 ]
 
 CAREERS = [
-    # Facultad de Tecnología
-    ("Ingeniería de Sistemas", "Facultad de Tecnología"),
-    ("Ingeniería Informática", "Facultad de Tecnología"),
-    ("Ingeniería en Redes y Telecomunicaciones", "Facultad de Tecnología"),
-    ("Ingeniería Industrial", "Facultad de Tecnología"),
-    ("Ingeniería Electrónica", "Facultad de Tecnología"),
-    # Ciencias de la Salud
+    # Facultad de Ciencias de la Salud
     ("Medicina", "Facultad de Ciencias de la Salud"),
-    ("Enfermería", "Facultad de Ciencias de la Salud"),
     ("Odontología", "Facultad de Ciencias de la Salud"),
-    ("Psicología", "Facultad de Ciencias de la Salud"),
+    ("Enfermería", "Facultad de Ciencias de la Salud"),
+    ("Medicina Veterinaria y Zootecnia", "Facultad de Ciencias de la Salud"),
+    ("Fisioterapia y Kinesiología", "Facultad de Ciencias de la Salud"),
+    ("Bioquímica y Farmacia", "Facultad de Ciencias de la Salud"),
+    ("Fonoaudiología", "Facultad de Ciencias de la Salud"),
     ("Nutrición y Dietética", "Facultad de Ciencias de la Salud"),
-    # Ciencias Empresariales
-    ("Administración de Empresas", "Facultad de Ciencias Empresariales"),
-    ("Contaduría Pública", "Facultad de Ciencias Empresariales"),
-    ("Ingeniería Comercial", "Facultad de Ciencias Empresariales"),
-    ("Marketing Digital", "Facultad de Ciencias Empresariales"),
-    # Ciencias Jurídicas y Políticas
-    ("Derecho", "Facultad de Ciencias Jurídicas y Políticas"),
-    ("Ciencias Políticas", "Facultad de Ciencias Jurídicas y Políticas"),
-    # Humanidades
-    ("Comunicación Social", "Facultad de Humanidades"),
-    ("Pedagogía", "Facultad de Humanidades"),
-    ("Lingüística", "Facultad de Humanidades"),
-    # Ciencias Agrícolas y Pecuarias
-    ("Agronomía", "Facultad de Ciencias Agrícolas y Pecuarias"),
-    ("Zootecnia", "Facultad de Ciencias Agrícolas y Pecuarias"),
-    # Arquitectura
-    ("Arquitectura", "Facultad de Arquitectura"),
+    ("Tec. Superior Prótesis Dental", "Facultad de Ciencias de la Salud"),
+    # Facultad de Ciencias de la Ingeniería
+    ("Ingeniería de Sonido", "Facultad de Ciencias de la Ingeniería"),
+    ("Ingeniería de Sistemas", "Facultad de Ciencias de la Ingeniería"),
+    ("Ingeniería Electrónica", "Facultad de Ciencias de la Ingeniería"),
+    ("Ingeniería Biomédica", "Facultad de Ciencias de la Ingeniería"),
+    # Facultad de Ciencias Económicas Financieras Empresariales y Administrativas
+    ("Contaduría Pública", "Facultad de Ciencias Económicas Financieras Empresariales y Administrativas"),
+    ("Economía", "Facultad de Ciencias Económicas Financieras Empresariales y Administrativas"),
+    ("Administración de Empresas", "Facultad de Ciencias Económicas Financieras Empresariales y Administrativas"),
+    ("Ingeniería Comercial", "Facultad de Ciencias Económicas Financieras Empresariales y Administrativas"),
+    ("Contaduría Pública (Complementaria)", "Facultad de Ciencias Económicas Financieras Empresariales y Administrativas"),
+    ("Administración de Empresas (Complementaria)", "Facultad de Ciencias Económicas Financieras Empresariales y Administrativas"),
+    ("Ingeniería Comercial (Complementaria)", "Facultad de Ciencias Económicas Financieras Empresariales y Administrativas"),
+    # Facultad de Ciencias Sociales y Jurídicas
+    ("Comunicación Social", "Facultad de Ciencias Sociales y Jurídicas"),
+    ("Derecho", "Facultad de Ciencias Sociales y Jurídicas"),
+    ("Artes y Escultura", "Facultad de Ciencias Sociales y Jurídicas"),
+    ("Cinematografía", "Facultad de Ciencias Sociales y Jurídicas"),
 ]
 
 ACTIVITY_TITLES = [
@@ -133,8 +134,10 @@ def seed():
     db = SessionLocal()
     try:
         print("Limpiando datos de prueba anteriores...")
+        db.execute(delete(ScientificActivityEvidence))
         db.execute(delete(ScientificActivity))
         db.execute(delete(AcademicActivity))
+        db.execute(delete(user_career_association))
         db.execute(delete(sede_career_association))
         db.execute(delete(Career))
         db.execute(delete(Sede))

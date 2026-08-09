@@ -1,5 +1,5 @@
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from celery.utils.log import get_task_logger
 import smtplib
 from email.message import EmailMessage
@@ -11,7 +11,62 @@ from app.core.config import settings
 
 logger = get_task_logger(__name__)
 
+
+def _build_weekly_summary(user: User, academic_activities: list, scientific_activities: list) -> str | None:
+    """Build the weekly summary message for a user based on their assigned careers."""
+    user_career_ids = {c.id for c in user.careers}
+
+    def activity_matches(activity) -> bool:
+        if activity.career_id is None:
+            return True
+        return activity.career_id in user_career_ids
+
+    user_academic = [a for a in academic_activities if activity_matches(a)]
+    user_scientific = [a for a in scientific_activities if activity_matches(a)]
+
+    if not user_academic and not user_scientific:
+        return None
+
+    lines = [f"Hola {user.full_name or 'Usuario'}, aquí están tus actividades para la próxima semana:", ""]
+    if user_academic:
+        lines.append("*Actividades Académicas:*")
+        for act in user_academic:
+            lines.append(f"- {act.title} ({act.start_date.strftime('%d/%m/%Y')})")
+        lines.append("")
+
+    if user_scientific:
+        lines.append("*Actividades Científicas:*")
+        for act in user_scientific:
+            lines.append(f"- {act.title} ({act.start_date.strftime('%d/%m/%Y')})")
+
+    return "\n".join(lines)
+
+
+def send_telegram_message(chat_id: str, message: str) -> bool:
+    """Send a message via the Telegram Bot API (free)."""
+    if not settings.TELEGRAM_BOT_TOKEN:
+        logger.warning("Telegram bot token not configured.")
+        return False
+
+    url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "Markdown",
+    }
+
+    try:
+        response = httpx.post(url, json=payload, timeout=15.0)
+        response.raise_for_status()
+        logger.info(f"Telegram message sent to chat {chat_id}")
+        return True
+    except httpx.HTTPError as exc:
+        logger.error(f"Failed to send Telegram message to chat {chat_id}: {exc}")
+        return False
+
+
 def send_whatsapp_message(phone_number: str, message: str) -> bool:
+    """Send a message via the official WhatsApp Business API (requires paid credentials)."""
     if not settings.WHATSAPP_API_TOKEN or not settings.WHATSAPP_PHONE_ID:
         logger.warning("WhatsApp API token or Phone ID not configured.")
         return False
@@ -27,7 +82,7 @@ def send_whatsapp_message(phone_number: str, message: str) -> bool:
         "type": "text",
         "text": {"body": message}
     }
-    
+
     try:
         response = httpx.post(url, headers=headers, json=payload, timeout=10.0)
         response.raise_for_status()
@@ -37,11 +92,13 @@ def send_whatsapp_message(phone_number: str, message: str) -> bool:
         logger.error(f"Failed to send WhatsApp message to {phone_number}: {exc}")
         return False
 
+
 def send_email_message(email_address: str, subject: str, message: str) -> bool:
+    """Send an email via SMTP (free providers: Gmail app password, SendGrid free tier)."""
     if not settings.SMTP_HOST or not settings.SMTP_PORT or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
         logger.warning("SMTP configuration is missing.")
         return False
-        
+
     msg = EmailMessage()
     msg.set_content(message)
     msg["Subject"] = subject
@@ -59,60 +116,68 @@ def send_email_message(email_address: str, subject: str, message: str) -> bool:
         logger.error(f"Failed to send email to {email_address}: {exc}")
         return False
 
+
 @celery_app.task(name="app.workers.notification_worker.dispatch_weekly_notifications")
 def dispatch_weekly_notifications():
+    """Dispatch weekly activity summaries to all active users.
+
+    Channel priority:
+      1. Telegram (free, automatic)
+      2. WhatsApp Business API (paid credentials required)
+      3. Email (free SMTP providers)
+    """
     logger.info("Starting weekly notification dispatch...")
     db = SessionLocal()
     try:
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         lookahead = today + timedelta(days=settings.NOTIFICATION_DAYS_AHEAD)
 
         academic_activities = db.query(AcademicActivity).filter(
             AcademicActivity.start_date <= lookahead,
             AcademicActivity.start_date >= today
         ).all()
-        
+
         scientific_activities = db.query(ScientificActivity).filter(
             ScientificActivity.start_date <= lookahead,
-            ScientificActivity.start_date >= today
+            ScientificActivity.start_date >= today,
+            ScientificActivity.status != "cancelled"
         ).all()
-        
+
         if not academic_activities and not scientific_activities:
             logger.info("No upcoming activities to notify.")
             return
 
         users = db.query(User).filter(User.is_active == True).all()
-        
+
         for user in users:
-            user_career_ids = {c.id for c in user.careers}
-            
-            user_academic = [a for a in academic_activities if not user_career_ids or a.career_id in user_career_ids]
-            user_scientific = [a for a in scientific_activities if not user_career_ids or a.career_id in user_career_ids]
-            
-            if not user_academic and not user_scientific:
+            message = _build_weekly_summary(user, academic_activities, scientific_activities)
+            if not message:
                 continue
-                
-            user_message_lines = [f"Hola {user.full_name or 'Usuario'}, aquí están tus actividades para la próxima semana:", ""]
-            if user_academic:
-                user_message_lines.append("*Actividades Académicas:*")
-                for act in user_academic:
-                    user_message_lines.append(f"- {act.title} ({act.start_date.strftime('%d/%m/%Y')})")
-                user_message_lines.append("")
-                
-            if user_scientific:
-                user_message_lines.append("*Actividades Científicas:*")
-                for act in user_scientific:
-                    user_message_lines.append(f"- {act.title} ({act.start_date.strftime('%d/%m/%Y')})")
-                    
-            user_message = "\n".join(user_message_lines)
-            
+
             delivered = False
-            if user.phone_number:
-                delivered = send_whatsapp_message(user.phone_number, user_message)
-                
+            channel = None
+
+            if user.telegram_chat_id:
+                delivered = send_telegram_message(user.telegram_chat_id, message)
+                channel = "telegram"
+
+            if not delivered and user.phone_number:
+                delivered = send_whatsapp_message(user.phone_number, message)
+                channel = "whatsapp"
+
             if not delivered and user.email:
-                send_email_message(user.email, "Agenda Científica - Actividades de la Semana", user_message)
-                
+                delivered = send_email_message(
+                    user.email,
+                    "Agenda Científica - Actividades de la Semana",
+                    message
+                )
+                channel = "email"
+
+            if delivered:
+                logger.info(f"Weekly summary delivered to {user.email} via {channel}")
+            else:
+                logger.warning(f"Could not deliver weekly summary to {user.email}: no channel configured or all channels failed")
+
     except Exception as e:
         logger.error(f"Error dispatching notifications: {e}")
     finally:

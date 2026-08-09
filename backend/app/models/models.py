@@ -10,6 +10,7 @@ class RoleEnum(str, enum.Enum):
     research = "research"
     coordinator = "coordinator"
     teacher = "teacher"
+    read_only = "read_only"
     vicerrectorado = "vicerrectorado"
     director_investigacion = "director_investigacion"
     jefe_investigacion = "jefe_investigacion"
@@ -24,6 +25,7 @@ class User(Base):
     role = Column(Enum(RoleEnum), default=RoleEnum.teacher, nullable=False)
     is_active = Column(Boolean, default=True)
     phone_number = Column(String, nullable=True)
+    telegram_chat_id = Column(String, nullable=True)
 
     careers = relationship("Career", secondary="user_career", back_populates="users")
 

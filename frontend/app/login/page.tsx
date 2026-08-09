@@ -120,7 +120,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="space-y-2 text-center lg:text-left">
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              ¡Bienvenido!
+              Iniciar Sesión
             </h2>
             <p className="text-sm text-muted-foreground">
               Ingresá tus credenciales para continuar
@@ -186,7 +186,7 @@ export default function LoginPage() {
                   Iniciando sesión...
                 </>
               ) : (
-                "Ingresar"
+                "Iniciar Sesión"
               )}
             </Button>
           </form>

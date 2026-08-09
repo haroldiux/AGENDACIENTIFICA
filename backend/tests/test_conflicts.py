@@ -12,6 +12,28 @@ from app.models.models import (
 )
 from app.schemas.schemas import ConflictListResponse
 from app.services.conflict_service import _overlaps, find_conflicts
+from app.api.deps import get_current_active_user
+from app.main import app
+from app.models.models import User, RoleEnum
+
+
+def _make_user(role: RoleEnum = RoleEnum.admin) -> User:
+    return User(
+        id=1,
+        email="conflicts@example.com",
+        hashed_password="hashed_pw",
+        full_name="Conflicts User",
+        role=role,
+        is_active=True,
+    )
+
+
+@pytest.fixture
+def authenticated_user():
+    user = _make_user()
+    app.dependency_overrides[get_current_active_user] = lambda: user
+    yield user
+    app.dependency_overrides.clear()
 
 
 # --- Unit tests for overlap predicate ---
@@ -92,7 +114,7 @@ def test_find_conflicts_excludes_cancelled_scientific(db_session):
 
 # --- Endpoint integration tests ---
 
-def test_get_conflicts_returns_overlapping_pair(client, db_session):
+def test_get_conflicts_returns_overlapping_pair(client, authenticated_user, db_session):
     career, gestion = _seed_career_and_gestion(db_session)
 
     academic = AcademicActivity(
@@ -132,7 +154,7 @@ def test_get_conflicts_returns_overlapping_pair(client, db_session):
     assert item.scientific_end_date == date(2026, 3, 5)
 
 
-def test_get_conflicts_filters_by_career_and_gestion(client, db_session):
+def test_get_conflicts_filters_by_career_and_gestion(client, authenticated_user, db_session):
     career_a, gestion_a = _seed_career_and_gestion(db_session)
     career_b = Career(name="Other Career", faculty="Other Faculty")
     db_session.add(career_b)
@@ -185,6 +207,6 @@ def test_get_conflicts_filters_by_career_and_gestion(client, db_session):
     assert payload["conflicts"][0]["academic_title"] == "Academic A"
 
 
-def test_get_conflicts_missing_gestion_id_returns_422(client):
+def test_get_conflicts_missing_gestion_id_returns_422(client, authenticated_user):
     response = client.get("/api/v1/conflicts?career_id=1")
     assert response.status_code == 422

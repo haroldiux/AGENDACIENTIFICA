@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, 
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.api.deps import get_current_active_user, check_activity_scope_permission
+from app.api.deps import require_read_only_get, check_activity_scope_permission
 from app.models.models import ScientificActivity, ScientificActivityEvidence, Career, Gestion, User, ActivityCategory
 from app.schemas.schemas import (
     ScientificActivityCreate,
@@ -39,6 +39,7 @@ def get_scientific_activities(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_read_only_get),
 ):
     try:
         filters = ScientificActivityFilterParams.model_validate({
@@ -65,7 +66,7 @@ def get_scientific_activities(
 def create_scientific_activity(
     activity: ScientificActivityCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     check_activity_scope_permission(current_user, activity.career_id)
 
@@ -104,7 +105,7 @@ def update_scientific_activity(
     id: int,
     activity_update: ScientificActivityUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
@@ -140,7 +141,7 @@ def update_scientific_activity(
 def delete_scientific_activity(
     id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
@@ -157,7 +158,7 @@ def update_scientific_status(
     id: int,
     status_update: ScientificActivityStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
@@ -180,7 +181,7 @@ async def upload_scientific_activity_evidence(
     id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
@@ -228,6 +229,7 @@ async def upload_scientific_activity_evidence(
 def list_scientific_activity_evidences(
     id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_read_only_get),
 ):
     db_activity = db.query(ScientificActivity).filter(ScientificActivity.id == id).first()
     if not db_activity:
@@ -238,7 +240,7 @@ def list_scientific_activity_evidences(
 def delete_scientific_activity_evidence(
     evidence_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_read_only_get),
 ):
     evidence = db.query(ScientificActivityEvidence).filter(ScientificActivityEvidence.id == evidence_id).first()
     if not evidence:

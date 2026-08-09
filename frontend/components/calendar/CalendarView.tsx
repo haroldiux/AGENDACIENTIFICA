@@ -232,12 +232,12 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
                   <div className="flex items-center gap-3">
                     <FlaskConical className="w-4 h-4 text-muted-foreground shrink-0" />
                     <span className="capitalize">{selectedEvent.activity_type.replace('_', ' ')}</span>
-                    {selectedEvent.status && (
+                    {selectedEvent.status && onStatusChange && (
                       <div className="ml-auto">
                         <Select
                           value={selectedEvent.status || undefined}
                           onValueChange={(val) => {
-                            if (val && onStatusChange) onStatusChange(selectedEvent.id, val);
+                            if (val) onStatusChange(selectedEvent.id, val);
                           }}
                         >
                           <SelectTrigger className="h-8 text-xs w-[130px]">

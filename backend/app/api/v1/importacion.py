@@ -9,7 +9,8 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from app.db.session import get_db
-from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, ActivityCategory
+from app.api.deps import require_read_only_get, check_activity_scope_permission
+from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, ActivityCategory, User
 from app.schemas.schemas import ActivityRowValidator, ScientificActivityType
 
 router = APIRouter()
@@ -53,7 +54,10 @@ def _add_example_row(ws, values: list):
 # ---------------------------------------------------------------------------
 
 @router.get("/template/download")
-def download_template(db: Session = Depends(get_db)):
+def download_template(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_read_only_get),
+):
     """Return a bilingual blank Excel template with career/gestion/category reference."""
     wb = openpyxl.Workbook()
 
@@ -250,7 +254,11 @@ def download_template(db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.post("/upload-excel")
-async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_excel(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_read_only_get),
+):
     if not file.filename.endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Invalid file format. Only Excel files are supported.")
     
@@ -359,6 +367,12 @@ async def upload_excel(file: UploadFile = File(...), db: Session = Depends(get_d
         except ValidationError as e:
             errors.append({"row": i + 2, "error": str(e)})
     
+    # Enforce scope-aware permissions before inserting
+    for row in valid_academic:
+        check_activity_scope_permission(current_user, row.get("career_id"))
+    for row in valid_scientific:
+        check_activity_scope_permission(current_user, row.get("career_id"))
+
     inserted_count = 0
     try:
         if valid_academic:

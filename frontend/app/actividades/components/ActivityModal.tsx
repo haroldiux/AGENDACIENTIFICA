@@ -21,6 +21,7 @@ import {
 } from "@/lib/api";
 import { activityStatusLabels } from "@/components/agenda/agenda-helpers";
 import { useUser } from "@/context/AuthContext";
+import { config as appConfig } from "@/lib/config";
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -506,7 +507,7 @@ export default function ActivityModal({
                 {evidences.length > 0 && (
                   <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                     {evidences.map((ev) => {
-                      const apiHost = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
+                      const apiHost = appConfig.apiHost;
                       const fileUrl = `${apiHost}/${ev.file_path.replace(/\\/g, '/')}`;
                       const sizeKB = (ev.file_size / 1024).toFixed(1);
 
@@ -570,6 +571,7 @@ export default function ActivityModal({
             </button>
             <button
               type="submit"
+              data-testid="activity-save-button"
               disabled={isSubmitting}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition-colors text-white text-sm"
             >

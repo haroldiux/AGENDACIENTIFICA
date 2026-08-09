@@ -60,6 +60,7 @@ class RoleEnum(str, Enum):
     research = "research"
     coordinator = "coordinator"
     teacher = "teacher"
+    read_only = "read_only"
     vicerrectorado = "vicerrectorado"
     director_investigacion = "director_investigacion"
     jefe_investigacion = "jefe_investigacion"
@@ -77,11 +78,18 @@ class UserBase(BaseModel):
     email: str
     full_name: Optional[str] = None
     phone_number: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
     role: RoleEnum = RoleEnum.teacher
 
 class UserCreate(UserBase):
     password: str
     career_ids: List[int] = []
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+    email: Optional[str] = None
 
 class UserResponse(UserBase):
     id: int

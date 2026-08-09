@@ -11,6 +11,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Lista mínima de prueba: un único usuario por rol funcional.
+# Todas las contraseñas se resetean a admin123 para facilitar las pruebas de entrega.
 INITIAL_USERS = [
     {
         "email": "admin@unitepc.edu.bo",
@@ -34,22 +36,12 @@ INITIAL_USERS = [
         "careers": ["Ingeniería de Sistemas"],
     },
     {
-        "email": "jefe.medicina@unitepc.edu.bo",
-        "full_name": "Dr. Marcelo Paz (Jefe Inv. Medicina)",
-        "role": "jefe_investigacion",
-        "careers": ["Medicina"],
-    },
-    {
-        "email": "coordinador.sistemas@unitepc.edu.bo",
+        "email": "haroldiux.18@gmail.com",
         "full_name": "Ing. Carlos Mendoza (Coordinador Sistemas)",
         "role": "coordinator",
         "careers": ["Ingeniería de Sistemas"],
-    },
-    {
-        "email": "coordinador.medicina@unitepc.edu.bo",
-        "full_name": "Dra. Patricia Soliz (Coordinadora Medicina)",
-        "role": "coordinator",
-        "careers": ["Medicina"],
+        "phone_number": "+59178311416",
+        "telegram_chat_id": "1025664701",
     },
     {
         "email": "docente.investigador@unitepc.edu.bo",
@@ -63,6 +55,7 @@ INITIAL_USERS = [
     },
 ]
 
+
 def seed_users():
     db = SessionLocal()
     try:
@@ -72,10 +65,14 @@ def seed_users():
         for udata in INITIAL_USERS:
             existing = db.query(User).filter(User.email == udata["email"]).first()
             if existing:
-                logger.info(f"User {udata['email']} already exists. Updating role and password...")
+                logger.info(f"User {udata['email']} already exists. Updating role, password and profile...")
                 existing.role = udata["role"]
                 existing.full_name = udata["full_name"]
                 existing.hashed_password = hashed_pwd
+                existing.is_active = True
+                existing.phone_number = udata.get("phone_number")
+                existing.telegram_chat_id = udata.get("telegram_chat_id")
+                user = existing
             else:
                 user = User(
                     email=udata["email"],
@@ -83,13 +80,18 @@ def seed_users():
                     full_name=udata["full_name"],
                     role=udata["role"],
                     is_active=True,
+                    phone_number=udata.get("phone_number"),
+                    telegram_chat_id=udata.get("telegram_chat_id"),
                 )
-                if "careers" in udata:
-                    for car_name in udata["careers"]:
-                        if car_name in careers_map:
-                            user.careers.append(careers_map[car_name])
                 db.add(user)
                 logger.info(f"Created user {udata['email']} ({udata['role']})")
+
+            # Sincronizar carreras (limpia y reasigna)
+            if "careers" in udata:
+                target_careers = [careers_map[name] for name in udata["careers"] if name in careers_map]
+                user.careers = target_careers
+            else:
+                user.careers = []
 
         db.commit()
         logger.info("User seeding completed successfully.")
@@ -98,6 +100,7 @@ def seed_users():
         logger.error(f"Error seeding users: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     logger.info("Seeding test users into database...")

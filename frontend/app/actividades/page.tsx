@@ -23,10 +23,30 @@ import {
   activityTypeLabels,
   formatDateRange,
 } from "@/components/agenda/agenda-helpers";
+import { useUser } from "@/context/AuthContext";
 
 type SortKey = "nombre" | "fecha" | "tipo" | "carrera" | "estado";
 
+const GLOBAL_ROLES = ["super_admin", "admin", "vicerrectorado", "director_investigacion"];
+const READ_ONLY_ROLES = ["read_only"];
+
+function isReadOnlyUser(user: { role: string } | null): boolean {
+  return !!user && READ_ONLY_ROLES.includes(user.role);
+}
+
+function canManageActivity(
+  user: { role: string; careers: { id: number }[] } | null,
+  activity: ScientificActivity
+): boolean {
+  if (!user) return false;
+  if (isReadOnlyUser(user)) return false;
+  if (GLOBAL_ROLES.includes(user.role)) return true;
+  if (activity.career_id == null) return false;
+  return user.careers.some((c) => c.id === activity.career_id);
+}
+
 export default function ActividadesPage() {
+  const { user } = useUser();
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
@@ -186,21 +206,26 @@ export default function ActividadesPage() {
         title="Actividades Científicas"
         description="Crea, edita y da seguimiento a las actividades de investigación por carrera y gestión."
         actions={
-          <>
-            <Link href="/importar">
-              <Button variant="secondary" className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Importar Excel
+          !isReadOnlyUser(user) ? (
+            <>
+              <Link href="/importar">
+                <Button variant="secondary" className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Importar Excel
+                </Button>
+              </Link>
+              <Button
+                onClick={openCreateModal}
+                data-testid="new-activity-button"
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Nueva Actividad
               </Button>
-            </Link>
-            <Button
-              onClick={openCreateModal}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Nueva Actividad
-            </Button>
-          </>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">Solo lectura</span>
+          )
         }
       />
 
@@ -338,29 +363,35 @@ export default function ActividadesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditModal(activity)}
-                        className="text-muted-foreground hover:text-foreground mr-2"
-                      >
-                        <Pencil className="w-3.5 h-3.5 mr-1" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(activity)}
-                        disabled={deletingId === activity.id}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        {deletingId === activity.id ? (
-                          <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3.5 h-3.5 mr-1" />
-                        )}
-                        Eliminar
-                      </Button>
+                      {canManageActivity(user, activity) ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditModal(activity)}
+                            className="text-muted-foreground hover:text-foreground mr-2"
+                          >
+                            <Pencil className="w-3.5 h-3.5 mr-1" />
+                            Editar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(activity)}
+                            disabled={deletingId === activity.id}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            {deletingId === activity.id ? (
+                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5 mr-1" />
+                            )}
+                            Eliminar
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Solo lectura</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

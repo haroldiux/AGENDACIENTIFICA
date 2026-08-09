@@ -10,11 +10,13 @@ import {
   ChevronRight,
   Loader2,
   FileUp,
+  User,
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { api, type DashboardStats } from '@/lib/api';
 import { activityTypeLabels } from '@/components/agenda/agenda-helpers';
 import PageHeader from '@/components/layout/PageHeader';
+import { useUser } from '@/context/AuthContext';
 
 const statusColors: Record<string, string> = {
   scheduled: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
@@ -43,6 +45,7 @@ function formatShortDate(dateStr: string): string {
 }
 
 export default function Dashboard() {
+  const { user } = useUser();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +134,26 @@ export default function Dashboard() {
             : 'Resumen general del sistema de agenda científica'
         }
       />
+
+      {user && !user.phone_number && !user.telegram_chat_id && (
+        <Link
+          href="/perfil"
+          className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200 hover:bg-amber-500/15 transition-colors"
+        >
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium text-sm">Completá tus datos de contacto</p>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Agregá tu WhatsApp o Telegram para recibir resúmenes semanales de
+              actividades.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium text-amber-300">
+            <User className="w-4 h-4" />
+            Ir a perfil
+          </div>
+        </Link>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

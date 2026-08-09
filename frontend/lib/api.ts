@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { config as appConfig } from './config';
+import { User } from '@/context/AuthContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = appConfig.apiUrl;
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -48,6 +50,19 @@ export interface Career {
   id: number;
   name: string;
   faculty: string;
+}
+
+export interface AcademicActivity {
+  id: number;
+  title: string;
+  start_date: string;
+  end_date: string;
+  category?: string | null;
+  category_id?: number | null;
+  origin_color?: string | null;
+  career_id?: number | null;
+  gestion_id: number;
+  activity_category?: ActivityCategory | null;
 }
 
 export interface Gestion {
@@ -300,6 +315,13 @@ export const api = {
   },
   users: {
     me: () => apiClient.get('/users/me').then((res) => res.data),
+    updateMe: (data: {
+      full_name?: string | null;
+      email?: string | null;
+      phone_number?: string | null;
+      telegram_chat_id?: string | null;
+    }) => apiClient.patch('/users/me', data).then((res) => res.data),
+    testTelegram: () => apiClient.post('/users/me/test-telegram').then((res) => res.data),
   },
   reports: {
     generate: (payload: ReportGenerateRequest) =>
