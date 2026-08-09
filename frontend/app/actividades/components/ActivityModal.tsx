@@ -404,44 +404,25 @@ export default function ActivityModal({
             </p>
           </div>
 
-          {/* Req 2 — Categoría above Tipo de Evento; labels renamed; no auto-fill */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Categoría</label>
-              <select
-                name="category_id"
-                value={formData.category_id}
-                onChange={handleChange}
-                className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-              >
-                <option value="">Seleccione Categoría (Opcional)...</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name} ({cat.code})
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground mt-1">Clasifica la actividad segun su naturaleza tematica.</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Tipo de Evento *</label>
-              <select
-                name="activity_type"
-                value={formData.activity_type}
-                onChange={handleChange}
-                required
-                className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-              >
-                <option value="">Seleccione...</option>
-                <option value="congreso">Congreso</option>
-                <option value="webinar">Webinar</option>
-                <option value="defensa">Defensa</option>
-                <option value="feria">Feria</option>
-                <option value="olimpiada">Olimpiada</option>
-                <option value="master_class">Master Class</option>
-              </select>
-              <p className="text-xs text-muted-foreground mt-1">Formato o modalidad del evento cientifico.</p>
-            </div>
+          {/* Tipo de Evento / Categoría de la Actividad */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Tipo de Evento *</label>
+            <select
+              name="activity_type"
+              value={formData.activity_type}
+              onChange={handleChange}
+              required
+              className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+            >
+              <option value="">Seleccione el tipo de evento...</option>
+              <option value="congreso">Congreso</option>
+              <option value="webinar">Webinar</option>
+              <option value="defensa">Defensa</option>
+              <option value="feria">Feria</option>
+              <option value="olimpiada">Olimpiada</option>
+              <option value="master_class">Master Class</option>
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">Formato o categoría principal del evento científico.</p>
           </div>
 
           {isEdit && (
