@@ -152,14 +152,29 @@ export default function Dashboard() {
     <div className="space-y-6">
       <Toaster position="top-right" />
 
-      <PageHeader
-        title="Dashboard de Analítica Científica"
-        description={
-          active_gestion.name
-            ? `Resumen institucional y métricas de desempeño (${active_gestion.name})`
-            : 'Resumen general del sistema de agenda científica'
-        }
-      />
+      {/* Hero Welcome Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800/80 to-slate-900 rounded-2xl border border-white/8 shadow-2xl p-6">
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-blue-500/20 blur-3xl opacity-40 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-violet-500/20 blur-3xl opacity-40 pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              Bienvenido, {user?.full_name || 'Usuario'}
+            </h1>
+            <p className="text-slate-400 mt-1">
+              Dashboard de Analítica Científica
+            </p>
+          </div>
+          {active_gestion.name && (
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+                Gestión Activa: {active_gestion.name}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
 
       {user && !user.phone_number && !user.telegram_chat_id && (
         <Link
@@ -202,15 +217,15 @@ export default function Dashboard() {
           total={counts.total_scientific}
         />
 
-        <div className="lg:col-span-2 bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold tracking-wide text-slate-300">
+        <div className="lg:col-span-2 rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-0 flex flex-col justify-between">
+          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+            <h3 className="text-sm font-semibold tracking-wide text-slate-200">
               Estado de Actividades Científicas
             </h3>
-            <span className="text-xs text-slate-400">Total: {counts.total_scientific}</span>
+            <span className="text-xs text-slate-500">Total: {counts.total_scientific}</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 my-auto">
             {['scheduled', 'in_progress', 'completed', 'cancelled'].map((stKey) => {
               const cnt = status_breakdown[stKey] || 0;
               return (
@@ -242,9 +257,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AuditFeedWidget audits={recent_audits || []} />
 
-        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold tracking-wide text-slate-300">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl flex flex-col justify-between overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+            <h3 className="text-sm font-semibold tracking-wide text-slate-200">
               Próximos Eventos Científicos
             </h3>
             <Link
@@ -310,7 +325,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Link
           href="/actividades"
-          className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl hover:bg-slate-900/50 hover:border-blue-500/40 transition-all group"
+          className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-6 hover:bg-slate-800/80 hover:border-blue-500/40 transition-all duration-200 group"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-4">
@@ -332,7 +347,7 @@ export default function Dashboard() {
 
         <Link
           href="/importar"
-          className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl hover:bg-slate-900/50 hover:border-blue-500/40 transition-all group"
+          className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-6 hover:bg-slate-800/80 hover:border-blue-500/40 transition-all duration-200 group"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-4">

@@ -12,15 +12,17 @@ export default function CareerFacultyChart({ data }: CareerFacultyChartProps) {
   const maxTotal = Math.max(1, ...data.map((item) => item.total));
 
   return (
-    <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl flex flex-col justify-between space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-emerald-400" />
-          <h3 className="text-sm font-semibold tracking-wide text-slate-300">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-0 flex flex-col justify-between">
+      <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <Layers className="w-4 h-4 text-emerald-400" />
+          </div>
+          <h3 className="text-sm font-semibold tracking-wide text-slate-200">
             Resumen por Carrera y Facultad
           </h3>
         </div>
-        <span className="text-xs text-slate-400 font-medium">
+        <span className="text-xs text-slate-500">
           {data.length} {data.length === 1 ? 'Carrera' : 'Carreras'}
         </span>
       </div>
@@ -30,7 +32,7 @@ export default function CareerFacultyChart({ data }: CareerFacultyChartProps) {
           No hay datos de carreras para mostrar.
         </div>
       ) : (
-        <div className="space-y-3.5 max-h-[320px] overflow-y-auto pr-1">
+        <div className="p-5 space-y-4 max-h-[320px] overflow-y-auto">
           {data.map((item, idx) => {
             const widthPercent = (item.total / maxTotal) * 100;
             return (

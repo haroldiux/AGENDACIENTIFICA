@@ -48,20 +48,24 @@ export default function KpiStatCards({ counts }: KpiStatCardsProps) {
       {cards.map(({ label, value, hint, icon: Icon, accent, chipClass }) => (
         <div
           key={label}
-          className="bg-card text-card-foreground border border-border shadow-sm p-5 rounded-2xl flex flex-col justify-between gap-3 hover:border-slate-700/80 transition-all"
+          className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-5 flex flex-col justify-between gap-3 hover:border-white/10 hover:shadow-xl transition-all duration-200 group"
           style={{ '--stat-accent': accent } as React.CSSProperties}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider group-hover:text-slate-300 transition-colors">
               {label}
             </span>
-            <div className={`p-2 rounded-xl ${chipClass}`}>
-              <Icon className="w-4 h-4" />
+            <div className={`p-2 rounded-lg flex items-center justify-center shadow-[0_0_15px_var(--stat-accent)] shadow-transparent group-hover:shadow-[0_0_15px_var(--stat-accent)]/20 transition-all duration-300 ${chipClass}`}>
+              <Icon className="w-5 h-5" />
             </div>
           </div>
           <div>
-            <p className="text-3xl font-extrabold tracking-tight">{value}</p>
-            <p className="text-xs text-slate-500 mt-1">{hint}</p>
+            <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
+            <div className="mt-2">
+              <span className="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px] text-slate-400">
+                {hint}
+              </span>
+            </div>
           </div>
         </div>
       ))}

@@ -25,16 +25,18 @@ export default function ExecutionGauge({ rate, completed, total }: ExecutionGaug
   const currentColor = getColor(normalizedRate);
 
   return (
-    <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl flex flex-col items-center justify-between relative overflow-hidden">
-      <div className="w-full flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold tracking-wide text-slate-300 flex items-center gap-2">
-          <Target className="w-4 h-4 text-emerald-400" />
+    <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-0 flex flex-col relative overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <span className="text-sm font-semibold tracking-wide text-slate-200 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <Target className="w-4 h-4 text-emerald-400" />
+          </div>
           Tasa de Ejecución
         </span>
-        <span className="text-xs text-slate-400 font-medium">Meta Institucional</span>
+        <span className="text-xs text-slate-500">Meta Institucional</span>
       </div>
 
-      <div className="relative flex items-center justify-center my-4">
+      <div className="relative flex items-center justify-center my-4 flex-1">
         <svg className="w-48 h-48 transform -rotate-90">
           {/* Background circle */}
           <circle
@@ -77,7 +79,7 @@ export default function ExecutionGauge({ rate, completed, total }: ExecutionGaug
         </div>
       </div>
 
-      <div className="w-full grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-center">
+      <div className="w-full grid grid-cols-2 gap-2 p-5 border-t border-white/5 text-center">
         <div className="bg-slate-900/40 p-2 rounded-xl">
           <p className="text-xs text-slate-400">Completadas</p>
           <p className="text-base font-bold text-emerald-400 flex items-center justify-center gap-1 mt-0.5">

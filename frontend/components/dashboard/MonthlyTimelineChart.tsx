@@ -20,11 +20,13 @@ export default function MonthlyTimelineChart({ data }: MonthlyTimelineChartProps
   );
 
   return (
-    <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl flex flex-col justify-between space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-violet-400" />
-          <h3 className="text-sm font-semibold tracking-wide text-slate-300">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-0 flex flex-col justify-between">
+      <div className="px-5 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+            <BarChart3 className="w-4 h-4 text-violet-400" />
+          </div>
+          <h3 className="text-sm font-semibold tracking-wide text-slate-200">
             Distribución Mensual de Actividades
           </h3>
         </div>
@@ -40,7 +42,7 @@ export default function MonthlyTimelineChart({ data }: MonthlyTimelineChartProps
         </div>
       </div>
 
-      <div className="h-52 w-full pt-6 flex items-end justify-between gap-1.5 sm:gap-2">
+      <div className="h-52 w-full p-5 flex items-end justify-between gap-1.5 sm:gap-2">
         {data.map((item) => {
           const acadHeightPercent = (item.academic_count / maxVal) * 100;
           const sciHeightPercent = (item.scientific_count / maxVal) * 100;

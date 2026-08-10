@@ -31,15 +31,17 @@ function formatAuditTime(dateStr: string): string {
 
 export default function AuditFeedWidget({ audits }: AuditFeedWidgetProps) {
   return (
-    <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-2xl flex flex-col justify-between space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-amber-400" />
-          <h3 className="text-sm font-semibold tracking-wide text-slate-300">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-0 flex flex-col justify-between">
+      <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <Activity className="w-4 h-4 text-amber-400" />
+          </div>
+          <h3 className="text-sm font-semibold tracking-wide text-slate-200">
             Feed de Auditoría Reciente
           </h3>
         </div>
-        <span className="text-xs text-slate-400 font-medium">Últimos cambios</span>
+        <span className="text-xs text-slate-500">Últimos cambios</span>
       </div>
 
       {audits.length === 0 ? (
@@ -47,7 +49,7 @@ export default function AuditFeedWidget({ audits }: AuditFeedWidgetProps) {
           No hay registros de auditoría recientes.
         </p>
       ) : (
-        <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+        <div className="divide-y divide-white/5 max-h-[320px] overflow-y-auto">
           {audits.map((item) => {
             const badge = actionLabels[item.action] || {
               label: item.action,
@@ -57,7 +59,7 @@ export default function AuditFeedWidget({ audits }: AuditFeedWidgetProps) {
             return (
               <div
                 key={item.id}
-                className="flex items-start gap-3 p-2.5 bg-slate-900/40 rounded-xl border border-slate-800/80 hover:bg-slate-900/70 transition-colors"
+                className="flex items-start gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors"
               >
                 <div className="p-2 bg-slate-800 rounded-lg shrink-0 mt-0.5">
                   <UserCheck className="w-3.5 h-3.5 text-slate-300" />
