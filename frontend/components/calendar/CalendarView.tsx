@@ -421,7 +421,7 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
           <div className="space-y-4 text-xs">
             <div className="space-y-1.5">
               <label className="font-semibold text-foreground block">Nuevo Estado de la Actividad:</label>
-              <Select value={targetStatus} onValueChange={setTargetStatus}>
+              <Select value={targetStatus} onValueChange={(val) => val && setTargetStatus(val)}>
                 <SelectTrigger className="h-9 text-xs w-full">
                   <SelectValue placeholder="Seleccione un estado" />
                 </SelectTrigger>

@@ -248,7 +248,7 @@ export default function ActivityDetailReportModal({
                 <Calendar className="w-3.5 h-3.5 text-primary" /> Fechas y Horario
               </span>
               <p className="font-semibold text-foreground text-xs">
-                {formatDateRange(activity.start_date, activity.end_date, activity.start_time, activity.end_time)}
+                {formatDateRange(activity.start_date, activity.end_date)}
               </p>
               {activity.start_time && (
                 <p className="text-muted-foreground flex items-center gap-1 pt-0.5 printable-text-muted">

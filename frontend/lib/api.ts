@@ -176,6 +176,7 @@ export interface ReportGenerateRequest {
   gestion_id: number;
   format: ReportFormat;
   report_type: ReportType;
+  status_filter?: string;
 }
 
 export interface ReportGenerateResponse {
