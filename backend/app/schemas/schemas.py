@@ -301,7 +301,7 @@ class ScientificActivityAuditResponse(BaseModel):
 class ScientificActivityResponse(ScientificActivityBase):
     id: int
     career_id: Optional[int] = None
-    gestion_id: int
+    gestion_id: Optional[int] = None
     status: ScientificActivityStatus
     evidence_url: Optional[str] = None
     evidences: List[ScientificActivityEvidenceResponse] = []
