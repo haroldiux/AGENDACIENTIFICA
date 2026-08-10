@@ -93,10 +93,19 @@ services:
       - "3001:3000"
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      # --- Hot-reload fix for Windows Docker Desktop ---
+      # Windows NTFS does not propagate inotify events to the Linux container.
+      # Polling makes Next.js (and Chokidar) detect file changes by actively
+      # checking the filesystem every second instead of waiting for events.
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next
+      # NOTE: /app/.next is intentionally NOT listed here.
+      # Mounting it as an anonymous volume hides the dev-server's compiled
+      # output from the host bind-mount, causing stale pages on refresh.
     command: npm run dev
     depends_on:
       - backend
