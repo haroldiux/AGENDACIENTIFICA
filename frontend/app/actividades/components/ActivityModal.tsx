@@ -23,6 +23,13 @@ import { activityStatusLabels } from "@/components/agenda/agenda-helpers";
 import { useUser } from "@/context/AuthContext";
 import { config as appConfig } from "@/lib/config";
 
+/** Converts '1-2026' -> 'Semestre 1 – 2026', leaves unknown formats as-is. */
+function formatGestion(name: string): string {
+  const match = name.match(/^([12])-(\d{4})$/);
+  if (match) return `Semestre ${match[1]} – ${match[2]}`;
+  return name;
+}
+
 interface ActivityModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -362,7 +369,7 @@ export default function ActivityModal({
               >
                 <option value="">Seleccione...</option>
                 {gestiones.map((g) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
+                  <option key={g.id} value={g.id}>{formatGestion(g.name)}</option>
                 ))}
               </select>
             </div>

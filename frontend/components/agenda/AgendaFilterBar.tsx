@@ -10,6 +10,13 @@ interface GestionOption {
   name: string;
 }
 
+/** Converts '1-2026' -> 'Semestre 1 – 2026', leaves unknown formats as-is. */
+function formatGestion(name: string): string {
+  const match = name.match(/^([12])-(\d{4})$/);
+  if (match) return `Semestre ${match[1]} – ${match[2]}`;
+  return name;
+}
+
 interface AgendaFilterBarProps {
   careers: CareerOption[];
   gestiones: GestionOption[];
@@ -84,7 +91,7 @@ export default function AgendaFilterBar({
             <option value="">Todas las gestiones</option>
             {gestiones.map((gestion) => (
               <option key={gestion.id} value={gestion.id}>
-                {gestion.name}
+                {formatGestion(gestion.name)}
               </option>
             ))}
           </select>

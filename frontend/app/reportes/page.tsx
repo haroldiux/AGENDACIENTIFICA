@@ -16,6 +16,13 @@ import {
 
 import { useUser } from '@/context/AuthContext';
 
+/** Converts '1-2026' -> 'Semestre 1 – 2026', leaves unknown formats as-is. */
+function formatGestion(name: string): string {
+  const match = name.match(/^([12])-(\d{4})$/);
+  if (match) return `Semestre ${match[1]} – ${match[2]}`;
+  return name;
+}
+
 export default function ReportesPage() {
   const { user } = useUser();
   const [careers, setCareers] = useState<Career[]>([]);
@@ -246,7 +253,7 @@ export default function ReportesPage() {
             <option value="">Seleccione una gestión</option>
             {gestiones.map((gestion) => (
               <option key={gestion.id} value={gestion.id}>
-                {gestion.name}
+                {formatGestion(gestion.name)}
               </option>
             ))}
           </select>

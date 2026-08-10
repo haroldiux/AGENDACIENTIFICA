@@ -15,7 +15,7 @@ def get_gestiones(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_read_only_get),
 ):
-    gestiones = db.query(Gestion).offset(skip).limit(limit).all()
+    gestiones = db.query(Gestion).order_by(Gestion.start_date.desc()).offset(skip).limit(limit).all()
     return gestiones
 
 @router.post("/", response_model=GestionResponse, status_code=status.HTTP_201_CREATED)

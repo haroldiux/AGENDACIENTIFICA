@@ -25,6 +25,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
+/** Converts '1-2026' -> 'Semestre 1 – 2026', leaves unknown formats as-is. */
+function formatGestion(name: string): string {
+  const match = name.match(/^([12])-(\d{4})$/);
+  if (match) return `Semestre ${match[1]} – ${match[2]}`;
+  return name;
+}
+
 interface PublicCalendarExplorerProps {
   events: PublicCalendarItem[];
   metadata: PublicMetadata | null;
@@ -144,7 +151,7 @@ export default function PublicCalendarExplorer({
               <option value="">Todas las Gestiones</option>
               {metadata?.gestiones.map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.name}
+                  {formatGestion(g.name)}
                 </option>
               ))}
             </select>

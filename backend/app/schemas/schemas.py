@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 from datetime import date, datetime
 from typing import Optional, List, Literal, Dict
 from enum import Enum
@@ -128,10 +128,23 @@ class UserImportReport(BaseModel):
 
 
 # --- Gestion Schemas ---
+import re as _re
+
 class GestionBase(BaseModel):
     name: str
     start_date: date
     end_date: date
+
+    @field_validator('name')
+    @classmethod
+    def name_must_be_semester_format(cls, v: str) -> str:
+        """Enforce the semester-year format: N-YYYY (e.g. 1-2026, 2-2025)."""
+        if not _re.match(r'^[12]-\d{4}$', v.strip()):
+            raise ValueError(
+                "El nombre de la gestión debe tener el formato semestral: N-AAAA "
+                "(ej. 1-2026, 2-2026). El semestre debe ser 1 o 2."
+            )
+        return v.strip()
 
 class GestionCreate(GestionBase):
     pass

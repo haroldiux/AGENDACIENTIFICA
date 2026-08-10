@@ -13,6 +13,13 @@ interface DashboardFiltersProps {
   disabled?: boolean;
 }
 
+/** Converts '1-2026' -> 'Semestre 1 – 2026', leaves unknown formats as-is. */
+function formatGestion(name: string): string {
+  const match = name.match(/^([12])-(\d{4})$/);
+  if (match) return `Semestre ${match[1]} – ${match[2]}`;
+  return name;
+}
+
 export default function DashboardFilters({
   gestiones,
   careers,
@@ -45,7 +52,7 @@ export default function DashboardFilters({
             <option value="">Todas las gestiones</option>
             {gestiones.map((g) => (
               <option key={g.id} value={g.id}>
-                {g.name}
+                {formatGestion(g.name)}
               </option>
             ))}
           </select>
