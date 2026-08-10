@@ -522,23 +522,23 @@ export default function ReportesPage() {
                     >
                       <div>
                         <p className="font-medium text-slate-200">
-                            {conflict.academic_title}
-                          </p>
-                          <p className="text-slate-400 text-xs">
-                            Académica · {conflict.academic_start_date} al{' '}
-                            {conflict.academic_end_date}
-                          </p>
-                        </div>
-                        <div className="md:text-right">
-                          <p className="font-medium">
-                            {conflict.scientific_title}
-                          </p>
-                          <p className="text-slate-400 text-xs">
-                            Científica ·{' '}
-                            {conflict.scientific_start_date} al{' '}
-                            {conflict.scientific_end_date}
-                          </p>
-                        </div>
+                          {conflict.academic_title}
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          Académica · {conflict.academic_start_date} al{' '}
+                          {conflict.academic_end_date}
+                        </p>
+                      </div>
+                      <div className="md:text-right">
+                        <p className="font-medium text-slate-200">
+                          {conflict.scientific_title}
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          Científica ·{' '}
+                          {conflict.scientific_start_date} al{' '}
+                          {conflict.scientific_end_date}
+                        </p>
+                      </div>
                     </li>
                   ))}
                 </ul>

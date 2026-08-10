@@ -159,13 +159,13 @@ export default function NotificationPreferencesPage() {
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Canales de Notificación */}
-        <Card className="p-6 border-border shadow-sm space-y-6">
-          <div className="flex items-center gap-3 border-b border-border pb-4">
-            <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-6 space-y-6">
+          <div className="flex items-center gap-3 border-b border-white/5 pb-4 px-1">
+            <div className="p-2.5 bg-primary/10 border border-primary/20 rounded-lg text-primary">
               <Bell className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">Canales de Notificación</h2>
+              <h2 className="text-base font-bold text-slate-200">Canales de Notificación</h2>
               <p className="text-xs text-muted-foreground">
                 Selecciona por cuáles medios deseas recibir resúmenes periódicos y avisos de eventos.
               </p>
@@ -174,7 +174,7 @@ export default function NotificationPreferencesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Email Channel */}
-            <div className={`p-5 rounded-xl border transition-all space-y-4 ${prefs.email_enabled ? 'border-primary/40 bg-primary/5' : 'border-border bg-card'}`}>
+            <div className={`p-5 rounded-xl border transition-all space-y-4 ${prefs.email_enabled ? 'border-primary/30 bg-primary/5' : 'border-white/6 bg-slate-800/40'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Mail className="w-5 h-5 text-blue-500" />
@@ -192,7 +192,7 @@ export default function NotificationPreferencesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Email personalizado (opcional)
                 </label>
                 <input
@@ -200,7 +200,7 @@ export default function NotificationPreferencesPage() {
                   value={prefs.custom_email || ""}
                   onChange={(e) => setPrefs((prev) => ({ ...prev, custom_email: e.target.value }))}
                   placeholder={user?.email ? `Default: ${user.email}` : "correo@ejemplo.com"}
-                  className="w-full p-2 bg-background border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export default function NotificationPreferencesPage() {
             </div>
 
             {/* WhatsApp Channel */}
-            <div className={`p-5 rounded-xl border transition-all space-y-4 ${prefs.whatsapp_enabled ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-border bg-card'}`}>
+            <div className={`p-5 rounded-xl border transition-all space-y-4 ${prefs.whatsapp_enabled ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/6 bg-slate-800/40'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-emerald-500" />
@@ -240,7 +240,7 @@ export default function NotificationPreferencesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Teléfono / Móvil (+591...)
                 </label>
                 <input
@@ -248,7 +248,7 @@ export default function NotificationPreferencesPage() {
                   value={prefs.custom_whatsapp || ""}
                   onChange={(e) => setPrefs((prev) => ({ ...prev, custom_whatsapp: e.target.value }))}
                   placeholder={user?.phone_number ? `Default: ${user.phone_number}` : "+591 70000000"}
-                  className="w-full p-2 bg-background border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
                 />
               </div>
 
@@ -270,7 +270,7 @@ export default function NotificationPreferencesPage() {
             </div>
 
             {/* Telegram Channel */}
-            <div className={`p-5 rounded-xl border transition-all space-y-4 ${prefs.telegram_enabled ? 'border-sky-500/40 bg-sky-500/5' : 'border-border bg-card'}`}>
+            <div className={`p-5 rounded-xl border transition-all space-y-4 ${prefs.telegram_enabled ? 'border-sky-500/30 bg-sky-500/5' : 'border-white/6 bg-slate-800/40'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Send className="w-5 h-5 text-sky-500" />
@@ -288,7 +288,7 @@ export default function NotificationPreferencesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Chat ID de Telegram
                 </label>
                 <input
@@ -296,7 +296,7 @@ export default function NotificationPreferencesPage() {
                   value={prefs.custom_telegram_chat_id || ""}
                   onChange={(e) => setPrefs((prev) => ({ ...prev, custom_telegram_chat_id: e.target.value }))}
                   placeholder={user?.telegram_chat_id ? `Default: ${user.telegram_chat_id}` : "Ej: 123456789"}
-                  className="w-full p-2 bg-background border border-input rounded-lg text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
                 />
               </div>
 
@@ -353,26 +353,26 @@ export default function NotificationPreferencesPage() {
               </Button>
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Categorías de Eventos & Frecuencia */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Categorías de Eventos */}
-          <Card className="p-6 border-border shadow-sm space-y-4">
-            <div className="flex items-center gap-3 border-b border-border pb-3">
-              <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-500">
+          <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-6 space-y-4">
+            <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+              <div className="p-2.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400">
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-foreground">Categorías de Eventos</h3>
+                <h3 className="text-sm font-bold text-slate-200">Categorías de Eventos</h3>
                 <p className="text-xs text-muted-foreground">Filtra los tipos de eventos en tus alertas.</p>
               </div>
             </div>
 
             <div className="space-y-3 pt-1">
-              <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+              <div className="flex items-center justify-between p-3 rounded-lg border border-white/5 bg-slate-800/40">
                 <div>
-                  <p className="text-xs font-semibold text-foreground">Actividades Académicas</p>
+                  <p className="text-xs font-semibold text-slate-200">Actividades Académicas</p>
                   <p className="text-[11px] text-muted-foreground">Exámenes, feriados, fechas del calendario institucional.</p>
                 </div>
                 <input
@@ -383,9 +383,9 @@ export default function NotificationPreferencesPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+              <div className="flex items-center justify-between p-3 rounded-lg border border-white/5 bg-slate-800/40">
                 <div>
-                  <p className="text-xs font-semibold text-foreground">Actividades Científicas</p>
+                  <p className="text-xs font-semibold text-slate-200">Actividades Científicas</p>
                   <p className="text-[11px] text-muted-foreground">Congresos, webinars, ferias, defensas de grado.</p>
                 </div>
                 <input
@@ -396,23 +396,23 @@ export default function NotificationPreferencesPage() {
                 />
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Frecuencia y Anticipación */}
-          <Card className="p-6 border-border shadow-sm space-y-4">
-            <div className="flex items-center gap-3 border-b border-border pb-3">
-              <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-500">
+          <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-6 space-y-4">
+            <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-foreground">Frecuencia y Anticipación</h3>
+                <h3 className="text-sm font-bold text-slate-200">Frecuencia y Anticipación</h3>
                 <p className="text-xs text-muted-foreground">Personaliza el ritmo de envío y alcance temporal.</p>
               </div>
             </div>
 
             <div className="space-y-4 pt-1">
               <div>
-                <label className="block text-xs font-semibold text-foreground mb-1">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Frecuencia de Resumen
                 </label>
                 <select
@@ -423,7 +423,7 @@ export default function NotificationPreferencesPage() {
                       digest_frequency: e.target.value as "daily" | "weekly" | "biweekly",
                     }))
                   }
-                  className="w-full p-2.5 bg-background border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
                 >
                   <option value="daily">Diario (Resumen cada mañana)</option>
                   <option value="weekly">Semanal (Cada lunes por la mañana)</option>
@@ -432,7 +432,7 @@ export default function NotificationPreferencesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-foreground mb-1">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Ventana de Anticipación (Días a futuro)
                 </label>
                 <select
@@ -443,7 +443,7 @@ export default function NotificationPreferencesPage() {
                       lookahead_days: Number(e.target.value),
                     }))
                   }
-                  className="w-full p-2.5 bg-background border border-input rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
                 >
                   <option value={3}>3 días</option>
                   <option value={7}>7 días (1 semana)</option>
@@ -452,7 +452,7 @@ export default function NotificationPreferencesPage() {
                 </select>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Submit Actions */}

@@ -349,10 +349,10 @@ export default function UserManagementPage() {
       />
 
       {/* Filters Bar */}
-      <Card className="p-4">
+      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative md:col-span-2">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
             <input
               type="text"
               placeholder="Buscar por email o nombre..."
@@ -361,7 +361,7 @@ export default function UserManagementPage() {
                 setSearchQuery(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-9 pr-4 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full pl-9 pr-4 py-2 border border-white/10 rounded-lg text-sm bg-slate-800/60 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
             />
           </div>
 
@@ -372,7 +372,7 @@ export default function UserManagementPage() {
                 setSelectedRole(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-white/10 rounded-xl text-sm bg-slate-800/60 text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
             >
               <option value="">Todos los Roles</option>
               {Object.entries(ROLE_LABELS).map(([rKey, rLabel]) => (
@@ -390,7 +390,7 @@ export default function UserManagementPage() {
                 setSelectedCareer(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-white/10 rounded-xl text-sm bg-slate-800/60 text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
             >
               <option value="">Todas las Carreras</option>
               {careers.map((c) => (
@@ -401,10 +401,10 @@ export default function UserManagementPage() {
             </select>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Main Table */}
-      <Card>
+      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center p-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -423,34 +423,34 @@ export default function UserManagementPage() {
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuario</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Carreras Asignadas</TableHead>
-                  <TableHead className="text-center">Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+              <TableHeader className="bg-slate-800/40 border-b border-white/5 text-xs text-slate-500 uppercase tracking-wide">
+                <TableRow className="border-b-0 hover:bg-transparent">
+                  <TableHead className="text-slate-500">Usuario</TableHead>
+                  <TableHead className="text-slate-500">Rol</TableHead>
+                  <TableHead className="text-slate-500">Contacto</TableHead>
+                  <TableHead className="text-slate-500">Carreras Asignadas</TableHead>
+                  <TableHead className="text-center text-slate-500">Estado</TableHead>
+                  <TableHead className="text-right text-slate-500">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
+                  <TableRow key={u.id} className="border-b border-white/4 hover:bg-white/3 transition-colors">
+                    <TableCell className="px-4 py-3 text-sm text-slate-300">
                       <div className="font-medium">{u.full_name || "Sin nombre registrado"}</div>
                       <div className="text-xs text-muted-foreground">{u.email}</div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-slate-300">
                       <Badge variant="outline" className={ROLE_BADGE_STYLES[u.role] || ""}>
                         {ROLE_LABELS[u.role] || u.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="px-4 py-3 text-xs text-slate-400">
                       {u.phone_number && <div>Tel: {u.phone_number}</div>}
                       {u.telegram_chat_id && <div>Telegram: {u.telegram_chat_id}</div>}
                       {!u.phone_number && !u.telegram_chat_id && <span>-</span>}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-slate-300">
                       <div className="flex flex-wrap gap-1 max-w-xs">
                         {u.careers && u.careers.length > 0 ? (
                           u.careers.map((c) => (
@@ -463,7 +463,7 @@ export default function UserManagementPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-4 py-3 text-sm text-slate-300 text-center">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -485,7 +485,7 @@ export default function UserManagementPage() {
                         )}
                       </Button>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="px-4 py-3 text-sm text-slate-300 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -531,7 +531,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Modal: Create User */}
       {isCreateModalOpen && (

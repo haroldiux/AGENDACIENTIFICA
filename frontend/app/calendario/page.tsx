@@ -265,7 +265,7 @@ export default function CalendarioPage() {
       />
 
       {/* Top bar with filters and actions */}
-      <Card className="p-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between shadow-sm">
+      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
         <AgendaFilterBar
           careers={careers}
           gestiones={gestiones}
@@ -338,18 +338,18 @@ export default function CalendarioPage() {
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Search + type filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             type="text"
             placeholder="Buscar actividad por nombre..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+            className="w-full pl-10 pr-10 py-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:border-primary/50 text-slate-100 placeholder:text-slate-500"
           />
           {searchQuery && (
             <button
@@ -360,7 +360,7 @@ export default function CalendarioPage() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border shrink-0">
+        <div className="flex items-center gap-1 bg-slate-900/60 backdrop-blur-sm p-1 rounded-lg border border-white/6 shrink-0 shadow-lg">
           {[
             { id: 'all', label: 'Todas', icon: LayoutGrid },
             { id: 'academic', label: 'Académicas', icon: BookOpen },
@@ -371,8 +371,8 @@ export default function CalendarioPage() {
               onClick={() => setTypeFilter(id as any)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
                 typeFilter === id
-                  ? 'bg-background shadow text-foreground border border-border'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-slate-800/60 shadow text-slate-200 border border-white/10'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />

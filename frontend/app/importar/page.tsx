@@ -127,9 +127,9 @@ export default function ImportarPage() {
         onDrop={handleDrop}
         onClick={() => !file && inputRef.current?.click()}
         className={`
-          bg-card text-card-foreground border border-border shadow-sm rounded-xl p-12 text-center cursor-pointer transition-all
-          ${isDragging ? "border-blue-500 bg-blue-500/5" : "border-dashed border-2 border-[var(--border)]"}
-          ${file ? "cursor-default" : "hover:bg-white/5"}
+          rounded-2xl p-12 text-center cursor-pointer transition-all
+          ${isDragging ? "border-2 border-dashed border-primary/50 bg-primary/10" : "border-2 border-dashed border-white/10 bg-slate-800/20"}
+          ${file ? "cursor-default" : "hover:border-primary/40 hover:bg-primary/5"}
         `}
       >
         <input
@@ -199,8 +199,8 @@ export default function ImportarPage() {
 
       {/* Results */}
       {result && (
-        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-6 space-y-4">
+          <h3 className="font-semibold flex items-center gap-2 text-slate-200">
             <CheckCircle className="w-5 h-5 text-green-400" />
             Resultado de la importación
           </h3>
@@ -271,7 +271,7 @@ export default function ImportarPage() {
       )}
 
       {/* Template download + hint */}
-      <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl">
+      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h4 className="font-semibold text-slate-200">Plantilla de importación</h4>
@@ -288,14 +288,14 @@ export default function ImportarPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--border)] text-slate-500">
+              <tr className="border-b border-white/5 text-slate-500">
                 <th className="pb-2 pr-4">Columna</th>
                 <th className="pb-2 pr-4">Tipo</th>
                 <th className="pb-2 pr-4">Requerido</th>
                 <th className="pb-2">Descripción</th>
               </tr>
             </thead>
-            <tbody className="text-slate-400 divide-y divide-[var(--border)]">
+            <tbody className="text-slate-400 divide-y divide-white/5">
               <tr>
                 <td className="py-2 pr-4 font-mono text-slate-300">title</td>
                 <td className="py-2 pr-4">texto</td>

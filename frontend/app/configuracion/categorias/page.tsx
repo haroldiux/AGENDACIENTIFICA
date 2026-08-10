@@ -246,13 +246,13 @@ export default function CategoryManagementPage() {
       {/* Filter and Control Bar */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             type="text"
             placeholder="Buscar por nombre, código o descripción..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+            className="w-full pl-10 pr-10 py-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:border-primary/50 text-slate-100 placeholder:text-slate-500"
           />
           {searchQuery && (
             <button
@@ -266,11 +266,11 @@ export default function CategoryManagementPage() {
 
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-muted-foreground">Ámbito:</label>
+            <label className="text-xs font-medium text-slate-400">Ámbito:</label>
             <select
               value={scopeFilter}
               onChange={(e) => setScopeFilter(e.target.value)}
-              className="bg-background border border-input rounded-md px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="bg-slate-800/60 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
             >
               <option value="">Todos los ámbitos</option>
               <option value="both">Ambos</option>
@@ -292,10 +292,10 @@ export default function CategoryManagementPage() {
       </div>
 
       {/* Categories Table */}
-      <Card className="p-0 overflow-hidden border-border shadow-sm">
+      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
@@ -314,40 +314,40 @@ export default function CategoryManagementPage() {
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">Color</TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Ámbito</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+              <TableHeader className="bg-slate-800/40 border-b border-white/5 text-xs text-slate-500 uppercase tracking-wide">
+                <TableRow className="border-b-0 hover:bg-transparent">
+                  <TableHead className="text-slate-500 w-[80px]">Color</TableHead>
+                  <TableHead className="text-slate-500">Nombre</TableHead>
+                  <TableHead className="text-slate-500">Código</TableHead>
+                  <TableHead className="text-slate-500">Ámbito</TableHead>
+                  <TableHead className="text-slate-500">Descripción</TableHead>
+                  <TableHead className="text-slate-500">Estado</TableHead>
+                  <TableHead className="text-slate-500 text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visibleCategories.map((cat) => (
-                  <TableRow key={cat.id} className={!cat.is_active ? "opacity-60 bg-muted/20" : ""}>
-                    <TableCell>
+                  <TableRow key={cat.id} className={`border-b border-white/4 hover:bg-white/3 transition-colors ${!cat.is_active ? "opacity-60 bg-slate-800/20" : ""}`}>
+                    <TableCell className="px-4 py-3 text-sm text-slate-300">
                       <div className="flex items-center gap-2">
                         <span
-                          className="w-5 h-5 rounded-full border border-border inline-block shadow-sm"
+                          className="w-5 h-5 rounded-lg border border-white/10 inline-block shadow-sm"
                           style={{ backgroundColor: cat.color || "#3B82F6" }}
                           title={cat.color || "#3B82F6"}
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="font-semibold text-foreground">{cat.name}</TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-3 text-sm font-semibold text-slate-200">{cat.name}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-slate-300">
                       <Badge variant="outline" className="font-mono text-xs">
                         {cat.code}
                       </Badge>
                     </TableCell>
-                    <TableCell>{getScopeBadge(cat.scope)}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs max-w-xs truncate">
+                    <TableCell className="px-4 py-3 text-sm text-slate-300">{getScopeBadge(cat.scope)}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-slate-400 max-w-xs truncate">
                       {cat.description || "—"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-slate-300">
                       {cat.is_active ? (
                         <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
                           Activa
@@ -358,12 +358,12 @@ export default function CategoryManagementPage() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
+                    <TableCell className="px-4 py-3 text-sm text-slate-300 text-right whitespace-nowrap">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => openEditModal(cat)}
-                        className="text-muted-foreground hover:text-foreground mr-1"
+                        className="text-slate-400 hover:text-slate-200 mr-1"
                       >
                         <Pencil className="w-3.5 h-3.5 mr-1" />
                         Editar
@@ -393,12 +393,12 @@ export default function CategoryManagementPage() {
             </Table>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Category Create / Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-card text-card-foreground border border-border shadow-xl p-6 rounded-xl w-full max-w-md">
+          <div className="rounded-2xl border border-white/6 bg-slate-900/90 backdrop-blur-md shadow-2xl p-6 w-full max-w-md">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Tag className="w-5 h-5 text-primary" />
               {editingCategory ? "Editar Categoría" : "Nueva Categoría"}
@@ -406,7 +406,7 @@ export default function CategoryManagementPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Nombre de Categoría *
                 </label>
                 <input
@@ -415,12 +415,12 @@ export default function CategoryManagementPage() {
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Ej: Simposio Internacional"
                   required
-                  className="w-full p-2.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Código Único *
                 </label>
                 <input
@@ -431,13 +431,13 @@ export default function CategoryManagementPage() {
                   }
                   placeholder="Ej: SIMPOSIO"
                   required
-                  className="w-full p-2.5 bg-background border border-input rounded-lg text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary text-foreground uppercase"
+                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm font-mono text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50 uppercase"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Ámbito</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Ámbito</label>
                   <select
                     value={formData.scope}
                     onChange={(e) =>
@@ -446,7 +446,7 @@ export default function CategoryManagementPage() {
                         scope: e.target.value as "academic" | "scientific" | "both",
                       }))
                     }
-                    className="w-full p-2.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                    className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-xl text-sm text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
                   >
                     <option value="both">Ambos (Académico / Científico)</option>
                     <option value="academic">Académico</option>
@@ -455,7 +455,7 @@ export default function CategoryManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground flex items-center gap-1">
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex items-center gap-1">
                     <Palette className="w-3.5 h-3.5 text-primary" />
                     Color Identificador
                   </label>
@@ -464,21 +464,21 @@ export default function CategoryManagementPage() {
                       type="color"
                       value={formData.color}
                       onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
-                      className="w-9 h-9 rounded cursor-pointer border border-input bg-transparent p-0.5"
+                      className="w-9 h-9 rounded cursor-pointer border border-white/10 bg-transparent p-0.5"
                     />
                     <input
                       type="text"
                       value={formData.color}
                       onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
                       placeholder="#3B82F6"
-                      className="flex-1 p-2 bg-background border border-input rounded-lg text-xs font-mono text-foreground"
+                      className="flex-1 p-2 bg-slate-800/60 border border-white/10 rounded-lg text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Descripción (Opcional)
                 </label>
                 <textarea
@@ -486,7 +486,7 @@ export default function CategoryManagementPage() {
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Detalles adicionales sobre los eventos clasificados bajo esta categoría..."
                   rows={3}
-                  className="w-full p-2.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground resize-none"
+                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50 resize-none"
                 />
               </div>
 
