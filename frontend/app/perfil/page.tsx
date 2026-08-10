@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Loader2,
   Save,
@@ -11,13 +12,15 @@ import {
   Send,
   Info,
   AlertTriangle,
-  CheckCircle2,
   Copy,
+  Bell,
+  ArrowRight,
+  ExternalLink,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useUser } from "@/context/AuthContext";
-import { api, type ScientificActivity, type AcademicActivity } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,29 +33,9 @@ import {
 import PageHeader from "@/components/layout/PageHeader";
 import { cn } from "@/lib/utils";
 
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(`${dateStr}T12:00:00`);
-  return d.toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
-
-function normalizePhone(phone: string): string {
-  return phone.replace(/[^0-9]/g, "");
-}
-
 export default function ProfilePage() {
   const { user, login } = useUser();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const [isTestingTelegram, setIsTestingTelegram] = useState(false);
   const [form, setForm] = useState({
     full_name: "",
@@ -60,10 +43,6 @@ export default function ProfilePage() {
     phone_number: "",
     telegram_chat_id: "",
   });
-
-  const [academic, setAcademic] = useState<AcademicActivity[]>([]);
-  const [scientific, setScientific] = useState<ScientificActivity[]>([]);
-  const [activitiesLoading, setActivitiesLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -75,29 +54,6 @@ export default function ProfilePage() {
       });
     }
   }, [user]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setActivitiesLoading(true);
-    Promise.all([api.academic.list(), api.scientific.list()])
-      .then(([academicData, scientificData]) => {
-        if (!cancelled) {
-          setAcademic(academicData || []);
-          setScientific(scientificData || []);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          toast.error("No se pudieron cargar las actividades para el resumen.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setActivitiesLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -131,106 +87,11 @@ export default function ProfilePage() {
     }
   };
 
-  const weeklyActivities = useMemo(() => {
-    if (!user) return { academic: [], scientific: [] };
-    const userCareerIds = new Set(user.careers.map((c) => c.id));
-    const today = new Date();
-    const nextWeek = addDays(today, 7);
-
-    const belongsToUser = (activity: { career_id?: number | null }) => {
-      if (activity.career_id == null) return true;
-      return userCareerIds.has(activity.career_id);
-    };
-
-    const withinRange = (startDate: string) => {
-      const start = new Date(`${startDate}T12:00:00`);
-      return start >= today && start <= nextWeek;
-    };
-
-    const userAcademic = academic
-      .filter((a) => belongsToUser(a) && withinRange(a.start_date))
-      .sort(
-        (a, b) =>
-          new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-      );
-
-    const userScientific = scientific
-      .filter(
-        (a) =>
-          belongsToUser(a) &&
-          withinRange(a.start_date) &&
-          a.status !== "cancelled"
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-      );
-
-    return { academic: userAcademic, scientific: userScientific };
-  }, [academic, scientific, user]);
-
-  const buildSummaryMessage = (): string | null => {
-    if (!user) return null;
-    const { academic: userAcademic, scientific: userScientific } =
-      weeklyActivities;
-
-    if (userAcademic.length === 0 && userScientific.length === 0) {
-      return null;
-    }
-
-    const lines = [
-      `Hola ${user.full_name || user.email}, estas son tus actividades de la próxima semana:`,
-      "",
-    ];
-
-    if (userAcademic.length > 0) {
-      lines.push("*Actividades Académicas:*");
-      userAcademic.forEach((act) => {
-        lines.push(`- ${act.title} (${formatDate(act.start_date)})`);
-      });
-      lines.push("");
-    }
-
-    if (userScientific.length > 0) {
-      lines.push("*Actividades Científicas:*");
-      userScientific.forEach((act) => {
-        lines.push(`- ${act.title} (${formatDate(act.start_date)})`);
-      });
-    }
-
-    return lines.join("\n");
-  };
-
-  const handleSendWhatsApp = () => {
-    if (!form.phone_number) {
-      toast.error("Agregá tu número de WhatsApp para enviar el resumen.");
-      return;
-    }
-
-    const message = buildSummaryMessage();
-    if (!message) {
-      toast("No tenés actividades programadas para la próxima semana.", {
-        icon: "ℹ️",
-      });
-      return;
-    }
-
-    setIsSending(true);
-    const phone = normalizePhone(form.phone_number);
-    const encoded = encodeURIComponent(message);
-    const url = `https://wa.me/${phone}?text=${encoded}`;
-
-    // Pequeña demora para dar feedback visual
-    setTimeout(() => {
-      window.open(url, "_blank", "noopener,noreferrer");
-      toast.success("Se abrió WhatsApp con tu resumen semanal.");
-      setIsSending(false);
-    }, 400);
-  };
-
   const handleTestTelegram = async () => {
     if (!form.telegram_chat_id) {
-      toast.error("Agregá tu Telegram Chat ID y guardá los cambios antes de probar.");
+      toast.error(
+        "Agregá tu Telegram Chat ID y guardá los cambios antes de probar."
+      );
       return;
     }
     setIsTestingTelegram(true);
@@ -249,7 +110,7 @@ export default function ProfilePage() {
 
   const copyTelegramInstructions = () => {
     const text =
-      "1) Abrí Telegram y buscá a @userinfobot (https://t.me/userinfobot).\n2) Copiá tu *Chat ID* de Telegram.\n3) Pegalo en tu perfil de la Agenda Científica y guardá los cambios.";
+      "Pasos para vincular Telegram:\n1) Abrí Telegram y buscá a @userinfobot (https://t.me/userinfobot).\n2) Obtené tu Chat ID numérico enviando un mensaje.\n3) Pegá tu Chat ID en el campo Telegram Chat ID de tu perfil y guardá los cambios.\n4) Hacé clic en 'Probar bot de Telegram' para verificar.";
     navigator.clipboard.writeText(text).then(
       () => toast.success("Instrucciones copiadas al portapapeles"),
       () => toast.error("No se pudo copiar")
@@ -272,7 +133,7 @@ export default function ProfilePage() {
       <Toaster position="top-right" />
       <PageHeader
         title="Mi Perfil"
-        description="Gestioná tus datos de contacto y preferencias de notificación."
+        description="Gestioná tus datos de contacto y canales de integración."
       />
 
       {!isProfileComplete && (
@@ -281,19 +142,46 @@ export default function ProfilePage() {
           <div className="text-sm">
             <p className="font-medium">Completá tus datos de contacto</p>
             <p className="text-amber-200/80">
-              Agregá tu número de WhatsApp o chat ID de Telegram para recibir
-              resúmenes semanales de actividades.
+              Agregá tu número de WhatsApp o Chat ID de Telegram para habilitar
+              las notificaciones de tus actividades.
             </p>
           </div>
         </div>
       )}
+
+      {/* Banner al Centro de Preferencias de Notificaciones */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5 sm:mt-0">
+            <Bell className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">
+              Centro de Preferencias de Notificación
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Configurá la frecuencia, canales de entrega y tipos de alertas para tus actividades académicas y científicas.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/configuracion/notificaciones"
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "shrink-0 gap-2 w-full sm:w-auto"
+          )}
+        >
+          Ir a Preferencias
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Información de contacto</CardTitle>
             <CardDescription>
-              Estos datos se usan para enviarte notificaciones y reportes.
+              Estos datos se usan para enviar notificaciones y alertas según tus preferencias.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -376,113 +264,103 @@ export default function ProfilePage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Resumen semanal</CardTitle>
-              <CardDescription>
-                Enviá un resumen de tus actividades de la próxima semana.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div
-                className={cn(
-                  "rounded-lg border p-3 text-sm",
-                  weeklyActivities.academic.length + weeklyActivities.scientific.length > 0
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200"
-                    : "bg-muted/50 border-border text-muted-foreground"
-                )}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span className="font-medium">Actividades próximas</span>
-                </div>
-                <p>
-                  {weeklyActivities.academic.length} académicas ·{" "}
-                  {weeklyActivities.scientific.length} científicas
-                </p>
-                {activitiesLoading && (
-                  <Loader2 className="w-4 h-4 animate-spin mt-2" />
-                )}
-              </div>
-
-              <Button
-                onClick={handleSendWhatsApp}
-                disabled={isSending || !form.phone_number}
-                className="w-full"
-                variant="outline"
-              >
-                {isSending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
-                )}
-                Enviar resumen a mi WhatsApp
-              </Button>
-
-              {!form.phone_number && (
-                <p className="text-xs text-muted-foreground">
-                  Agregá tu número de WhatsApp primero para habilitar el envío.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
               <CardTitle>Configurar Telegram</CardTitle>
               <CardDescription>
-                Las notificaciones automáticas se envían por Telegram si tenés un
-                Chat ID configurado.
+                Vinculá tu cuenta de Telegram para recibir alertas y notificaciones personalizadas.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <ol className="list-decimal list-inside space-y-2 text-foreground/90">
-                <li>
-                  Abrí Telegram y buscá a{" "}
-                  <a
-                    href="https://t.me/userinfobot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary font-semibold hover:underline"
-                  >
-                    @userinfobot
-                  </a>.
-                </li>
-                <li>
-                  Copiá tu <strong>Chat ID</strong> de Telegram (número personal).
-                </li>
-                <li>
-                  Pegalo en el campo <strong>Telegram Chat ID</strong> arriba a la izquierda y guardá los cambios.
-                </li>
-              </ol>
+            <CardContent className="space-y-5 text-sm">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    1
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="font-medium text-foreground">
+                      Abrí Telegram y buscá a{" "}
+                      <a
+                        href="https://t.me/userinfobot"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
+                      >
+                        @userinfobot
+                        <ExternalLink className="w-3 h-3 inline" />
+                      </a>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Un bot oficial que te devolverá tu ID de usuario de Telegram.
+                    </p>
+                  </div>
+                </div>
 
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={copyTelegramInstructions}
-                className="w-full"
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Copiar instrucciones
-              </Button>
+                <div className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    2
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="font-medium text-foreground">Obtené tu Chat ID</p>
+                    <p className="text-xs text-muted-foreground">
+                      Enviá cualquier mensaje al bot y copiá el número indicado en <strong>Id</strong>.
+                    </p>
+                  </div>
+                </div>
 
-              <Button
-                size="sm"
-                onClick={handleTestTelegram}
-                disabled={isTestingTelegram || !form.telegram_chat_id}
-                className="w-full"
-              >
-                {isTestingTelegram ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
-                )}
-                Probar bot de Telegram
-              </Button>
+                <div className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    3
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="font-medium text-foreground">Guardá tu ID en la plataforma</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pegalo en el campo <strong>Telegram Chat ID</strong> y hacé clic en <strong>Guardar cambios</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    4
+                  </span>
+                  <div className="space-y-0.5">
+                    <p className="font-medium text-foreground">Verificá la conexión</p>
+                    <p className="text-xs text-muted-foreground">
+                      Usá el botón de abajo para enviar un mensaje de prueba a tu Telegram.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={copyTelegramInstructions}
+                  className="w-full"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar instrucciones
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={handleTestTelegram}
+                  disabled={isTestingTelegram || !form.telegram_chat_id}
+                  className="w-full"
+                >
+                  {isTestingTelegram ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  Probar bot de Telegram
+                </Button>
+              </div>
 
               <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 flex items-start gap-2 text-blue-200">
                 <Info className="w-4 h-4 shrink-0 mt-0.5" />
                 <p className="text-xs">
-                  El sistema envía los resúmenes automáticamente cada semana si
-                  detecta un Chat ID.
+                  Las notificaciones automáticas respetarán la frecuencia y reglas configuradas en tu Centro de Notificaciones.
                 </p>
               </div>
             </CardContent>
@@ -492,3 +370,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

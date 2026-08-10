@@ -40,6 +40,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
     @property
     def sync_database_url(self) -> str:
