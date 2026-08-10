@@ -9,12 +9,8 @@ import {
   MessageCircle,
   Mail,
   User,
-  Send,
-  Info,
-  Copy,
   Bell,
   ArrowRight,
-  ExternalLink,
   Shield,
   GraduationCap,
 } from "lucide-react";
@@ -86,14 +82,7 @@ export default function ProfilePage() {
     }
   };
 
-  const copyTelegramInstructions = () => {
-    const text =
-      "Pasos para vincular Telegram:\n1) Abrí Telegram y buscá a @userinfobot (https://t.me/userinfobot).\n2) Obtené tu Chat ID numérico enviando un mensaje.\n3) Ingresá a Administrar canales y notificaciones (/configuracion/notificaciones).\n4) Pegá tu Chat ID en el campo Telegram Chat ID y guardá los cambios.";
-    navigator.clipboard.writeText(text).then(
-      () => toast.success("Instrucciones copiadas al portapapeles"),
-      () => toast.error("No se pudo copiar")
-    );
-  };
+
 
   if (!user) {
     return (
@@ -140,8 +129,8 @@ export default function ProfilePage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+      <div className="max-w-4xl mx-auto">
+        <Card>
           <CardHeader>
             <CardTitle>Información de Perfil</CardTitle>
             <CardDescription>
@@ -284,100 +273,6 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Send className="w-4 h-4 text-sky-500" />
-                Guía de Vinculación de Telegram
-              </CardTitle>
-              <CardDescription>
-                Paso a paso para vincular tu cuenta de Telegram en el Centro de Notificaciones.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5 text-sm">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    1
-                  </span>
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-foreground">
-                      Abrí Telegram y buscá a{" "}
-                      <a
-                        href="https://t.me/userinfobot"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
-                      >
-                        @userinfobot
-                        <ExternalLink className="w-3 h-3 inline" />
-                      </a>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Un bot oficial que te devolverá tu ID numérico de Telegram.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    2
-                  </span>
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-foreground">Obtené tu Chat ID</p>
-                    <p className="text-xs text-muted-foreground">
-                      Enviá cualquier mensaje al bot y copiá el número indicado en <strong>Id</strong>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    3
-                  </span>
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-foreground">Configurá tu ID en Notificaciones</p>
-                    <p className="text-xs text-muted-foreground">
-                      Ingresá a Preferencias de Notificación y pegá el ID en el campo de Telegram.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2 space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyTelegramInstructions}
-                  className="w-full"
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copiar instrucciones
-                </Button>
-
-                <Link
-                  href="/configuracion/notificaciones"
-                  className={cn(
-                    buttonVariants({ variant: "default", size: "sm" }),
-                    "w-full flex items-center justify-center gap-2"
-                  )}
-                >
-                  <Bell className="w-4 h-4" />
-                  Administrar canales y notificaciones
-                </Link>
-              </div>
-
-              <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 flex items-start gap-2 text-sky-200">
-                <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                <p className="text-xs">
-                  Las notificaciones y mensajes de prueba se gestionan centralizadamente desde la página de Notificaciones.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
