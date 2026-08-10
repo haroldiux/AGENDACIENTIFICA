@@ -218,9 +218,9 @@ export default function ReportesPage() {
       />
 
       {/* Shared career/gestión selectors */}
-      <div className="bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl flex flex-col md:flex-row gap-4">
+      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-4 flex flex-col md:flex-row gap-4">
         <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="report-career" className="text-xs text-slate-400">
+          <label htmlFor="report-career" className="text-xs text-slate-400 font-medium">
             Carrera
           </label>
           <select
@@ -228,7 +228,7 @@ export default function ReportesPage() {
             value={careerId ?? ''}
             onChange={(e) => setCareerId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="bg-slate-800/60 border border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50"
           >
             <option value="">Seleccione una carrera</option>
             {careers.map((career) => (
@@ -240,7 +240,7 @@ export default function ReportesPage() {
         </div>
 
         <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="report-gestion" className="text-xs text-slate-400">
+          <label htmlFor="report-gestion" className="text-xs text-slate-400 font-medium">
             Gestión
           </label>
           <select
@@ -248,7 +248,7 @@ export default function ReportesPage() {
             value={gestionId ?? ''}
             onChange={(e) => setGestionId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="bg-slate-800/60 border border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50"
           >
             <option value="">Seleccione una gestión</option>
             {gestiones.map((gestion) => (
@@ -260,7 +260,7 @@ export default function ReportesPage() {
         </div>
 
         <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="report-status" className="text-xs text-slate-400">
+          <label htmlFor="report-status" className="text-xs text-slate-400 font-medium">
             Filtrar por Estado (Opcional)
           </label>
           <select
@@ -268,7 +268,7 @@ export default function ReportesPage() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             disabled={selectorsDisabled}
-            className="bg-background text-foreground border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="bg-slate-800/60 border border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50"
           >
             <option value="">Todos los estados</option>
             <option value="scheduled">Programadas</option>
@@ -280,8 +280,8 @@ export default function ReportesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
-          <div className="w-10 h-10 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
             <BarChart3 className="w-5 h-5" />
           </div>
           <div>
@@ -338,8 +338,8 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
-          <div className="w-10 h-10 rounded bg-primary/20 text-primary flex items-center justify-center">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
@@ -412,8 +412,8 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
-          <div className="w-10 h-10 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
+          <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
@@ -440,8 +440,8 @@ export default function ReportesPage() {
           </button>
         </div>
 
-        <div className="bg-card text-card-foreground border border-border shadow-sm p-6 rounded-xl flex flex-col gap-4">
-          <div className="w-10 h-10 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
+          <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
@@ -493,8 +493,8 @@ export default function ReportesPage() {
 
       {conflictsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-card text-card-foreground border border-border shadow-sm w-full max-w-4xl max-h-[80vh] overflow-hidden rounded-xl flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
+          <div className="rounded-2xl border border-white/6 bg-slate-900/90 backdrop-blur-md shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
               <h3 className="font-medium text-lg">Conflictos detectados</h3>
               <button
                 type="button"
@@ -514,15 +514,14 @@ export default function ReportesPage() {
                   seleccionadas.
                 </p>
               ) : (
-                <ul className="space-y-3">
+                <ul className="divide-y divide-white/5">
                   {conflicts.map((conflict) => (
                     <li
                       key={`${conflict.academic_id}-${conflict.scientific_id}`}
-                      className="border border-[var(--border)] rounded-lg p-3 text-sm"
+                      className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
                     >
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                        <div>
-                          <p className="font-medium">
+                      <div>
+                        <p className="font-medium text-slate-200">
                             {conflict.academic_title}
                           </p>
                           <p className="text-slate-400 text-xs">
@@ -540,7 +539,6 @@ export default function ReportesPage() {
                             {conflict.scientific_end_date}
                           </p>
                         </div>
-                      </div>
                     </li>
                   ))}
                 </ul>
@@ -553,8 +551,8 @@ export default function ReportesPage() {
       {/* Seguimiento y Cumplimiento Metrics Modal */}
       {seguimientoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-card text-card-foreground border border-border shadow-lg w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-xl flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-muted/40">
+          <div className="rounded-2xl border border-white/6 bg-slate-900/90 backdrop-blur-md shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-emerald-400" />
                 <h3 className="font-semibold text-lg">Métricas de Avance y Cumplimiento</h3>
