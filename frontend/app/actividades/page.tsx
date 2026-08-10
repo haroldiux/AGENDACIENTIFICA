@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, Activity, FileText } from "lucide-react";
+import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, Activity, FileText, Calendar } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
 import StatusUpdateModal from "@/components/agenda/StatusUpdateModal";
@@ -224,6 +224,21 @@ export default function ActividadesPage() {
         actions={
           !isReadOnlyUser(user) ? (
             <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const url = api.fusion.exportIcsUrl({
+                    career_id: careerId ?? undefined,
+                    gestion_id: gestionId ?? undefined,
+                  });
+                  window.open(url, '_blank');
+                  toast.success('Descargando archivo iCalendar (.ics)');
+                }}
+                className="flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4 text-blue-500" />
+                Exportar (.ics)
+              </Button>
               <Link href="/importar">
                 <Button variant="secondary" className="flex items-center gap-2">
                   <Upload className="w-4 h-4" />
@@ -240,7 +255,24 @@ export default function ActividadesPage() {
               </Button>
             </>
           ) : (
-            <span className="text-xs text-muted-foreground">Solo lectura</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const url = api.fusion.exportIcsUrl({
+                    career_id: careerId ?? undefined,
+                    gestion_id: gestionId ?? undefined,
+                  });
+                  window.open(url, '_blank');
+                  toast.success('Descargando archivo iCalendar (.ics)');
+                }}
+                className="flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4 text-blue-500" />
+                Exportar (.ics)
+              </Button>
+              <span className="text-xs text-muted-foreground">Solo lectura</span>
+            </div>
           )
         }
       />

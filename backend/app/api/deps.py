@@ -122,3 +122,25 @@ def require_read_only_get(
         )
     return current_user
 
+
+def require_admin_role(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """
+    Dependency that enforces that the user has an administrative role.
+    Allowed admin roles: super_admin, admin, vicerrectorado, director_investigacion.
+    """
+    allowed_roles = {
+        RoleEnum.super_admin,
+        RoleEnum.admin,
+        RoleEnum.vicerrectorado,
+        RoleEnum.director_investigacion,
+    }
+    if current_user.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required for user administration",
+        )
+    return current_user
+
+

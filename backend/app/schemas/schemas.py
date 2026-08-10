@@ -98,6 +98,35 @@ class UserResponse(UserBase):
     
     model_config = ConfigDict(from_attributes=True)
 
+class UserAdminUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+    role: Optional[RoleEnum] = None
+    is_active: Optional[bool] = None
+    career_ids: Optional[List[int]] = None
+    password: Optional[str] = None
+
+class PaginatedUserResponse(BaseModel):
+    items: List[UserResponse]
+    total: int
+    page: int
+    page_size: int
+    pages: int
+
+class UserImportRowError(BaseModel):
+    row: int
+    email: Optional[str] = None
+    error: str
+
+class UserImportReport(BaseModel):
+    total_rows: int
+    success_count: int
+    error_count: int
+    row_errors: List[UserImportRowError]
+
+
 # --- Gestion Schemas ---
 class GestionBase(BaseModel):
     name: str

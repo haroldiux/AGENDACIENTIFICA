@@ -42,7 +42,8 @@ export type RoleEnum =
   | 'teacher'
   | 'vicerrectorado'
   | 'director_investigacion'
-  | 'jefe_investigacion';
+  | 'jefe_investigacion'
+  | 'read_only';
 
 // --- Career / Gestion ---
 
@@ -370,10 +371,74 @@ export interface ScientificActivityAudit {
   timestamp: string;
 }
 
+export interface UserAdminUpdate {
+  full_name?: string | null;
+  email?: string | null;
+  phone_number?: string | null;
+  telegram_chat_id?: string | null;
+  role?: RoleEnum | null;
+  is_active?: boolean | null;
+  career_ids?: number[] | null;
+  password?: string | null;
+}
+
+export interface UserCreateData {
+  email: string;
+  password: string;
+  full_name?: string | null;
+  phone_number?: string | null;
+  telegram_chat_id?: string | null;
+  role: RoleEnum;
+  career_ids?: number[];
+}
+
+export interface UserResponseItem {
+  id: number;
+  email: string;
+  full_name?: string | null;
+  phone_number?: string | null;
+  telegram_chat_id?: string | null;
+  role: RoleEnum;
+  is_active: boolean;
+  careers: Career[];
+}
+
+export interface PaginatedUserResponse {
+  items: UserResponseItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
+
+export interface UserImportRowError {
+  row: number;
+  email?: string | null;
+  error: string;
+}
+
+export interface UserImportReport {
+  total_rows: number;
+  success_count: number;
+  error_count: number;
+  row_errors: UserImportRowError[];
+}
+
 export const api = {
   fusion: {
     getMerged: (params?: MergedCalendarFilters) =>
       apiClient.get<MergedCalendarResponse>('/fusion/', { params }).then((res) => res.data),
+    exportIcsUrl: (params?: MergedCalendarFilters) => {
+      const query = new URLSearchParams();
+      if (params?.career_id) query.append('career_id', params.career_id.toString());
+      if (params?.gestion_id) query.append('gestion_id', params.gestion_id.toString());
+      if (params?.start_date) query.append('start_date', params.start_date);
+      if (params?.end_date) query.append('end_date', params.end_date);
+      const qStr = query.toString();
+      return `${API_URL}/fusion/export-ics${qStr ? `?${qStr}` : ''}`;
+    },
+    exportIcs: (params?: MergedCalendarFilters) =>
+      apiClient.get<Blob>('/fusion/export-ics', { params, responseType: 'blob' }).then((res) => res.data),
   },
   importacion: {
     downloadTemplate: () =>
@@ -459,6 +524,22 @@ export const api = {
       telegram_chat_id?: string | null;
     }) => apiClient.patch('/users/me', data).then((res) => res.data),
     testTelegram: () => apiClient.post('/users/me/test-telegram').then((res) => res.data),
+    list: (params?: { page?: number; page_size?: number; search?: string; role?: string; career_id?: number }) =>
+      apiClient.get<PaginatedUserResponse>('/users/', { params }).then((res) => res.data),
+    create: (data: UserCreateData) =>
+      apiClient.post<UserResponseItem>('/users/', data).then((res) => res.data),
+    update: (id: number, data: UserAdminUpdate) =>
+      apiClient.put<UserResponseItem>(`/users/${id}`, data).then((res) => res.data),
+    getExcelTemplateUrl: () => `${API_URL}/users/excel-template`,
+    downloadExcelTemplate: () =>
+      apiClient.get<Blob>('/users/excel-template', { responseType: 'blob' }).then((res) => res.data),
+    importExcel: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return apiClient.post<UserImportReport>('/users/import-excel', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then((res) => res.data);
+    },
   },
   reports: {
     generate: (payload: ReportGenerateRequest) =>

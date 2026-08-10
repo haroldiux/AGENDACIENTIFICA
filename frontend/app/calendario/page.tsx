@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Download, LayoutGrid, List, Search, X, BookOpen, FlaskConical, FileText } from 'lucide-react';
+import { Calendar, Download, LayoutGrid, List, Search, X, BookOpen, FlaskConical, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -40,6 +40,15 @@ export default function CalendarioPage() {
   const [activeLegendFilter, setActiveLegendFilter] = useState<ActiveLegendFilter | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleExportICS = () => {
+    const url = api.fusion.exportIcsUrl({
+      career_id: careerId ?? undefined,
+      gestion_id: gestionId ?? undefined,
+    });
+    window.open(url, '_blank');
+    toast.success('Descargando calendario iCalendar (.ics)');
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -278,6 +287,17 @@ export default function CalendarioPage() {
               {scientificCount} científicas
             </span>
           </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportICS}
+            className="text-xs h-9 px-3 gap-1.5 font-medium border-border"
+          >
+            <Calendar className="w-3.5 h-3.5 text-blue-500" />
+            Exportar (.ics)
+          </Button>
 
           <div className="relative group">
             <Button

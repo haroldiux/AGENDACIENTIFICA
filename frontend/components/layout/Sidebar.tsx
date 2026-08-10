@@ -19,6 +19,7 @@ import {
   Tag,
   LogOut,
   User,
+  Users,
   Sparkles,
   Bell,
 } from "lucide-react";
@@ -43,6 +44,13 @@ const CATEGORY_ALLOWED_ROLES = [
   "research",
 ];
 
+const USER_ADMIN_ROLES = [
+  "vicerrectorado",
+  "admin",
+  "super_admin",
+  "director_investigacion",
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -59,6 +67,7 @@ export default function Sidebar() {
   }
 
   const canManageCategories = user ? CATEGORY_ALLOWED_ROLES.includes(user.role) : false;
+  const canManageUsers = user ? USER_ADMIN_ROLES.includes(user.role) : false;
 
   const navItems = [
     BASE_NAV_ITEMS[0],
@@ -66,6 +75,9 @@ export default function Sidebar() {
     BASE_NAV_ITEMS[2],
     ...(canManageCategories
       ? [{ href: "/configuracion/categorias", label: "Categorías", icon: Tag }]
+      : []),
+    ...(canManageUsers
+      ? [{ href: "/configuracion/usuarios", label: "Usuarios", icon: Users }]
       : []),
     { href: "/configuracion/notificaciones", label: "Notificaciones", icon: Bell },
     BASE_NAV_ITEMS[3],
