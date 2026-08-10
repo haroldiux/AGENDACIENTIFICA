@@ -307,7 +307,6 @@ class ActivityRowValidator(BaseModel):
     gestion_id: int
     is_scientific: bool = False
 
-
 # --- Conflict Schemas ---
 class ConflictItem(BaseModel):
     academic_id: int
@@ -320,10 +319,8 @@ class ConflictItem(BaseModel):
     scientific_start_date: date
     scientific_end_date: date
 
-
 class ConflictListResponse(BaseModel):
     conflicts: List[ConflictItem]
-
 
 # --- Report Schemas ---
 class ReportRequest(BaseModel):
@@ -342,11 +339,52 @@ class ReportRequest(BaseModel):
     ] = "table"
     status_filter: Optional[str] = None
 
-
 # --- Notification Schemas ---
+class UserNotificationPreferenceBase(BaseModel):
+    email_enabled: bool = True
+    whatsapp_enabled: bool = False
+    telegram_enabled: bool = False
+    custom_email: Optional[str] = None
+    custom_whatsapp: Optional[str] = None
+    custom_telegram_chat_id: Optional[str] = None
+    notify_academic: bool = True
+    notify_scientific: bool = True
+    digest_frequency: Literal["daily", "weekly", "biweekly"] = "weekly"
+    lookahead_days: int = Field(default=7, ge=1, le=30)
+
+class UserNotificationPreferenceCreate(UserNotificationPreferenceBase):
+    pass
+
+class UserNotificationPreferenceUpdate(BaseModel):
+    email_enabled: Optional[bool] = None
+    whatsapp_enabled: Optional[bool] = None
+    telegram_enabled: Optional[bool] = None
+    custom_email: Optional[str] = None
+    custom_whatsapp: Optional[str] = None
+    custom_telegram_chat_id: Optional[str] = None
+    notify_academic: Optional[bool] = None
+    notify_scientific: Optional[bool] = None
+    digest_frequency: Optional[Literal["daily", "weekly", "biweekly"]] = None
+    lookahead_days: Optional[int] = Field(default=None, ge=1, le=30)
+
+class UserNotificationPreferenceResponse(UserNotificationPreferenceBase):
+    id: int
+    user_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class TestChannelRequest(BaseModel):
+    channel: Literal["email", "whatsapp", "telegram"]
+    target_destination: Optional[str] = None
+
+class TestChannelResponse(BaseModel):
+    success: bool
+    message: str
+    channel: str
+    target_destination: str
+    timestamp: datetime
+
 class TestEmailRequest(BaseModel):
     recipient_email: str
-
 
 class TestEmailResponse(BaseModel):
     success: bool
@@ -355,17 +393,14 @@ class TestEmailResponse(BaseModel):
     smtp_port: int
     timestamp: datetime
 
-
 class SendDigestRequest(BaseModel):
     recipient_email: Optional[str] = None
     user_id: Optional[int] = None
-
 
 class SendDigestResponse(BaseModel):
     success: bool
     message: str
     recipients_count: int
-
 
 # --- Dashboard Schemas ---
 class DashboardCounts(BaseModel):

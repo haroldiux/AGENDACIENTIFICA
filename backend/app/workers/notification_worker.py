@@ -126,73 +126,102 @@ def send_email_message(
     )
 
 
+from app.models.models import User, AcademicActivity, ScientificActivity, UserNotificationPreference
+
+
 @celery_app.task(name="app.workers.notification_worker.dispatch_weekly_notifications")
 def dispatch_weekly_notifications():
-    """Dispatch weekly activity summaries to all active users.
+    """Dispatch weekly activity summaries to all active users based on preference matrix.
 
-    Channel priority:
-      1. Telegram (free, automatic)
-      2. WhatsApp Business API (paid credentials required)
-      3. Email (free SMTP providers via EmailService HTML digest)
+    Channel evaluation order:
+      1. Telegram (if enabled & chat ID present)
+      2. WhatsApp Business API (if enabled & phone present)
+      3. Email (if enabled or fallback)
     """
     logger.info("Starting weekly notification dispatch...")
     db = SessionLocal()
     try:
         today = datetime.now(timezone.utc).date()
-        lookahead = today + timedelta(days=settings.NOTIFICATION_DAYS_AHEAD)
-
-        academic_activities = db.query(AcademicActivity).filter(
-            AcademicActivity.start_date <= lookahead,
-            AcademicActivity.start_date >= today
-        ).all()
-
-        scientific_activities = db.query(ScientificActivity).filter(
-            ScientificActivity.start_date <= lookahead,
-            ScientificActivity.start_date >= today,
-            ScientificActivity.status != "cancelled"
-        ).all()
-
-        if not academic_activities and not scientific_activities:
-            logger.info("No upcoming activities to notify.")
-            return
-
         users = db.query(User).filter(User.is_active == True).all()
 
         for user in users:
-            message = _build_weekly_summary(user, academic_activities, scientific_activities)
+            pref = user.notification_preference
+            if not pref:
+                pref = UserNotificationPreference(
+                    user_id=user.id,
+                    email_enabled=not bool(user.telegram_chat_id or user.phone_number),
+                    whatsapp_enabled=bool(user.phone_number and not user.telegram_chat_id),
+                    telegram_enabled=bool(user.telegram_chat_id),
+                    notify_academic=True,
+                    notify_scientific=True,
+                    digest_frequency="weekly",
+                    lookahead_days=7,
+                )
+                db.add(pref)
+                db.commit()
+                db.refresh(pref)
+
+            lookahead_days = pref.lookahead_days if pref.lookahead_days else settings.NOTIFICATION_DAYS_AHEAD
+            user_lookahead = today + timedelta(days=lookahead_days)
+
+            user_academic = []
+            if pref.notify_academic:
+                user_academic = db.query(AcademicActivity).filter(
+                    AcademicActivity.start_date <= user_lookahead,
+                    AcademicActivity.start_date >= today
+                ).all()
+
+            user_scientific = []
+            if pref.notify_scientific:
+                user_scientific = db.query(ScientificActivity).filter(
+                    ScientificActivity.start_date <= user_lookahead,
+                    ScientificActivity.start_date >= today,
+                    ScientificActivity.status != "cancelled"
+                ).all()
+
+            user_career_ids = {c.id for c in user.careers}
+            def activity_matches(activity) -> bool:
+                if activity.career_id is None:
+                    return True
+                return activity.career_id in user_career_ids
+
+            user_academic = [a for a in user_academic if activity_matches(a)]
+            user_scientific = [a for a in user_scientific if activity_matches(a)]
+
+            message = _build_weekly_summary(user, user_academic, user_scientific)
             if not message:
                 continue
 
             delivered = False
             channel = None
 
-            if user.telegram_chat_id:
-                delivered = send_telegram_message(user.telegram_chat_id, message)
-                channel = "telegram"
+            # 1. Telegram
+            if pref.telegram_enabled or (user.telegram_chat_id and not pref.email_enabled and not pref.whatsapp_enabled):
+                telegram_target = (pref.custom_telegram_chat_id or user.telegram_chat_id or "").strip()
+                if telegram_target:
+                    delivered = send_telegram_message(telegram_target, message)
+                    channel = "telegram"
 
-            if not delivered and user.phone_number:
-                delivered = send_whatsapp_message(user.phone_number, message)
-                channel = "whatsapp"
+            # 2. WhatsApp
+            if not delivered and (pref.whatsapp_enabled or (user.phone_number and not pref.email_enabled)):
+                whatsapp_target = (pref.custom_whatsapp or user.phone_number or "").strip()
+                if whatsapp_target:
+                    delivered = send_whatsapp_message(whatsapp_target, message)
+                    channel = "whatsapp"
 
-            if not delivered and user.email:
-                user_career_ids = {c.id for c in user.careers}
-                def activity_matches(activity) -> bool:
-                    if activity.career_id is None:
-                        return True
-                    return activity.career_id in user_career_ids
-
-                user_academic = [a for a in academic_activities if activity_matches(a)]
-                user_scientific = [a for a in scientific_activities if activity_matches(a)]
-
-                delivered = send_email_message(
-                    user.email,
-                    "Agenda Científica - Actividades de la Semana",
-                    message,
-                    user_name=user.full_name or "Usuario",
-                    academic_activities=user_academic,
-                    scientific_activities=user_scientific,
-                )
-                channel = "email"
+            # 3. Email
+            if not delivered and (pref.email_enabled or user.email):
+                email_target = (pref.custom_email or user.email or "").strip()
+                if email_target:
+                    delivered = send_email_message(
+                        email_target,
+                        "Agenda Científica - Actividades de la Semana",
+                        message,
+                        user_name=user.full_name or "Usuario",
+                        academic_activities=user_academic,
+                        scientific_activities=user_scientific,
+                    )
+                    channel = "email"
 
             if delivered:
                 logger.info(f"Weekly summary delivered to {user.email} via {channel}")
@@ -204,4 +233,5 @@ def dispatch_weekly_notifications():
     finally:
         db.close()
     logger.info("Finished weekly notification dispatch.")
+
 

@@ -20,6 +20,7 @@ import {
   LogOut,
   User,
   Sparkles,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,7 @@ export default function Sidebar() {
     ...(canManageCategories
       ? [{ href: "/configuracion/categorias", label: "Categorías", icon: Tag }]
       : []),
+    { href: "/configuracion/notificaciones", label: "Notificaciones", icon: Bell },
     BASE_NAV_ITEMS[3],
     BASE_NAV_ITEMS[4],
     BASE_NAV_ITEMS[5],

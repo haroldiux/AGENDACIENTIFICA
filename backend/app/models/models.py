@@ -28,6 +28,7 @@ class User(Base):
     telegram_chat_id = Column(String, nullable=True)
 
     careers = relationship("Career", secondary="user_career", back_populates="users")
+    notification_preference = relationship("UserNotificationPreference", uselist=False, back_populates="user", cascade="all, delete-orphan")
 
 user_career_association = Table(
     "user_career",
@@ -184,4 +185,24 @@ class ScientificActivityAudit(Base):
 
     scientific_activity = relationship("ScientificActivity", back_populates="audits")
     user = relationship("User")
+
+
+class UserNotificationPreference(Base):
+    __tablename__ = "user_notification_preferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, index=True, nullable=False)
+    email_enabled = Column(Boolean, default=True, nullable=False)
+    whatsapp_enabled = Column(Boolean, default=False, nullable=False)
+    telegram_enabled = Column(Boolean, default=False, nullable=False)
+    custom_email = Column(String, nullable=True)
+    custom_whatsapp = Column(String, nullable=True)
+    custom_telegram_chat_id = Column(String, nullable=True)
+    notify_academic = Column(Boolean, default=True, nullable=False)
+    notify_scientific = Column(Boolean, default=True, nullable=False)
+    digest_frequency = Column(String, default="weekly", nullable=False)
+    lookahead_days = Column(Integer, default=7, nullable=False)
+
+    user = relationship("User", back_populates="notification_preference")
+
 

@@ -310,6 +310,49 @@ export interface DashboardStats {
   next_events: DashboardNextEventItem[];
 }
 
+// --- Notification Preferences ---
+
+export interface UserNotificationPreference {
+  id: number;
+  user_id: number;
+  email_enabled: boolean;
+  whatsapp_enabled: boolean;
+  telegram_enabled: boolean;
+  custom_email?: string | null;
+  custom_whatsapp?: string | null;
+  custom_telegram_chat_id?: string | null;
+  notify_academic: boolean;
+  notify_scientific: boolean;
+  digest_frequency: 'daily' | 'weekly' | 'biweekly';
+  lookahead_days: number;
+}
+
+export interface UserNotificationPreferenceUpdate {
+  email_enabled?: boolean;
+  whatsapp_enabled?: boolean;
+  telegram_enabled?: boolean;
+  custom_email?: string | null;
+  custom_whatsapp?: string | null;
+  custom_telegram_chat_id?: string | null;
+  notify_academic?: boolean;
+  notify_scientific?: boolean;
+  digest_frequency?: 'daily' | 'weekly' | 'biweekly';
+  lookahead_days?: number;
+}
+
+export interface TestChannelRequest {
+  channel: 'email' | 'whatsapp' | 'telegram';
+  target_destination?: string | null;
+}
+
+export interface TestChannelResponse {
+  success: boolean;
+  message: string;
+  channel: string;
+  target_destination: string;
+  timestamp: string;
+}
+
 // --- API namespaces ---
 
 export interface ScientificActivityAudit {
@@ -458,6 +501,22 @@ export const api = {
         .then((res) => res.data),
     getEvidenceDownloadUrl: (id: number) =>
       `${API_URL}/public-portal/evidences/${id}/download`,
+  },
+  userPreferences: {
+    get: () =>
+      apiClient
+        .get<UserNotificationPreference>('/users/me/notification-preferences')
+        .then((res) => res.data),
+    update: (data: UserNotificationPreferenceUpdate) =>
+      apiClient
+        .put<UserNotificationPreference>('/users/me/notification-preferences', data)
+        .then((res) => res.data),
+  },
+  notifications: {
+    testChannel: (data: TestChannelRequest) =>
+      apiClient
+        .post<TestChannelResponse>('/notifications/test-channel', data)
+        .then((res) => res.data),
   },
 };
 

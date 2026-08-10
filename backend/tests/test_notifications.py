@@ -26,7 +26,7 @@ def test_smtp_config_defaults():
     assert custom_settings.SMTP_HOST == "smtp.gmail.com"
     assert custom_settings.SMTP_PORT == 587
     assert custom_settings.SMTP_TLS is True
-    assert custom_settings.EMAILS_FROM_NAME == "Agenda Cientifica UNITEPC"
+    assert custom_settings.EMAILS_FROM_NAME == "Agenda Científica UNITEPC"
 
 
 # ---------------------------------------------------------------------------
