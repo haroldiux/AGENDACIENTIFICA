@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from datetime import date, datetime
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Dict
 from enum import Enum
 
 class ScientificActivityType(str, Enum):
@@ -367,4 +367,62 @@ class SendDigestResponse(BaseModel):
     recipients_count: int
 
 
+# --- Dashboard Schemas ---
+class DashboardCounts(BaseModel):
+    total_academic: int
+    total_scientific: int
+    upcoming_7_days: int
+    upcoming_30_days: int
+    completed_scientific: int
+    completion_rate: float
+    upcoming_events: int = 0
+    upcoming_scientific: int = 0
 
+class MonthlyTimelineItem(BaseModel):
+    month: int
+    academic_count: int
+    scientific_count: int
+
+class CareerFacultyBreakdownItem(BaseModel):
+    career_id: Optional[int] = None
+    career_name: str
+    faculty: str
+    total: int
+    completion_rate: float
+
+CareerBreakdownItem = CareerFacultyBreakdownItem
+
+class AuditFeedItem(BaseModel):
+    id: int
+    title: str
+    user_name: Optional[str] = None
+    role: Optional[str] = None
+    action: str
+    timestamp: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+DashboardAuditItem = AuditFeedItem
+
+class DashboardNextEventItem(BaseModel):
+    id: int
+    title: str
+    start_date: date
+    end_date: date
+    activity_type: Optional[str] = None
+    status: Optional[str] = None
+    career_id: Optional[int] = None
+
+class DashboardActiveGestion(BaseModel):
+    id: Optional[int] = None
+    name: Optional[str] = None
+
+class DashboardStatsResponse(BaseModel):
+    active_gestion: DashboardActiveGestion
+    counts: DashboardCounts
+    status_breakdown: Dict[str, int]
+    monthly_timeline: List[MonthlyTimelineItem] = []
+    career_breakdown: List[CareerFacultyBreakdownItem] = []
+    recent_audits: List[AuditFeedItem] = []
+    next_events: List[DashboardNextEventItem] = []
+
+DashboardAdvancedStats = DashboardStatsResponse

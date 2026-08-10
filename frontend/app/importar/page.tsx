@@ -245,7 +245,7 @@ export default function ImportarPage() {
               <div className="max-h-48 overflow-y-auto space-y-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
                 {result.conflicts.map((c, idx) => (
                   <div key={idx} className="text-xs text-amber-200 leading-relaxed">
-                    • <span className="font-semibold text-amber-100">{c.activity_title}</span> se cruza en fechas ({c.dates}) con la actividad <span className="font-semibold text-amber-100">"{c.conflicting_title}"</span>.
+                    • <span className="font-semibold text-amber-100">{c.activity_title}</span> se cruza en fechas ({c.dates}) con la actividad <span className="font-semibold text-amber-100">&quot;{c.conflicting_title}&quot;</span>.
                   </div>
                 ))}
               </div>

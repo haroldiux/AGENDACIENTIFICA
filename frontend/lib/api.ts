@@ -250,6 +250,44 @@ export interface MergedCalendarFilters {
 
 // --- Dashboard Stats ---
 
+export interface DashboardFilters {
+  gestion_id?: number;
+  career_id?: number;
+}
+
+export interface MonthlyTimelineItem {
+  month: number;
+  academic_count: number;
+  scientific_count: number;
+}
+
+export interface CareerFacultyBreakdownItem {
+  career_id?: number | null;
+  career_name: string;
+  faculty: string;
+  total: number;
+  completion_rate: number;
+}
+
+export interface AuditFeedItem {
+  id: number;
+  title: string;
+  user_name?: string | null;
+  role?: string | null;
+  action: string;
+  timestamp: string;
+}
+
+export interface DashboardNextEventItem {
+  id: number;
+  title: string;
+  start_date: string;
+  end_date: string;
+  activity_type?: string | null;
+  status?: string | null;
+  career_id?: number | null;
+}
+
 export interface DashboardStats {
   active_gestion: {
     id: number | null;
@@ -258,19 +296,18 @@ export interface DashboardStats {
   counts: {
     total_academic: number;
     total_scientific: number;
-    upcoming_events: number;
-    upcoming_scientific: number;
+    upcoming_7_days: number;
+    upcoming_30_days: number;
+    completed_scientific: number;
+    completion_rate: number;
+    upcoming_events?: number;
+    upcoming_scientific?: number;
   };
   status_breakdown: Record<string, number>;
-  next_events: {
-    id: number;
-    title: string;
-    start_date: string;
-    end_date: string;
-    activity_type: string | null;
-    status: string | null;
-    career_id: number;
-  }[];
+  monthly_timeline: MonthlyTimelineItem[];
+  career_breakdown: CareerFacultyBreakdownItem[];
+  recent_audits: AuditFeedItem[];
+  next_events: DashboardNextEventItem[];
 }
 
 // --- API namespaces ---
@@ -355,7 +392,8 @@ export const api = {
     list: () => apiClient.get<Gestion[]>('/gestiones/').then((res) => res.data),
   },
   dashboard: {
-    stats: () => apiClient.get<DashboardStats>('/dashboard/stats').then((res) => res.data),
+    stats: (filters?: DashboardFilters) =>
+      apiClient.get<DashboardStats>('/dashboard/stats', { params: filters }).then((res) => res.data),
   },
   auth: {
     login: (username: string, password: string) => {
