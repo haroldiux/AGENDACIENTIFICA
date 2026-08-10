@@ -1,4 +1,5 @@
 import math
+import re
 from io import BytesIO
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile, status, Response
@@ -22,6 +23,61 @@ from app.core.security import get_password_hash
 from app.workers.notification_worker import send_telegram_message
 
 router = APIRouter()
+
+ROLE_MAP = {
+    "docente": RoleEnum.teacher,
+    "teacher": RoleEnum.teacher,
+    "coordinador": RoleEnum.coordinator,
+    "coordinator": RoleEnum.coordinator,
+    "investigador": RoleEnum.research,
+    "research": RoleEnum.research,
+    "administrador": RoleEnum.admin,
+    "admin": RoleEnum.admin,
+    "super admin": RoleEnum.super_admin,
+    "super_admin": RoleEnum.super_admin,
+    "superadmin": RoleEnum.super_admin,
+    "lectura": RoleEnum.read_only,
+    "solo lectura": RoleEnum.read_only,
+    "read_only": RoleEnum.read_only,
+    "vicerrectorado": RoleEnum.vicerrectorado,
+    "director de investigación": RoleEnum.director_investigacion,
+    "director de investigacion": RoleEnum.director_investigacion,
+    "director_investigacion": RoleEnum.director_investigacion,
+    "jefe de investigación": RoleEnum.jefe_investigacion,
+    "jefe de investigacion": RoleEnum.jefe_investigacion,
+    "jefe_investigacion": RoleEnum.jefe_investigacion,
+}
+
+for r in RoleEnum:
+    ROLE_MAP[r.value.lower()] = r
+
+
+def resolve_role(role_val: str) -> RoleEnum:
+    if not role_val:
+        return RoleEnum.teacher
+    val_lower = role_val.strip().lower()
+    if val_lower in ROLE_MAP:
+        return ROLE_MAP[val_lower]
+    for part in val_lower.split("-"):
+        p = part.strip()
+        if p in ROLE_MAP:
+            return ROLE_MAP[p]
+    return RoleEnum.teacher
+
+
+def extract_career_ids(careers_val: str) -> List[int]:
+    cids = []
+    if not careers_val:
+        return cids
+    for token in str(careers_val).split(","):
+        token = token.strip()
+        if not token:
+            continue
+        match = re.search(r'^\s*(\d+)', token)
+        if match:
+            cids.append(int(match.group(1)))
+    return cids
+
 
 @router.get("/me", response_model=UserResponse)
 def read_user_me(
@@ -125,6 +181,7 @@ def list_users(
 
 @router.get("/excel-template")
 def get_user_excel_template(
+    db: Session = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
     """
@@ -132,6 +189,7 @@ def get_user_excel_template(
     """
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.worksheet.datavalidation import DataValidation
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -140,9 +198,15 @@ def get_user_excel_template(
     # Title / headers
     ws.append(["Email *", "Nombre Completo", "Rol", "Teléfono", "Telegram Chat ID", "Contraseña", "IDs Carreras (separadas por coma)"])
 
-    # Sample rows
-    ws.append(["ejemplo.docente@unitepc.edu.bo", "Juan Pérez", "teacher", "+59170000000", "12345678", "Unitepc2026!", "1, 2"])
-    ws.append(["coordinador.med@unitepc.edu.bo", "María Lopez", "coordinator", "+59171111111", "", "Unitepc2026!", "1"])
+    careers = db.query(Career).order_by(Career.id).all()
+    if careers:
+        career_options = [f"{c.id} - {c.name}" for c in careers]
+    else:
+        career_options = ["1 - Carrera General"]
+
+    sample_career = career_options[0]
+    ws.append(["ejemplo.docente@unitepc.edu.bo", "Juan Pérez", "Docente", "+59170000000", "12345678", "Unitepc2026!", sample_career])
+    ws.append(["coordinador.med@unitepc.edu.bo", "María Lopez", "Coordinador", "+59171111111", "", "Unitepc2026!", sample_career])
 
     # Header styling
     header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
@@ -158,6 +222,38 @@ def get_user_excel_template(
     widths = [35, 25, 18, 16, 20, 18, 30]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+
+    # Catalog sheet creation
+    ws_cat = wb.create_sheet(title="Catalogos")
+    roles = [
+        "Docente",
+        "Coordinador",
+        "Investigador",
+        "Administrador",
+        "Super Admin",
+        "Lectura",
+        "Vicerrectorado",
+        "Director de Investigación",
+        "Jefe de Investigación",
+    ]
+
+    ws_cat.append(["Roles", "Carreras"])
+    max_rows = max(len(roles), len(career_options))
+    for i in range(max_rows):
+        r_val = roles[i] if i < len(roles) else None
+        c_val = career_options[i] if i < len(career_options) else None
+        ws_cat.append([r_val, c_val])
+
+    # DataValidation setup on Usuarios sheet
+    dv_role = DataValidation(type="list", formula1="=Catalogos!$A$2:$A$10", allow_blank=True)
+    ws.add_data_validation(dv_role)
+    dv_role.add("C2:C500")
+
+    N = 1 + len(career_options)
+    dv_career = DataValidation(type="list", formula1=f"=Catalogos!$B$2:$B${N}", allow_blank=True)
+    dv_career.showErrorMessage = False
+    ws.add_data_validation(dv_career)
+    dv_career.add("G2:G500")
 
     output = BytesIO()
     wb.save(output)
@@ -196,7 +292,7 @@ def import_users_excel(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"No se pudo leer el archivo Excel: {str(e)}")
 
-    ws = wb.active
+    ws = wb["Usuarios"] if "Usuarios" in wb.sheetnames else wb.active
     rows = list(ws.iter_rows(values_only=True))
 
     if not rows:
@@ -215,7 +311,6 @@ def import_users_excel(
     success_count = 0
     row_errors = []
 
-    valid_roles = {r.value: r for r in RoleEnum}
     existing_emails = set(e[0].lower() for e in db.query(User.email).all())
     processed_emails_in_batch = set()
 
@@ -226,7 +321,7 @@ def import_users_excel(
 
         email_val = str(r[0]).strip() if len(r) > 0 and r[0] is not None else ""
         name_val = str(r[1]).strip() if len(r) > 1 and r[1] is not None else ""
-        role_val = str(r[2]).strip().lower() if len(r) > 2 and r[2] is not None else "teacher"
+        role_val = str(r[2]).strip() if len(r) > 2 and r[2] is not None else "teacher"
         phone_val = str(r[3]).strip() if len(r) > 3 and r[3] is not None else None
         telegram_val = str(r[4]).strip() if len(r) > 4 and r[4] is not None else None
         password_val = str(r[5]).strip() if len(r) > 5 and r[5] is not None else "Unitepc2026!"
@@ -242,10 +337,7 @@ def import_users_excel(
             row_errors.append(UserImportRowError(row=idx, email=email_val, error="El email ya se encuentra registrado"))
             continue
 
-        if role_val not in valid_roles:
-            role_enum_val = RoleEnum.teacher
-        else:
-            role_enum_val = valid_roles[role_val]
+        role_enum_val = resolve_role(role_val)
 
         if role_enum_val == RoleEnum.super_admin and current_user.role != RoleEnum.super_admin:
             row_errors.append(UserImportRowError(row=idx, email=email_val, error="No tiene permisos para importar usuarios super_admin"))
@@ -256,11 +348,7 @@ def import_users_excel(
 
         career_objects = []
         if careers_val:
-            career_id_strs = [c.strip() for c in careers_val.split(",") if c.strip()]
-            valid_cids = []
-            for cid_str in career_id_strs:
-                if cid_str.isdigit():
-                    valid_cids.append(int(cid_str))
+            valid_cids = extract_career_ids(careers_val)
             if valid_cids:
                 career_objects = db.query(Career).filter(Career.id.in_(valid_cids)).all()
 

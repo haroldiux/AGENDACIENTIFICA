@@ -81,7 +81,12 @@ def test_update_user_admin_and_privilege_guard(client, db_session):
         app.dependency_overrides.clear()
 
 
-def test_get_user_excel_template(client):
+def test_get_user_excel_template(client, db_session):
+    c1 = Career(name="Sistemas", faculty="Tecnología")
+    db_session.add(c1)
+    db_session.commit()
+    db_session.refresh(c1)
+
     admin = _make_admin_user(RoleEnum.admin)
     app.dependency_overrides[require_admin_role] = lambda: admin
 
@@ -90,10 +95,50 @@ def test_get_user_excel_template(client):
         assert resp.status_code == 200
         assert resp.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         
-        # Verify it's a valid openpyxl workbook
+        # Verify it's a valid openpyxl workbook with Catalogos
         wb = openpyxl.load_workbook(io.BytesIO(resp.content))
-        ws = wb.active
-        assert ws.cell(row=1, column=1).value == "Email *"
+        assert "Usuarios" in wb.sheetnames
+        assert "Catalogos" in wb.sheetnames
+
+        ws_users = wb["Usuarios"]
+        assert ws_users.cell(row=1, column=1).value == "Email *"
+
+        ws_cat = wb["Catalogos"]
+        assert ws_cat.cell(row=1, column=1).value == "Roles"
+        assert ws_cat.cell(row=1, column=2).value == "Carreras"
+        assert ws_cat.cell(row=2, column=1).value == "Docente"
+        assert ws_cat.cell(row=2, column=2).value == f"{c1.id} - Sistemas"
+
+        # Verify DataValidation on Usuarios worksheet
+        dvs = ws_users.data_validations.dataValidation
+        assert len(dvs) == 2
+        
+        role_dv = next((dv for dv in dvs if "C2:C500" in str(dv.sqref)), None)
+        career_dv = next((dv for dv in dvs if "G2:G500" in str(dv.sqref)), None)
+
+        assert role_dv is not None
+        assert role_dv.formula1 == "=Catalogos!$A$2:$A$10"
+
+        assert career_dv is not None
+        assert career_dv.formula1 == "=Catalogos!$B$2:$B$2"
+        assert career_dv.showErrorMessage is False
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_get_user_excel_template_zero_careers_fallback(client, db_session):
+    db_session.query(Career).delete()
+    db_session.commit()
+
+    admin = _make_admin_user(RoleEnum.admin)
+    app.dependency_overrides[require_admin_role] = lambda: admin
+
+    try:
+        resp = client.get("/api/v1/users/excel-template")
+        assert resp.status_code == 200
+        wb = openpyxl.load_workbook(io.BytesIO(resp.content))
+        ws_cat = wb["Catalogos"]
+        assert ws_cat.cell(row=2, column=2).value == "1 - Carrera General"
     finally:
         app.dependency_overrides.clear()
 
@@ -101,17 +146,21 @@ def test_get_user_excel_template(client):
 def test_import_users_excel(client, db_session):
     # Create sample careers
     c1 = Career(name="Medicina Import", faculty="Salud")
-    db_session.add(c1)
+    c2 = Career(name="Enfermería Import", faculty="Salud")
+    db_session.add_all([c1, c2])
     db_session.commit()
     db_session.refresh(c1)
+    db_session.refresh(c2)
 
     # Create Excel workbook in memory
     wb = openpyxl.Workbook()
     ws = wb.active
+    ws.title = "Usuarios"
     ws.append(["Email *", "Nombre Completo", "Rol", "Teléfono", "Telegram Chat ID", "Contraseña", "IDs Carreras (separadas por coma)"])
-    ws.append(["import.valid@unitepc.edu.bo", "Valid Import User", "teacher", "+59170001111", "998877", "Pass123!", str(c1.id)])
-    ws.append(["invalid-email-no-at", "Bad User", "teacher", "", "", "", ""])
-    ws.append(["import.valid2@unitepc.edu.bo", "Valid User 2", "coordinator", "", "", "Pass123!", ""])
+    ws.append(["import.valid@unitepc.edu.bo", "Valid Import User", "Docente", "+59170001111", "998877", "Pass123!", f"{c1.id} - Medicina Import"])
+    ws.append(["invalid-email-no-at", "Bad User", "Docente", "", "", "", ""])
+    ws.append(["import.valid2@unitepc.edu.bo", "Valid User 2", "Coordinador", "", "", "Pass123!", f"{c1.id} - Medicina Import, {c2.id} - Enfermería Import"])
+    ws.append(["import.valid3@unitepc.edu.bo", "Valid User 3", "teacher - Docente", "", "", "Pass123!", ""])
 
     excel_bytes = io.BytesIO()
     wb.save(excel_bytes)
@@ -127,8 +176,8 @@ def test_import_users_excel(client, db_session):
         )
         assert resp.status_code == 200
         report = resp.json()
-        assert report["total_rows"] == 3
-        assert report["success_count"] == 2
+        assert report["total_rows"] == 4
+        assert report["success_count"] == 3
         assert report["error_count"] == 1
         assert len(report["row_errors"]) == 1
         assert report["row_errors"][0]["row"] == 3
@@ -140,5 +189,16 @@ def test_import_users_excel(client, db_session):
         assert created_user.role == RoleEnum.teacher
         assert len(created_user.careers) == 1
         assert created_user.careers[0].id == c1.id
+
+        created_user2 = db_session.query(User).filter(User.email == "import.valid2@unitepc.edu.bo").first()
+        assert created_user2 is not None
+        assert created_user2.role == RoleEnum.coordinator
+        assert len(created_user2.careers) == 2
+        career_ids = {c.id for c in created_user2.careers}
+        assert career_ids == {c1.id, c2.id}
+
+        created_user3 = db_session.query(User).filter(User.email == "import.valid3@unitepc.edu.bo").first()
+        assert created_user3 is not None
+        assert created_user3.role == RoleEnum.teacher
     finally:
         app.dependency_overrides.clear()
