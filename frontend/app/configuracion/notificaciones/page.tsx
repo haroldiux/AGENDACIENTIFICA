@@ -14,6 +14,9 @@ import {
   AlertCircle,
   Save,
   Sparkles,
+  ExternalLink,
+  Copy,
+  HelpCircle,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -126,6 +129,15 @@ export default function NotificationPreferencesPage() {
     } finally {
       setTestingChannel(null);
     }
+  };
+
+  const copyTelegramInstructions = () => {
+    const text =
+      "Pasos para obtener tu Telegram Chat ID:\n1) Abrí Telegram y buscá a @userinfobot (https://t.me/userinfobot).\n2) Obtené tu Chat ID numérico enviando un mensaje al bot.\n3) Pegá tu Chat ID en el campo Chat ID de Telegram y guardá tus preferencias.";
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Instrucciones copiadas al portapapeles"),
+      () => toast.error("No se pudo copiar")
+    );
   };
 
   if (isLoading) {
@@ -286,6 +298,42 @@ export default function NotificationPreferencesPage() {
                   placeholder={user?.telegram_chat_id ? `Default: ${user.telegram_chat_id}` : "Ej: 123456789"}
                   className="w-full p-2 bg-background border border-input rounded-lg text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
+              </div>
+
+              {/* Guía para obtener Telegram Chat ID */}
+              <div className="p-3.5 rounded-lg border border-sky-500/30 bg-sky-500/10 space-y-3 text-xs">
+                <div className="flex items-center gap-2 font-semibold text-foreground">
+                  <HelpCircle className="w-4 h-4 shrink-0 text-sky-500" />
+                  <span>¿Cómo obtener tu Telegram Chat ID?</span>
+                </div>
+
+                <ol className="space-y-1.5 text-muted-foreground text-[11px] list-decimal list-inside pl-0.5">
+                  <li>
+                    Abrí Telegram y buscá a{" "}
+                    <a
+                      href="https://t.me/userinfobot"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-0.5 text-sky-500 font-semibold hover:underline"
+                    >
+                      @userinfobot
+                      <ExternalLink className="w-2.5 h-2.5 inline" />
+                    </a>.
+                  </li>
+                  <li>Obtené tu Chat ID numérico enviando un mensaje al bot.</li>
+                  <li>Pegá tu Chat ID en el campo de arriba y guardá tus preferencias.</li>
+                </ol>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={copyTelegramInstructions}
+                  className="w-full text-xs h-7 gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copiar instrucciones
+                </Button>
               </div>
 
               <Button
