@@ -92,9 +92,11 @@ export default function Sidebar() {
     <motion.aside
       initial={false}
       animate={{ width: collapsed ? "80px" : "256px" }}
-      className="bg-card text-card-foreground border-r border-border md:sticky md:top-0 md:h-screen flex flex-col z-20 transition-all duration-300 md:border-b-0 border-b w-full md:w-auto shrink-0"
+      className="bg-slate-950/95 backdrop-blur-md text-card-foreground border-r border-white/5 md:sticky md:top-0 md:h-screen flex flex-col z-20 transition-all duration-300 md:border-b-0 border-b w-full md:w-auto shrink-0"
     >
-      <div className={cn("p-4 flex items-center transition-all", collapsed ? "flex-col gap-3 px-2 py-3 justify-center" : "justify-between")}>
+      <div className={cn("p-4 flex items-center transition-all relative", collapsed ? "flex-col gap-3 px-2 py-3 justify-center" : "justify-between")}>
+        {/* Glow behind logo */}
+        <div className="absolute top-4 left-4 w-12 h-12 bg-primary/20 blur-xl rounded-full pointer-events-none" />
         <Link href="/" className="flex items-center gap-3 overflow-hidden">
           <div className="w-10 h-10 shrink-0 rounded-xl bg-primary flex items-center justify-center shadow-md">
             <GraduationCap className="w-5 h-5 text-primary-foreground" />
@@ -133,10 +135,10 @@ export default function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group relative",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative",
                 active
-                  ? "bg-primary/10 text-primary hover:bg-primary/20"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary/15 text-primary border-l-2 border-primary"
+                  : "text-slate-400 hover:text-slate-100 hover:bg-white/5"
               )}
             >
               <Icon className="w-5 h-5 shrink-0" />
@@ -164,12 +166,13 @@ export default function Sidebar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="p-3 rounded-xl bg-muted/50 border border-border overflow-hidden"
+              className="p-3 rounded-xl bg-slate-900/40 border border-white/5 overflow-hidden"
             >
-              <p className="text-[11px] text-muted-foreground leading-relaxed whitespace-nowrap">
+              <p className="text-slate-600 uppercase text-[10px] tracking-widest font-bold leading-relaxed whitespace-nowrap mb-1">
                 Depto. de Investigación Científica
-                <br />
-                <span className="text-foreground/70">Calendario académico</span>
+              </p>
+              <p className="text-slate-400 text-xs">
+                Calendario académico
               </p>
             </motion.div>
           )}
@@ -178,7 +181,7 @@ export default function Sidebar() {
 
       {/* User Info Badge & Logout */}
       {user && (
-        <div className="p-3 border-t border-border mt-auto hidden md:flex flex-col gap-2">
+        <div className="p-3 border-t border-white/5 bg-slate-900/40 mt-auto hidden md:flex flex-col gap-2">
           <div className="flex items-center gap-2.5 px-1 py-1">
             <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
               {user.full_name ? user.full_name[0].toUpperCase() : user.email[0].toUpperCase()}
@@ -212,7 +215,7 @@ export default function Sidebar() {
       )}
 
       {/* Theme & Onboarding Guide Toggle */}
-      <div className={cn("p-3 border-t border-border hidden md:flex flex-col gap-1 items-center justify-center", !user && "mt-auto")}>
+      <div className={cn("p-3 border-t border-white/5 bg-slate-900/40 hidden md:flex flex-col gap-1 items-center justify-center", !user && "mt-auto")}>
         <Button
           variant="ghost"
           size="sm"

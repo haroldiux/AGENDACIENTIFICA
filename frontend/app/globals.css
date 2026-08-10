@@ -28,9 +28,9 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 224 71% 4%;
+    --background: 222 47% 3%;
     --foreground: 210 40% 98%;
-    --card: 224 71% 4%;
+    --card: 222 47% 5%;
     --card-foreground: 210 40% 98%;
     --popover: 224 71% 4%;
     --popover-foreground: 210 40% 98%;
@@ -38,14 +38,14 @@
     --primary-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217 32% 10%;
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 188.7 94.5% 42.7%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217 32% 14%;
+    --input: 217 32% 14%;
     --ring: 262.1 83.3% 57.8%;
   }
 }
@@ -59,10 +59,25 @@
   }
 }
 
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg;
+  }
+  .glass-card-hero {
+    @apply rounded-2xl border border-white/8 bg-gradient-to-br from-slate-900 via-slate-800/80 to-slate-900 shadow-2xl;
+  }
+  .section-row {
+    @apply px-5 py-4 flex items-center gap-4;
+  }
+  .icon-tile {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center shrink-0;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

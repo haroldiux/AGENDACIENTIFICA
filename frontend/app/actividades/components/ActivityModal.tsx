@@ -259,26 +259,27 @@ export default function ActivityModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-card text-card-foreground border border-border shadow-lg p-6 rounded-xl w-full max-w-lg text-white max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">
-          {isEdit ? "Editar Actividad Científica" : "Nueva Actividad Científica"}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-slate-900 border border-white/8 rounded-2xl shadow-2xl w-full max-w-lg text-slate-200 max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col">
+        <div className="px-6 py-5 border-b border-white/5 flex items-center gap-3 shrink-0">
+          <h2 className="text-xl font-bold text-slate-100">
+            {isEdit ? "Editar Actividad Científica" : "Nueva Actividad Científica"}
+          </h2>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1">Título *</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Título *</label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+              className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 placeholder:text-slate-500 text-sm"
             />
           </div>
 
-          {/* Req 1A — Global Scope Toggle: hidden for career-scoped roles */}
           {canSetGlobal && (
-            <div className="flex items-center gap-2 p-2.5 bg-[#0f172a]/80 border border-[var(--border)] rounded-lg">
+            <div className="flex items-center gap-2 p-2.5 bg-slate-800/40 border border-white/5 rounded-lg">
               <input
                 type="checkbox"
                 id="is_global_toggle"
@@ -289,9 +290,9 @@ export default function ActivityModal({
                     setFormData((prev) => ({ ...prev, career_id: "" }));
                   }
                 }}
-                className="w-4 h-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-slate-800 cursor-pointer"
+                className="w-4 h-4 rounded border-white/10 text-primary focus:ring-primary/50 bg-slate-800 cursor-pointer"
               />
-              <label htmlFor="is_global_toggle" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer text-slate-200">
+              <label htmlFor="is_global_toggle" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer text-slate-300">
                 <Globe className="w-4 h-4 text-purple-400 shrink-0" />
                 Es actividad global / institucional (Vicerrectorado)
               </label>
@@ -300,25 +301,25 @@ export default function ActivityModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Fecha Inicio *</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Fecha Inicio *</label>
               <input
                 type="date"
                 name="start_date"
                 value={formData.start_date}
                 onChange={handleChange}
                 required
-                className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+                className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Fecha Fin *</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Fecha Fin *</label>
               <input
                 type="date"
                 name="end_date"
                 value={formData.end_date}
                 onChange={handleChange}
                 required
-                className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+                className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 text-sm"
               />
             </div>
           </div>
@@ -326,7 +327,7 @@ export default function ActivityModal({
           <div className="grid grid-cols-2 gap-4">
             {/* Req 1B — Career dropdown pre-fill + lock */}
             <div>
-              <label className="block text-sm font-medium mb-1">Carrera {!isGlobal && "*"}</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Carrera {!isGlobal && "*"}</label>
               <select
                 name="career_id"
                 value={isGlobal ? "" : formData.career_id}
@@ -342,7 +343,7 @@ export default function ActivityModal({
                     ? "Carrera asignada a tu usuario"
                     : undefined
                 }
-                className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
+                className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 text-sm disabled:opacity-50"
               >
                 {isGlobal ? (
                   <option value="">Global / Vicerrectorado</option>
@@ -357,7 +358,7 @@ export default function ActivityModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Gestión *</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Gestión *</label>
               <select
                 name="gestion_id"
                 value={formData.gestion_id}
@@ -365,7 +366,7 @@ export default function ActivityModal({
                 required
                 disabled={isEdit}
                 title={isEdit ? "La gestión no se puede cambiar al editar" : undefined}
-                className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
+                className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 text-sm disabled:opacity-50"
               >
                 <option value="">Seleccione...</option>
                 {gestiones.map((g) => (
@@ -375,10 +376,9 @@ export default function ActivityModal({
             </div>
           </div>
 
-          {/* Req 1C — Collaboration careers checkboxes */}
           <div>
-            <label className="block text-sm font-medium mb-1">Carreras en Colaboración</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg custom-scrollbar">
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Carreras en Colaboración</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2.5 bg-slate-800/40 border border-white/5 rounded-lg custom-scrollbar">
               {careers
                 .filter((c) => c.id !== Number(formData.career_id))
                 .map((c) => {
@@ -386,7 +386,7 @@ export default function ActivityModal({
                   return (
                     <label
                       key={c.id}
-                      className="flex items-center gap-2 cursor-pointer text-sm text-slate-200 hover:text-white transition-colors"
+                      className="flex items-center gap-2 cursor-pointer text-sm text-slate-300 hover:text-white transition-colors"
                     >
                       <input
                         type="checkbox"
@@ -399,27 +399,26 @@ export default function ActivityModal({
                             return { ...prev, collaboration_career_ids: newIds };
                           });
                         }}
-                        className="w-4 h-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-slate-800 cursor-pointer"
+                        className="w-4 h-4 rounded border-white/10 text-primary focus:ring-primary/50 bg-slate-800 cursor-pointer"
                       />
                       <span className="truncate" title={c.name}>{c.name}</span>
                     </label>
                   );
                 })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-slate-500 mt-1.5">
               Selecciona las carreras que colaborarán en esta actividad.
             </p>
           </div>
 
-          {/* Tipo de Evento / Categoría de la Actividad */}
           <div>
-            <label className="block text-sm font-medium mb-1">Tipo de Evento *</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Tipo de Evento *</label>
             <select
               name="activity_type"
               value={formData.activity_type}
               onChange={handleChange}
               required
-              className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+              className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 text-sm"
             >
               <option value="">Seleccione el tipo de evento...</option>
               <option value="congreso">Congreso</option>
@@ -429,17 +428,17 @@ export default function ActivityModal({
               <option value="olimpiada">Olimpiada</option>
               <option value="master_class">Master Class</option>
             </select>
-            <p className="text-xs text-muted-foreground mt-1">Formato o categoría principal del evento científico.</p>
+            <p className="text-[11px] text-slate-500 mt-1.5">Formato o categoría principal del evento científico.</p>
           </div>
 
           {isEdit && (
             <div>
-              <label className="block text-sm font-medium mb-1">Estado</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Estado</label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+                className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 text-sm"
               >
                 {STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status}>
@@ -451,20 +450,19 @@ export default function ActivityModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-1">Responsable</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1.5 block">Responsable</label>
             <input
               type="text"
               name="responsible_name"
               value={formData.responsible_name}
               onChange={handleChange}
-              className="w-full p-2.5 bg-[#0f172a] border border-[var(--border)] rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+              className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg focus:outline-none focus:border-primary/50 text-slate-100 text-sm"
             />
           </div>
 
-          {/* Evidence Attachments Section */}
-          <div className="border-t border-[var(--border)] pt-4 mt-4">
-            <label className="block text-sm font-semibold mb-2 flex items-center gap-1.5 text-slate-200">
-              <Paperclip className="w-4 h-4 text-blue-400" />
+          <div className="border-t border-white/5 pt-4 mt-6">
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2 flex items-center gap-1.5">
+              <Paperclip className="w-4 h-4 text-primary" />
               Evidencias y Adjuntos (PDF, Imágenes, DOCX)
             </label>
 
@@ -479,7 +477,7 @@ export default function ActivityModal({
                       Array.from(e.dataTransfer.files).forEach((file) => handleFileUpload(file));
                     }
                   }}
-                  className="border-2 border-dashed border-slate-700 hover:border-blue-500 bg-[#0f172a]/40 p-4 rounded-lg text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5"
+                  className="border-2 border-dashed border-white/10 hover:border-primary/50 bg-slate-800/30 p-4 rounded-lg text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5"
                 >
                   <input
                     ref={fileInputRef}
@@ -494,7 +492,7 @@ export default function ActivityModal({
                     className="hidden"
                   />
                   {isUploading ? (
-                    <div className="flex items-center gap-2 text-blue-400 text-xs py-1">
+                    <div className="flex items-center gap-2 text-primary text-xs py-1">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Subiendo evidencia...</span>
                     </div>
@@ -502,7 +500,7 @@ export default function ActivityModal({
                     <>
                       <Upload className="w-5 h-5 text-slate-400 mb-0.5" />
                       <p className="text-xs font-medium text-slate-300">
-                        Arrastra y suelta un archivo aquí, o <span className="text-blue-400 underline">haz clic para seleccionar</span>
+                        Arrastra y suelta un archivo aquí, o <span className="text-primary hover:underline">haz clic para seleccionar</span>
                       </p>
                       <p className="text-[11px] text-slate-500">PDF, PNG, JPG, DOCX (Máximo 10 MB)</p>
                     </>
@@ -519,10 +517,10 @@ export default function ActivityModal({
                       return (
                         <div
                           key={ev.id}
-                          className="flex items-center justify-between p-2 bg-[#0f172a] border border-[var(--border)] rounded-md text-xs"
+                          className="flex items-center justify-between p-2 bg-slate-800/40 border border-white/5 rounded-md text-xs"
                         >
                           <div className="flex items-center gap-2 truncate min-w-0 mr-2">
-                            <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                            <FileText className="w-4 h-4 text-primary shrink-0" />
                             <div className="truncate">
                               <p className="font-medium text-slate-200 truncate">{ev.filename}</p>
                               <p className="text-[10px] text-slate-400">{sizeKB} KB</p>
@@ -560,17 +558,17 @@ export default function ActivityModal({
                 )}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 italic">
+              <p className="text-xs text-slate-500 italic">
                 Podrás adjuntar archivos y evidencias una vez guardada la actividad.
               </p>
             )}
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-lg transition-colors text-sm"
+              className="px-4 py-2 border border-white/10 hover:bg-white/5 rounded-lg transition-colors text-slate-300 text-sm font-medium"
             >
               Cancelar
             </button>
@@ -578,7 +576,7 @@ export default function ActivityModal({
               type="submit"
               data-testid="activity-save-button"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition-colors text-white text-sm"
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 rounded-lg transition-colors text-sm font-medium"
             >
               {isSubmitting ? "Guardando..." : "Guardar"}
             </button>

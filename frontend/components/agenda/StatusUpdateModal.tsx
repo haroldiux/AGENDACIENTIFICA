@@ -123,20 +123,20 @@ export default function StatusUpdateModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base font-bold">
+      <DialogContent className="sm:max-w-lg bg-slate-900 border-white/8 rounded-2xl shadow-2xl text-slate-200">
+        <DialogHeader className="px-6 py-5 border-b border-white/5 pb-5">
+          <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-100">
             <Activity className="w-5 h-5 text-primary" />
             Gestión de Estado, Observaciones y Evidencia
           </DialogTitle>
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-slate-400 truncate mt-1">
             {activity.title} {activity.career_name ? `(${activity.career_name})` : ""}
           </p>
         </DialogHeader>
 
-        <div className="space-y-4 py-3 text-xs">
+        <div className="space-y-4 py-3 text-xs px-6">
           <div className="space-y-1.5">
-            <label className="font-semibold text-foreground block">
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1 block">
               Nuevo Estado de la Actividad:
             </label>
             <Select
@@ -158,7 +158,7 @@ export default function StatusUpdateModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-semibold text-foreground flex items-center gap-1.5">
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1 flex items-center gap-1.5">
               <MessageSquare className="w-3.5 h-3.5 text-primary" />
               Cuadro de Observaciones / Motivo:
             </label>
@@ -173,12 +173,12 @@ export default function StatusUpdateModal({
                   : "Escriba observaciones generales sobre la actividad..."
               }
               rows={3}
-              className="w-full p-2.5 bg-background border border-input rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground resize-none"
+              className="w-full p-2.5 bg-slate-800/60 border border-white/10 rounded-lg text-xs focus:outline-none focus:border-primary/50 text-slate-100 placeholder:text-slate-500 resize-none"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-semibold text-foreground flex items-center gap-1.5">
+            <label className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1 flex items-center gap-1.5">
               <Upload className="w-3.5 h-3.5 text-primary" />
               Adjuntar Evidencia (PDF, Imagen, Word - Máx 10MB):
             </label>
@@ -186,7 +186,7 @@ export default function StatusUpdateModal({
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,.docx"
               onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="w-full text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+              className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
             />
             {selectedFile && (
               <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
@@ -196,13 +196,13 @@ export default function StatusUpdateModal({
           </div>
 
           {existingEvidences.length > 0 && (
-            <div className="space-y-1.5 pt-2 border-t border-border">
-              <span className="font-semibold text-foreground block">
+            <div className="space-y-1.5 pt-2 border-t border-white/5">
+              <span className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1 block">
                 Evidencias Adjuntas Previamente ({existingEvidences.length}):
               </span>
-              <div className="max-h-28 overflow-y-auto space-y-1 bg-muted/30 p-2 rounded-lg border border-border">
+              <div className="max-h-28 overflow-y-auto space-y-1 bg-slate-800/40 p-2 rounded-lg border border-white/5">
                 {existingEvidences.map((ev) => (
-                  <div key={ev.id} className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <div key={ev.id} className="flex items-center justify-between text-[11px] text-slate-400">
                     <span className="truncate flex items-center gap-1.5 font-medium">
                       <FileText className="w-3 h-3 text-primary shrink-0" />
                       {ev.filename}
@@ -232,13 +232,14 @@ export default function StatusUpdateModal({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-border">
+        <div className="flex justify-end gap-2 pt-4 px-6 pb-6 border-t border-white/5">
           <Button
             type="button"
             variant="outline"
             size="sm"
             disabled={isSaving}
             onClick={onClose}
+            className="border-white/10 text-slate-300 hover:bg-white/5"
           >
             Cancelar
           </Button>

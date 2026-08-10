@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AgendaFilterBar from "@/components/agenda/AgendaFilterBar";
+import AgendaEmptyState from "@/components/agenda/AgendaEmptyState";
 import PageHeader from "@/components/layout/PageHeader";
 import {
   api,
@@ -288,8 +289,8 @@ export default function ActividadesPage() {
             onGestionChange={setGestionId}
           />
         </div>
-        <Card className="p-4 flex flex-col gap-1.5 md:w-56 shadow-sm border-border">
-          <label htmlFor="status-select" className="text-xs text-muted-foreground font-medium">
+        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-4 flex flex-col gap-1.5 md:w-56">
+          <label htmlFor="status-select" className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1 block">
             Estado
           </label>
           <select
@@ -298,7 +299,7 @@ export default function ActividadesPage() {
             onChange={(e) =>
               setStatusFilter(e.target.value as ScientificActivityStatus | "")
             }
-            className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+            className="w-full bg-slate-800/60 border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
           >
             <option value="">Todos los estados</option>
             {Object.entries(activityStatusLabels).map(([value, label]) => (
@@ -307,18 +308,18 @@ export default function ActividadesPage() {
               </option>
             ))}
           </select>
-        </Card>
+        </div>
       </div>
 
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
           placeholder="Buscar por título, responsable o tipo de actividad..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-10 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+          className="w-full pl-10 pr-10 py-2.5 bg-slate-900/60 border border-white/10 rounded-2xl text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-slate-100 placeholder:text-slate-500 backdrop-blur-sm shadow-sm"
         />
         {searchQuery && (
           <button
@@ -330,108 +331,108 @@ export default function ActividadesPage() {
         )}
       </div>
 
-      <Card className="p-0 overflow-hidden border-border shadow-sm">
+      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-destructive text-sm">{error}</p>
+            <p className="text-red-400 text-sm">{error}</p>
             <Button
               variant="outline"
               onClick={loadActivities}
-              className="mt-4"
+              className="mt-4 border-white/10 text-slate-300"
             >
               Reintentar
             </Button>
           </div>
         ) : visibleActivities.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-12">
-            No hay actividades con los filtros seleccionados.
-          </p>
+          <div className="py-12">
+            <AgendaEmptyState />
+          </div>
         ) : (
           <div className="w-full overflow-hidden">
-            <Table className="w-full table-fixed">
+            <Table className="w-full table-fixed divide-y divide-white/5">
               <TableHeader>
-                <TableRow>
+                <TableRow className="border-b border-white/5 hover:bg-transparent">
                   <TableHead
-                    className="w-[28%] cursor-pointer select-none hover:text-foreground"
+                    className="w-[28%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
                     onClick={() => handleSort("nombre")}
                   >
                     Nombre <SortIcon col="nombre" />
                   </TableHead>
                   <TableHead
-                    className="w-[16%] cursor-pointer select-none hover:text-foreground"
+                    className="w-[16%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
                     onClick={() => handleSort("fecha")}
                   >
                     Fecha <SortIcon col="fecha" />
                   </TableHead>
                   <TableHead
-                    className="w-[13%] cursor-pointer select-none hover:text-foreground"
+                    className="w-[13%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
                     onClick={() => handleSort("tipo")}
                   >
                     Tipo <SortIcon col="tipo" />
                   </TableHead>
                   <TableHead
-                    className="w-[16%] cursor-pointer select-none hover:text-foreground"
+                    className="w-[16%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
                     onClick={() => handleSort("carrera")}
                   >
                     Carrera <SortIcon col="carrera" />
                   </TableHead>
                   <TableHead
-                    className="w-[13%] cursor-pointer select-none hover:text-foreground"
+                    className="w-[13%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
                     onClick={() => handleSort("estado")}
                   >
                     Estado <SortIcon col="estado" />
                   </TableHead>
-                  <TableHead className="w-[14%] text-right">Acciones</TableHead>
+                  <TableHead className="w-[14%] text-right text-slate-400">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="divide-y divide-white/5">
                 {visibleActivities.map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell className="font-medium text-xs py-2.5 truncate" title={activity.title}>
+                  <TableRow key={activity.id} className="border-0 px-5 py-4 hover:bg-white/5 transition-colors group">
+                    <TableCell className="font-medium text-xs py-3.5 text-slate-200 truncate" title={activity.title}>
                       {activity.title}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap py-2.5">
+                    <TableCell className="text-xs text-slate-400 whitespace-nowrap py-3.5">
                       {formatDateRange(activity.start_date, activity.end_date)}
                     </TableCell>
-                    <TableCell className="py-2.5">
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] px-2 py-0.5 whitespace-nowrap">
+                    <TableCell className="py-3.5">
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] px-2.5 py-0.5 rounded-full whitespace-nowrap">
                         {activityTypeLabels[activity.activity_type] ??
                           activity.activity_type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground truncate py-2.5" title={careerName(activity.career_id)}>
+                    <TableCell className="text-xs text-slate-400 truncate py-3.5" title={careerName(activity.career_id)}>
                       {careerName(activity.career_id)}
                     </TableCell>
-                    <TableCell className="py-2.5">
+                    <TableCell className="py-3.5">
                       {canManageActivity(user, activity) ? (
                         <button
                           type="button"
                           onClick={() => setStatusModalActivity(activity)}
                           title="Haz clic para cambiar de estado, agregar observaciones o subir evidencia"
-                          className="group focus:outline-none"
+                          className="focus:outline-none"
                         >
                           <Badge
-                            variant="secondary"
-                            className={`${activityStatusClasses[activity.status] ?? ""} text-[11px] px-2 py-0.5 group-hover:scale-105 transition-transform cursor-pointer shadow-sm whitespace-nowrap`}
+                            variant="outline"
+                            className={`${activityStatusClasses[activity.status] ?? ""} text-[11px] px-2.5 py-0.5 rounded-full hover:scale-105 transition-transform cursor-pointer shadow-sm whitespace-nowrap`}
                           >
                             {activityStatusLabels[activity.status] ?? activity.status} ✎
                           </Badge>
                         </button>
                       ) : (
                         <Badge
-                          variant="secondary"
-                          className={`${activityStatusClasses[activity.status] ?? ""} text-[11px] px-2 py-0.5 whitespace-nowrap`}
+                          variant="outline"
+                          className={`${activityStatusClasses[activity.status] ?? ""} text-[11px] px-2.5 py-0.5 rounded-full whitespace-nowrap`}
                         >
                           {activityStatusLabels[activity.status] ?? activity.status}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap py-2.5">
-                      <div className="flex items-center justify-end gap-1">
+                    <TableCell className="text-right whitespace-nowrap py-3.5">
+                      <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         {/* Ver Informe Individual */}
                         <Button
                           variant="ghost"
@@ -461,7 +462,7 @@ export default function ActividadesPage() {
                               size="icon"
                               onClick={() => openEditModal(activity)}
                               title="Editar actividad"
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              className="h-8 w-8 text-slate-400 hover:text-slate-200 hover:bg-white/5"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
@@ -472,7 +473,7 @@ export default function ActividadesPage() {
                               onClick={() => handleDelete(activity)}
                               disabled={deletingId === activity.id}
                               title="Eliminar actividad"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
                             >
                               {deletingId === activity.id ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -490,7 +491,7 @@ export default function ActividadesPage() {
             </Table>
           </div>
         )}
-      </Card>
+      </div>
 
       <ActivityModal
         isOpen={isModalOpen}

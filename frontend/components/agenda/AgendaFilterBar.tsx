@@ -47,7 +47,7 @@ export default function AgendaFilterBar({
   };
 
   return (
-    <div className="bg-card text-card-foreground border border-border shadow-sm p-4 rounded-xl flex flex-col md:flex-row gap-4 md:items-center">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-4 flex flex-col md:flex-row gap-4 md:items-center">
       <div className="flex items-center gap-2 text-slate-400">
         <Filter className="w-5 h-5" />
         <span className="text-sm font-medium">Filtros</span>
@@ -55,7 +55,7 @@ export default function AgendaFilterBar({
 
       <div className="flex flex-col sm:flex-row gap-4 flex-1">
         <div className="flex flex-col gap-1.5 flex-1">
-          <label htmlFor="career-select" className="text-xs text-slate-400">
+          <label htmlFor="career-select" className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1 block">
             Carrera
           </label>
           <select
@@ -66,7 +66,7 @@ export default function AgendaFilterBar({
               onCareerChange(val === 'all' ? null : Number(val));
             }}
             disabled={disabled}
-            className="w-full bg-background text-foreground border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="w-full bg-slate-800/60 border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 disabled:opacity-50 transition-colors"
           >
             <option value="all">Todas las carreras / Calendario General</option>
             {careers.map((career) => (
@@ -78,7 +78,7 @@ export default function AgendaFilterBar({
         </div>
 
         <div className="flex flex-col gap-1.5 flex-1">
-          <label htmlFor="gestion-select" className="text-xs text-slate-400">
+          <label htmlFor="gestion-select" className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1 block">
             Gestión
           </label>
           <select
@@ -86,7 +86,7 @@ export default function AgendaFilterBar({
             value={gestionId ?? ''}
             onChange={(e) => handleGestionChange(e.target.value)}
             disabled={disabled}
-            className="w-full bg-background text-foreground border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="w-full bg-slate-800/60 border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 disabled:opacity-50 transition-colors"
           >
             <option value="">Todas las gestiones</option>
             {gestiones.map((gestion) => (
