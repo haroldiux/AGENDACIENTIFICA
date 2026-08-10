@@ -61,7 +61,7 @@ def test_generate_conflict_pdf_report_dispatches_with_report_type(client, authen
 
     assert response.status_code == 200
     assert response.json()["task_id"] == "pdf-task-id"
-    mock_pdf_task.delay.assert_called_once_with(1, 2, "conflict")
+    mock_pdf_task.delay.assert_called_once_with(1, 2, "conflict", None)
 
 
 def test_generate_conflict_excel_report_dispatches_with_report_type(client, authenticated_user, mock_excel_task):
@@ -77,7 +77,7 @@ def test_generate_conflict_excel_report_dispatches_with_report_type(client, auth
 
     assert response.status_code == 200
     assert response.json()["task_id"] == "excel-task-id"
-    mock_excel_task.delay.assert_called_once_with(1, 2, "conflict")
+    mock_excel_task.delay.assert_called_once_with(1, 2, "conflict", None)
 
 
 def test_generate_table_pdf_report_keeps_existing_behavior(client, authenticated_user, mock_pdf_task):
@@ -92,7 +92,7 @@ def test_generate_table_pdf_report_keeps_existing_behavior(client, authenticated
     )
 
     assert response.status_code == 200
-    mock_pdf_task.delay.assert_called_once_with(1, 2, "table")
+    mock_pdf_task.delay.assert_called_once_with(1, 2, "table", None)
 
 
 def test_generate_research_agenda_pdf_report_keeps_existing_behavior(client, authenticated_user, mock_pdf_task):
@@ -107,7 +107,7 @@ def test_generate_research_agenda_pdf_report_keeps_existing_behavior(client, aut
     )
 
     assert response.status_code == 200
-    mock_pdf_task.delay.assert_called_once_with(1, 2, "research-agenda")
+    mock_pdf_task.delay.assert_called_once_with(1, 2, "research-agenda", None)
 
 
 def test_generate_table_excel_report_keeps_existing_behavior(client, authenticated_user, mock_excel_task):
@@ -122,7 +122,7 @@ def test_generate_table_excel_report_keeps_existing_behavior(client, authenticat
     )
 
     assert response.status_code == 200
-    mock_excel_task.delay.assert_called_once_with(1, 2, "table")
+    mock_excel_task.delay.assert_called_once_with(1, 2, "table", None)
 
 
 def test_generate_research_agenda_excel_report_keeps_existing_behavior(client, authenticated_user, mock_excel_task):
@@ -137,4 +137,4 @@ def test_generate_research_agenda_excel_report_keeps_existing_behavior(client, a
     )
 
     assert response.status_code == 200
-    mock_excel_task.delay.assert_called_once_with(1, 2, "research-agenda")
+    mock_excel_task.delay.assert_called_once_with(1, 2, "research-agenda", None)

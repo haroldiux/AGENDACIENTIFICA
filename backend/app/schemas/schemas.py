@@ -343,3 +343,28 @@ class ReportRequest(BaseModel):
     status_filter: Optional[str] = None
 
 
+# --- Notification Schemas ---
+class TestEmailRequest(BaseModel):
+    recipient_email: str
+
+
+class TestEmailResponse(BaseModel):
+    success: bool
+    message: str
+    smtp_host: str
+    smtp_port: int
+    timestamp: datetime
+
+
+class SendDigestRequest(BaseModel):
+    recipient_email: Optional[str] = None
+    user_id: Optional[int] = None
+
+
+class SendDigestResponse(BaseModel):
+    success: bool
+    message: str
+    recipients_count: int
+
+
+

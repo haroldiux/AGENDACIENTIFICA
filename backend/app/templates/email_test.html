@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prueba SMTP - Agenda Científica UNITEPC</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f8;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #333333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 25px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .header {
+      background-color: #6B3392;
+      color: #ffffff;
+      padding: 24px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .header p {
+      margin: 4px 0 0 0;
+      font-size: 13px;
+      color: #E0D0EE;
+    }
+    .accent-bar {
+      height: 4px;
+      background-color: #009E96;
+    }
+    .content {
+      padding: 30px;
+    }
+    .status-badge {
+      display: inline-block;
+      background-color: #009E96;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .details-box {
+      background-color: #f8f6fb;
+      border: 1px solid #e0d8eb;
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-top: 15px;
+    }
+    .details-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .details-row:last-child {
+      margin-bottom: 0;
+    }
+    .label {
+      font-weight: 600;
+      color: #6B3392;
+    }
+    .value {
+      color: #444444;
+      font-family: monospace;
+    }
+    .footer {
+      background-color: #f0ecf4;
+      text-align: center;
+      padding: 16px 20px;
+      font-size: 12px;
+      color: #666666;
+      border-top: 1px solid #e2d9ec;
+    }
+    .footer strong {
+      color: #6B3392;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AGENDA CIENTÍFICA UNITEPC</h1>
+      <p>Diagnóstico de Servidor SMTP</p>
+    </div>
+    <div class="accent-bar"></div>
+    <div class="content">
+      <div class="status-badge">✔ Conexión SMTP Verificada</div>
+      <p>Este es un correo de prueba enviado desde el sistema de Agenda Científica UNITEPC para confirmar que la configuración del servidor de correo funciona correctamente.</p>
+      
+      <div class="details-box">
+        <div class="details-row">
+          <span class="label">Destinatario:</span>
+          <span class="value">{{ recipient_email }}</span>
+        </div>
+        <div class="details-row">
+          <span class="label">Servidor SMTP:</span>
+          <span class="value">{{ smtp_host }}:{{ smtp_port }}</span>
+        </div>
+        <div class="details-row">
+          <span class="label">Fecha y Hora:</span>
+          <span class="value">{{ timestamp }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <p>Universidad Técnica Privada Cosmos - <strong>UNITEPC</strong></p>
+      <p>Sistema de Notificaciones Automatizadas</p>
+    </div>
+  </div>
+</body>
+</html>

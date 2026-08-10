@@ -93,28 +93,37 @@ def send_whatsapp_message(phone_number: str, message: str) -> bool:
         return False
 
 
-def send_email_message(email_address: str, subject: str, message: str) -> bool:
-    """Send an email via SMTP (free providers: Gmail app password, SendGrid free tier)."""
+from app.services.email_service import email_service
+
+
+def send_email_message(
+    email_address: str,
+    subject: str,
+    message: str,
+    user_name: str = "Usuario",
+    academic_activities: list = None,
+    scientific_activities: list = None,
+) -> bool:
+    """Send an email using EmailService (HTML digest or fallback text)."""
     if not settings.SMTP_HOST or not settings.SMTP_PORT or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
         logger.warning("SMTP configuration is missing.")
         return False
 
-    msg = EmailMessage()
-    msg.set_content(message)
-    msg["Subject"] = subject
-    msg["From"] = settings.SMTP_USER
-    msg["To"] = email_address
+    if academic_activities is not None or scientific_activities is not None:
+        return email_service.send_digest_email(
+            recipient_email=email_address,
+            user_name=user_name,
+            academic_activities=academic_activities or [],
+            scientific_activities=scientific_activities or [],
+        )
 
-    try:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.send_message(msg)
-        logger.info(f"Email message sent to {email_address}")
-        return True
-    except Exception as exc:
-        logger.error(f"Failed to send email to {email_address}: {exc}")
-        return False
+    html_content = f"<html><body><pre>{message}</pre></body></html>"
+    return email_service.send_email(
+        to_email=email_address,
+        subject=subject,
+        html_content=html_content,
+        text_content=message,
+    )
 
 
 @celery_app.task(name="app.workers.notification_worker.dispatch_weekly_notifications")
@@ -124,7 +133,7 @@ def dispatch_weekly_notifications():
     Channel priority:
       1. Telegram (free, automatic)
       2. WhatsApp Business API (paid credentials required)
-      3. Email (free SMTP providers)
+      3. Email (free SMTP providers via EmailService HTML digest)
     """
     logger.info("Starting weekly notification dispatch...")
     db = SessionLocal()
@@ -166,10 +175,22 @@ def dispatch_weekly_notifications():
                 channel = "whatsapp"
 
             if not delivered and user.email:
+                user_career_ids = {c.id for c in user.careers}
+                def activity_matches(activity) -> bool:
+                    if activity.career_id is None:
+                        return True
+                    return activity.career_id in user_career_ids
+
+                user_academic = [a for a in academic_activities if activity_matches(a)]
+                user_scientific = [a for a in scientific_activities if activity_matches(a)]
+
                 delivered = send_email_message(
                     user.email,
                     "Agenda Científica - Actividades de la Semana",
-                    message
+                    message,
+                    user_name=user.full_name or "Usuario",
+                    academic_activities=user_academic,
+                    scientific_activities=user_scientific,
                 )
                 channel = "email"
 
@@ -183,3 +204,4 @@ def dispatch_weekly_notifications():
     finally:
         db.close()
     logger.info("Finished weekly notification dispatch.")
+

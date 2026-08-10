@@ -23,16 +23,19 @@ class Settings(BaseSettings):
     WHATSAPP_API_TOKEN: str | None = None
     WHATSAPP_PHONE_ID: str | None = None
     TELEGRAM_BOT_TOKEN: str | None = None
-    SMTP_HOST: str | None = None
-    SMTP_PORT: int | None = None
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_TLS: bool = True
     SMTP_USER: str | None = None
     SMTP_PASSWORD: str | None = None
+    EMAILS_FROM_NAME: str = "Agenda Cientifica UNITEPC"
+    EMAILS_FROM_EMAIL: str | None = None
 
     @field_validator("SMTP_PORT", mode="before")
     @classmethod
     def _empty_smtp_port(cls, value):
         if value == "" or value is None:
-            return None
+            return 587
         return value
 
     class Config:
