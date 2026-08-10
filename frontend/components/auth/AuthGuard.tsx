@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
-const PUBLIC_ROUTES = ["/login"];
+const PUBLIC_ROUTES = ["/login", "/portal", "/public"];
 
 export interface AuthGuardProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"));
 
   useEffect(() => {
     if (!isLoading) {

@@ -9,15 +9,21 @@ import { cn } from "@/lib/utils";
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
+  const isPublicRoute =
+    pathname === "/login" ||
+    pathname === "/portal" ||
+    pathname.startsWith("/portal/") ||
+    pathname === "/public" ||
+    pathname.startsWith("/public/");
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased flex w-full">
-      {!isLoginPage && <Sidebar />}
-      {!isLoginPage && <OnboardingTutorialModal />}
+      {!isPublicRoute && <Sidebar />}
+      {!isPublicRoute && <OnboardingTutorialModal />}
       <main
         className={cn(
           "flex-1 w-full",
-          isLoginPage ? "p-0 min-h-screen" : "p-6 md:p-8 max-w-[1400px] mx-auto"
+          isPublicRoute ? "p-0 min-h-screen" : "p-6 md:p-8 max-w-[1400px] mx-auto"
         )}
       >
         {children}

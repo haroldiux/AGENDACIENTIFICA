@@ -443,4 +443,120 @@ export const api = {
         .get<ConflictListResponse>('/conflicts/', { params: filters })
         .then((res) => res.data),
   },
+  publicPortal: {
+    getCalendar: (params?: PublicCalendarFilters) =>
+      apiClient
+        .get<{ items: PublicCalendarItem[] }>('/public-portal/calendar', { params })
+        .then((res) => res.data),
+    getMetadata: () =>
+      apiClient
+        .get<PublicMetadata>('/public-portal/metadata')
+        .then((res) => res.data),
+    getEventDetail: (id: number, source_type?: string) =>
+      apiClient
+        .get<PublicEventDetail>(`/public-portal/events/${source_type ? `${source_type}/${id}` : id}`)
+        .then((res) => res.data),
+    getEvidenceDownloadUrl: (id: number) =>
+      `${API_URL}/public-portal/evidences/${id}/download`,
+  },
 };
+
+// --- Public Portal Interfaces ---
+
+export interface PublicCalendarItem {
+  id: number;
+  title: string;
+  start_date: string;
+  end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  source_type: 'academic' | 'scientific';
+  category?: string | null;
+  origin_color?: string | null;
+  activity_type?: ScientificActivityType | string | null;
+  status?: ScientificActivityStatus | string | null;
+  responsible_name?: string | null;
+  career_id?: number | null;
+  career_name?: string | null;
+  gestion_id?: number | null;
+  gestion_name?: string | null;
+  category_id?: number | null;
+}
+
+export type PublicEventItem = PublicCalendarItem;
+
+export interface PublicEvidenceItem {
+  id: number;
+  filename: string;
+  file_type: string;
+  file_size: number;
+  uploaded_at: string;
+  download_url: string;
+}
+
+export interface PublicEventDetail {
+  id: number;
+  title: string;
+  start_date: string;
+  end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  source_type: 'academic' | 'scientific';
+  category?: string | null;
+  origin_color?: string | null;
+  activity_type?: ScientificActivityType | string | null;
+  status?: ScientificActivityStatus | string | null;
+  responsible_name?: string | null;
+  notes?: string | null;
+  career?: { id: number; name: string; faculty?: string } | null;
+  gestion?: { id: number; name: string; start_date?: string; end_date?: string } | null;
+  activity_category?: { id: number; name: string; code: string; color?: string | null } | null;
+  evidences?: PublicEvidenceItem[];
+}
+
+export type PublicEventDetailResponse = PublicEventDetail;
+
+export interface PublicMetadataSede {
+  id: number;
+  name: string;
+}
+
+export interface PublicMetadataGestion {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface PublicMetadataCareer {
+  id: number;
+  name: string;
+  faculty: string;
+}
+
+export interface PublicMetadataCategory {
+  id: number;
+  name: string;
+  code: string;
+  color?: string | null;
+  scope: string;
+}
+
+export interface PublicMetadata {
+  gestiones: PublicMetadataGestion[];
+  sedes: PublicMetadataSede[];
+  careers: PublicMetadataCareer[];
+  categories: PublicMetadataCategory[];
+}
+
+export type PublicMetadataResponse = PublicMetadata;
+
+export interface PublicCalendarFilters {
+  gestion_id?: number | null;
+  sede_id?: number | null;
+  career_id?: number | null;
+  category_id?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  search?: string | null;
+}
