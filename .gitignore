@@ -47,3 +47,5 @@ next-env.d.ts
 .agents/activate.cmd
 .gemini/settings.json
 .gentle-ai-backup/
+*.zip
+*-gentle-ai.ps1
