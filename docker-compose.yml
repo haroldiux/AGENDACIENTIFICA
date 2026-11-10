@@ -29,7 +29,7 @@ services:
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8005}:8000"
     volumes:
       - ./backend:/app
     depends_on:
@@ -87,12 +87,12 @@ services:
       dockerfile: Dockerfile
       target: deps
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8005/api/v1}
     container_name: unitepc_frontend
     ports:
-      - "3001:3000"
+      - "${FRONTEND_PORT:-3005}:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8005/api/v1}
       # --- Hot-reload fix for Windows Docker Desktop ---
       # Windows NTFS does not propagate inotify events to the Linux container.
       # Polling makes Next.js (and Chokidar) detect file changes by actively
