@@ -353,15 +353,30 @@ async def upload_excel(
         
     raw_records = []
     for sheet_name, df in excel_sheets.items():
-        if sheet_name.strip().lower() in ["referencia", "reference"]:
+        if sheet_name.strip().lower() in ["referencia", "reference", "instrucciones", "guia"]:
             continue
         sheet_recs = df.to_dict('records')
         for rec in sheet_recs:
-            # Skip warning / example hint rows
-            title_val = str(rec.get("titulo", rec.get("title", "")) or "")
-            if "bórrala antes de importar" in title_val.lower() or "⚠" in title_val:
+            # Skip empty rows or rows without title
+            title_val = str(rec.get("titulo", rec.get("title", "")) or "").strip()
+            if not title_val or title_val.lower() in ["nan", "none", "null"]:
                 continue
-            
+
+            # Skip warning / example hint / note rows
+            title_lower = title_val.lower()
+            if (
+                any(marker in title_lower for marker in ["bórrala", "borrala", "nota de rol", "nota para", "nota:", "instrucciones", "ejemplo:"])
+                or any(sym in title_val for sym in ["⚠", "ℹ", "📌", "👉"])
+            ):
+                continue
+
+            # Skip rows where dates are completely missing (e.g. descriptive notes or empty rows)
+            start_raw = rec.get("fecha_inicio", rec.get("start_date"))
+            end_raw = rec.get("fecha_fin", rec.get("end_date"))
+            if (pd.isna(start_raw) or str(start_raw).strip().lower() in ["", "nan", "none"]) and \
+               (pd.isna(end_raw) or str(end_raw).strip().lower() in ["", "nan", "none"]):
+                continue
+
             # Infer is_scientific from sheet name if not specified
             if "es_cientifica" not in rec and "is_scientific" not in rec:
                 if "científica" in sheet_name.lower() or "cientifica" in sheet_name.lower():
