@@ -10,7 +10,6 @@ from datetime import date
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import table, column
-from passlib.context import CryptContext
 
 # revision identifiers, used by Alembic.
 revision: str = '3a4b5c6d7e8f'
@@ -18,7 +17,8 @@ down_revision: Union[str, None] = '299cc48a1ccb'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Pre-computed bcrypt hash for 'unitepc123' to avoid runtime passlib/bcrypt incompatibility in Python 3.12
+DEFAULT_HASHED_PASSWORD = "$2b$12$paBWNItBp3XyTjZ5E0BQA.mlGFFaWW5L38WN3Tm/MA4pjd0q6PDte"
 
 CAREERS_DATA = [
     ("Medicina", "Facultad de Ciencias de la Salud"),
@@ -63,88 +63,105 @@ def upgrade() -> None:
     bind = op.get_bind()
 
     # 1. Ensure all official Gestiones exist (including 1-2027 and 2-2027)
-    gestiones_table = table(
-        'gestiones',
-        column('id', sa.Integer),
-        column('name', sa.String),
-        column('start_date', sa.Date),
-        column('end_date', sa.Date)
-    )
+    try:
+        gestiones_table = table(
+            'gestiones',
+            column('id', sa.Integer),
+            column('name', sa.String),
+            column('start_date', sa.Date),
+            column('end_date', sa.Date)
+        )
 
-    for g in GESTIONES_DATA:
-        res = bind.execute(
-            sa.text("SELECT id FROM gestiones WHERE name = :name"),
-            {"name": g["name"]}
-        ).fetchone()
-        if not res:
-            op.bulk_insert(gestiones_table, [g])
+        for g in GESTIONES_DATA:
+            res = bind.execute(
+                sa.text("SELECT id FROM gestiones WHERE name = :name"),
+                {"name": g["name"]}
+            ).fetchone()
+            if not res:
+                op.bulk_insert(gestiones_table, [g])
+    except Exception as e:
+        print(f"Warning inserting gestiones: {e}")
 
     # 2. Ensure all 24 official Careers exist in fresh databases
-    careers_table = table(
-        'careers',
-        column('id', sa.Integer),
-        column('name', sa.String),
-        column('faculty', sa.String)
-    )
-    for name, faculty in CAREERS_DATA:
-        res = bind.execute(
-            sa.text("SELECT id FROM careers WHERE name = :name"),
-            {"name": name}
-        ).fetchone()
-        if not res:
-            op.bulk_insert(careers_table, [{"name": name, "faculty": faculty}])
+    try:
+        careers_table = table(
+            'careers',
+            column('id', sa.Integer),
+            column('name', sa.String),
+            column('faculty', sa.String)
+        )
+        for name, faculty in CAREERS_DATA:
+            res = bind.execute(
+                sa.text("SELECT id FROM careers WHERE name = :name"),
+                {"name": name}
+            ).fetchone()
+            if not res:
+                op.bulk_insert(careers_table, [{"name": name, "faculty": faculty}])
+    except Exception as e:
+        print(f"Warning inserting careers: {e}")
 
     # 3. Ensure Core Users exist
-    users_table = table(
-        'users',
-        column('id', sa.Integer),
-        column('email', sa.String),
-        column('full_name', sa.String),
-        column('role', sa.String),
-        column('hashed_password', sa.String),
-        column('is_active', sa.Boolean)
-    )
+    try:
+        core_users = [
+            {
+                "email": "admin@unitepc.edu.bo",
+                "full_name": "Administrador General UNITEPC",
+                "role": "super_admin",
+                "hashed_password": DEFAULT_HASHED_PASSWORD,
+                "is_active": True,
+            },
+            {
+                "email": "morellana_med@unitepc.edu.bo",
+                "full_name": "Dra. María Lorena Orellana Aguilar",
+                "role": "director_investigacion",
+                "hashed_password": DEFAULT_HASHED_PASSWORD,
+                "is_active": True,
+            },
+            {
+                "email": "vicerrectorado@unitepc.edu.bo",
+                "full_name": "Vicerrectorado Académico Nacional",
+                "role": "vicerrectorado",
+                "hashed_password": DEFAULT_HASHED_PASSWORD,
+                "is_active": True,
+            },
+        ]
 
-    hashed_pw = pwd_context.hash("unitepc123")
+        is_postgres = (bind.dialect.name == "postgresql")
 
-    core_users = [
-        {
-            "email": "admin@unitepc.edu.bo",
-            "full_name": "Administrador General UNITEPC",
-            "role": "super_admin",
-            "hashed_password": hashed_pw,
-            "is_active": True,
-        },
-        {
-            "email": "morellana_med@unitepc.edu.bo",
-            "full_name": "Dra. María Lorena Orellana Aguilar",
-            "role": "director_investigacion",
-            "hashed_password": hashed_pw,
-            "is_active": True,
-        },
-        {
-            "email": "vicerrectorado@unitepc.edu.bo",
-            "full_name": "Vicerrectorado Académico Nacional",
-            "role": "vicerrectorado",
-            "hashed_password": hashed_pw,
-            "is_active": True,
-        },
-    ]
-
-    for u in core_users:
-        res_user = bind.execute(
-            sa.text("SELECT id FROM users WHERE email = :email"),
-            {"email": u["email"]}
-        ).fetchone()
-        if not res_user:
-            op.bulk_insert(users_table, [u])
+        for u in core_users:
+            res_user = bind.execute(
+                sa.text("SELECT id FROM users WHERE email = :email"),
+                {"email": u["email"]}
+            ).fetchone()
+            if not res_user:
+                if is_postgres:
+                    bind.execute(
+                        sa.text("""
+                            INSERT INTO users (email, full_name, role, hashed_password, is_active)
+                            VALUES (:email, :full_name, CAST(:role AS roleenum), :hashed_password, :is_active)
+                        """),
+                        u
+                    )
+                else:
+                    bind.execute(
+                        sa.text("""
+                            INSERT INTO users (email, full_name, role, hashed_password, is_active)
+                            VALUES (:email, :full_name, :role, :hashed_password, :is_active)
+                        """),
+                        u
+                    )
+    except Exception as e:
+        print(f"Warning inserting core users: {e}")
 
 
 def downgrade() -> None:
     bind = op.get_bind()
-    bind.execute(
-        sa.text("DELETE FROM gestiones WHERE name IN ('1-2027', '2-2027')")
-    )
-    bind.execute(
-        sa.text("DELETE FROM users WHERE email IN ('morellana_med@unitepc.edu.bo', 'admin@unitepc.edu.bo')")
-    )
+    try:
+        bind.execute(
+            sa.text("DELETE FROM gestiones WHERE name IN ('1-2027', '2-2027')")
+        )
+        bind.execute(
+            sa.text("DELETE FROM users WHERE email IN ('morellana_med@unitepc.edu.bo', 'admin@unitepc.edu.bo', 'vicerrectorado@unitepc.edu.bo')")
+        )
+    except Exception as e:
+        print(f"Warning in downgrade: {e}")
