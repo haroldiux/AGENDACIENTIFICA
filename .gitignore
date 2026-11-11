@@ -33,6 +33,7 @@ celerybeat-schedule*
 # OS / editor
 .DS_Store
 Thumbs.db
+~$*
 .idea/
 .vscode/
 *.tsbuildinfo

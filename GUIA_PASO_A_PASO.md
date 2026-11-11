@@ -33,7 +33,7 @@
 
 ## 3. Guía Paso a Paso para Usar y Demostrar el Sistema
 
-Tenés una carpeta lista en tu proyecto llamada **`f:\AGENDA\material_demostracion\`** con 5 planillas Excel ya llenadas y 3 documentos PDF oficiales para hacer toda la demostración en vivo.
+Tenés una carpeta lista en tu proyecto llamada **`material_demostracion\`** (en `C:\PROYECTOS\AGENDA CIENTIFICA\material_demostracion\`) con las planillas Excel oficiales organizadas por cada **Rol Institucional**, además de documentos PDF de evidencia para hacer toda la demostración en vivo. Consulta también [`material_demostracion/GUIA_ROLES_Y_PLANTILLAS.md`](file:///c:/PROYECTOS/AGENDA%20CIENTIFICA/material_demostracion/GUIA_ROLES_Y_PLANTILLAS.md).
 
 ### PASO 1: Entrar y explorar los datos del Seeder + Modo Claro/Oscuro
 1. Abrí http://localhost:3005/login en tu navegador.
@@ -53,11 +53,11 @@ Ahora vamos a ver cómo una carrera carga su planificación semestral:
    - **Contraseña**: `unitepc123`
 3. En el menú izquierdo, entrá a **Importar (`/importar`)**.
 4. Arrastrá o seleccioná el archivo:
-   - `f:\AGENDA\material_demostracion\02_Planilla_Carrera_Ingenieria_de_Sistemas_2-2026.xlsx`
+   - `material_demostracion\03_Rol_JEFATURA_DE_INVESTIGACION_Sistemas_2-2026.xlsx`
 5. Hacé clic en **Subir y Procesar**:
-   - **Resultado 1**: Se registran las actividades académicas y científicas de **Ingeniería de Sistemas** para el semestre `2-2026`.
-   - **Resultado 2 (Detección de Choque)**: El sistema te avisa en pantalla que el *Hackathon UNITEPC (22/09/2026)* choca con el *Examen Parcial de Ingeniería de Software (21/09 al 23/09/2026)*.
-   - **Prueba de Seguridad por Rol**: Si intentás subir con este mismo usuario el archivo `03_Planilla_Carrera_Medicina_2-2026.xlsx`, el sistema te rechazará las filas porque el Jefe de Sistemas no tiene permiso para tocar la agenda de Medicina.
+   - **Resultado 1**: Se registran las actividades de investigación de **Ingeniería de Sistemas** para el semestre `2-2026` (Hackathon, Feria de IoT, Webinars).
+   - **Resultado 2 (Detección de Choque)**: Si ya se subió la planificación académica de Sistemas (`05_Rol_DIRECCION_DE_CARRERA_Sistemas_2-2026.xlsx`), el sistema te avisa en pantalla que el *Hackathon UNITEPC (22/09/2026)* choca con el *Examen Parcial de Ingeniería de Software (21/09 al 23/09/2026)*.
+   - **Prueba de Seguridad por Rol**: Si intentás subir con este mismo usuario la plantilla de Medicina (`04_Rol_DIRECCION_DE_CARRERA_Medicina_2-2026.xlsx`), el sistema te rechazará las filas porque el Jefe de Sistemas no tiene permiso para tocar la agenda de Medicina.
 
 ---
 
@@ -65,10 +65,10 @@ Ahora vamos a ver cómo una carrera carga su planificación semestral:
 1. Cerrá sesión y volvé a entrar como **Director Nacional de Investigación**:
    - **Correo**: `director_investigacion@unitepc.edu.bo`
    - **Contraseña**: `unitepc123`
-2. Entrá a **Importar (`/importar`)** y subí estos 3 archivos de `f:\AGENDA\material_demostracion\`:
-   - `01_Planilla_Direccion_Investigacion_Vicerrectorado_2-2026.xlsx` *(Actividades Globales del Vicerrectorado para todas las carreras)*
-   - `03_Planilla_Carrera_Medicina_2-2026.xlsx` *(Actividades de Medicina)*
-   - `04_Planilla_Carrera_Derecho_2-2026.xlsx` *(Actividades de Derecho)*
+2. Entrá a **Importar (`/importar`)** y subí las planillas globales y de seguimiento:
+   - `01_Rol_VICERRECTORADO_ACADEMICO_NACIONAL_2-2026.xlsx` *(Marco Académico Nacional para todas las carreras)*
+   - `02_Rol_DIRECCION_DE_INVESTIGACION_2-2026.xlsx` *(Congresos Nacionales y Seguimiento Semestral a las carreras)*
+   - `04_Rol_DIRECCION_DE_CARRERA_Medicina_2-2026.xlsx` *(Actividades Curriculares de Medicina)*
 
 ---
 
@@ -91,7 +91,7 @@ Ahora vamos a ver cómo una carrera carga su planificación semestral:
 3. En la columna **Estado**, hacé clic sobre el botón **`Programada ✎`** de la actividad:
    - Cambiá el estado a **`Completada (Requiere verificación)`**.
    - En el **Cuadro de Observaciones**, escribí: *"Actividad ejecutada al 100% con 18 equipos participantes según informe adjunto."*
-   - En **Adjuntar Evidencia**, seleccioná cualquiera de los 3 PDFs oficiales que están en `f:\AGENDA\material_demostracion\evidencias_ejemplo\`:
+   - En **Adjuntar Evidencia**, seleccioná cualquiera de los 3 PDFs oficiales que están en `material_demostracion\evidencias_ejemplo\`:
      - `Acta_Conformidad_Feria_Cientifica_UNITEPC_2026.pdf`
      - `Informe_Ejecucion_Hackathon_Sistemas_2026.pdf`
      - `Resolucion_Vicerrectorado_Agenda_Cientifica_2-2026.pdf`
