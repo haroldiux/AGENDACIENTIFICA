@@ -116,7 +116,10 @@ def test_test_channel_endpoint_email(client, db_session):
     assert data["target_destination"] == "testchan_email@unitepc.edu.bo"
 
 
-def test_test_channel_endpoint_whatsapp_custom_target(client, db_session):
+def test_test_channel_endpoint_whatsapp_custom_target(client, db_session, monkeypatch):
+    monkeypatch.setattr("app.api.v1.notifications.settings.WHATSAPP_API_TOKEN", "dummy-token")
+    monkeypatch.setattr("app.api.v1.notifications.settings.WHATSAPP_PHONE_ID", "dummy-phone-id")
+
     user = _make_test_user(user_id=105, email="testchan_wa@unitepc.edu.bo")
     db_session.add(user)
     db_session.commit()

@@ -228,8 +228,8 @@ def dispatch_weekly_notifications():
                     ):
                         delivered_channels.append("email")
 
-            # Fallback if no specific channel preference was set active
-            if not delivered_channels and not pref.telegram_enabled and not pref.whatsapp_enabled and not pref.email_enabled:
+            # Fallback if all attempted channels failed or no specific channel preference was set active
+            if not delivered_channels:
                 if user.email:
                     if send_email_message(
                         user.email,

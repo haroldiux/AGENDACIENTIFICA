@@ -94,7 +94,7 @@ def test_send_whatsapp_message_returns_true_on_success(monkeypatch):
     assert result is True
     mock_post.assert_called_once()
     call_args = mock_post.call_args
-    assert call_args.kwargs["json"]["to"] == "+59112345678"
+    assert call_args.kwargs["json"]["to"] == "59112345678"
     assert "test message" in call_args.kwargs["json"]["text"]["body"]
 
 
@@ -164,8 +164,13 @@ def test_email_service_render_templates():
     assert "Congreso de Biología" in digest_html
 
 
-def test_email_service_send_test_email():
-    with patch.object(email_service, "send_email", return_value=True) as mock_send:
+def test_email_service_send_test_email(monkeypatch):
+    monkeypatch.setattr("app.services.email_service.settings.SMTP_USER", "user@unitepc.edu.bo")
+    monkeypatch.setattr("app.services.email_service.settings.SMTP_PASSWORD", "secret123")
+    monkeypatch.setattr("app.services.email_service.settings.SMTP_HOST", "smtp.gmail.com")
+    monkeypatch.setattr("app.services.email_service.settings.SMTP_PORT", 587)
+
+    with patch.object(email_service, "send_email_detailed", return_value=(True, None)) as mock_send:
         res = email_service.send_test_email("admin@unitepc.edu.bo")
 
     assert res["success"] is True
