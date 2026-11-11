@@ -50,6 +50,8 @@ GESTIONES = [
     {"name": "2-2025", "start_date": date(2025, 7, 1), "end_date": date(2025, 12, 31)},
     {"name": "1-2026", "start_date": date(2026, 1, 1), "end_date": date(2026, 6, 30)},
     {"name": "2-2026", "start_date": date(2026, 7, 1), "end_date": date(2026, 12, 31)},
+    {"name": "1-2027", "start_date": date(2027, 1, 1), "end_date": date(2027, 6, 30)},
+    {"name": "2-2027", "start_date": date(2027, 7, 1), "end_date": date(2027, 12, 31)},
 ]
 
 CAREERS = [

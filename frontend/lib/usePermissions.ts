@@ -10,6 +10,11 @@ export const GLOBAL_ROLES: RoleEnum[] = [
   "director_investigacion",
 ];
 
+export const USER_ADMIN_ROLES: RoleEnum[] = [
+  "super_admin",
+  "admin",
+];
+
 export const CATEGORY_MANAGER_ROLES: RoleEnum[] = [
   "super_admin",
   "admin",
@@ -39,7 +44,7 @@ export function usePermissions() {
 
   const isGlobalRole = !!role && GLOBAL_ROLES.includes(role);
   const isReadOnly = !!role && READ_ONLY_ROLES.includes(role);
-  const canManageUsers = isGlobalRole;
+  const canManageUsers = !!role && USER_ADMIN_ROLES.includes(role);
   const canManageCategories = !!role && CATEGORY_MANAGER_ROLES.includes(role);
 
   const canManageActivity = (activity: { career_id?: number | null }) => {

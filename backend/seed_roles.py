@@ -38,6 +38,28 @@ def seed_roles():
                     print(f"Failed to create user {email}: {e}")
             else:
                 print(f"User already exists: {email}")
+        # Ensure official Director of Research Dra. María Lorena Orellana Aguilar
+        directora_email = "morellana_med@unitepc.edu.bo"
+        directora = db.query(User).filter(User.email == directora_email).first()
+        if not directora:
+            directora = User(
+                email=directora_email,
+                full_name="Dra. María Lorena Orellana Aguilar",
+                role=RoleEnum.director_investigacion,
+                hashed_password=password_hash,
+                is_active=True
+            )
+            db.add(directora)
+            try:
+                db.commit()
+                created_count += 1
+                print(f"Created official Director of Research: {directora_email}")
+            except Exception as e:
+                db.rollback()
+                print(f"Failed to create user {directora_email}: {e}")
+        else:
+            print(f"User already exists: {directora_email}")
+
         print(f"Total users created: {created_count}")
         
     except Exception as e:
