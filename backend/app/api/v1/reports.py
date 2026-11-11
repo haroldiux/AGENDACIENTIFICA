@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Query, status
 from fastapi.responses import FileResponse
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
@@ -10,8 +10,82 @@ from app.models.models import User
 from celery.result import AsyncResult
 from kombu.exceptions import OperationalError
 import os
+import shutil
 
 router = APIRouter()
+
+COVERS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "uploads", "covers"))
+os.makedirs(COVERS_DIR, exist_ok=True)
+
+
+def _cover_filename(career_id: Optional[int]) -> str:
+    return f"career_{career_id}.jpg" if career_id is not None else "default.jpg"
+
+
+@router.post("/cover-image")
+async def upload_cover_image(
+    career_id: Optional[int] = Query(None),
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_read_only_get),
+):
+    """Upload a custom cover image for reports (per career or institutional default)."""
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Formato no soportado. Suba una imagen JPG, PNG o WebP.")
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="La imagen excede el límite de 5 MB.")
+
+    dest_filename = _cover_filename(career_id)
+    dest_path = os.path.join(COVERS_DIR, dest_filename)
+
+    with open(dest_path, "wb") as f:
+        f.write(content)
+
+    return {
+        "status": "ok",
+        "career_id": career_id,
+        "filename": dest_filename,
+        "url": f"/api/v1/uploads/covers/{dest_filename}",
+    }
+
+
+@router.get("/cover-image")
+def get_cover_image_info(
+    career_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_read_only_get),
+):
+    """Check if a custom cover image is set and return its path/URL."""
+    dest_filename = _cover_filename(career_id)
+    dest_path = os.path.join(COVERS_DIR, dest_filename)
+    if os.path.exists(dest_path):
+        return {
+            "has_custom": True,
+            "career_id": career_id,
+            "url": f"/api/v1/uploads/covers/{dest_filename}",
+        }
+    return {
+        "has_custom": False,
+        "career_id": career_id,
+        "url": None,
+    }
+
+
+@router.delete("/cover-image")
+def delete_cover_image(
+    career_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_read_only_get),
+):
+    """Reset the cover image to default."""
+    dest_filename = _cover_filename(career_id)
+    dest_path = os.path.join(COVERS_DIR, dest_filename)
+    if os.path.exists(dest_path):
+        try:
+            os.remove(dest_path)
+        except OSError:
+            pass
+    return {"status": "ok", "message": "Portada restablecida a la predeterminada"}
 
 
 def _check_celery_broker() -> None:

@@ -1,276 +1,265 @@
 {% extends "base.html" %}
 
-{% block title %}Agenda de Investigación{% endblock %}
-{% block header_title %}{% endblock %}
+{% block title %}{{ report_title }}{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
-    .calendar-container {
-        font-family: 'Inter', sans-serif;
+    @page {
+        size: A4 portrait;
+        margin: 1.5cm 1.4cm 1.7cm 1.4cm;
+        @bottom-left {
+            content: "UNITEPC · {{ report_title }} · Gestión {{ gestion_name }}";
+            font-family: 'Inter', sans-serif;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
+        @bottom-right {
+            content: "Página " counter(page) " de " counter(pages);
+            font-family: 'Inter', sans-serif;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
     }
-    .header-banner {
-        display: flex;
-        align-items: center;
-        background-color: #009E96;
-        color: white;
-        padding: 30px;
-        margin-bottom: 40px;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .header-banner .year {
-        font-size: 65px;
-        font-weight: 900;
-        margin-right: 30px;
-        line-height: 1;
-        letter-spacing: -3px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-    .header-banner .slogan {
-        font-size: 22px;
-        font-weight: 600;
-        line-height: 1.3;
-    }
-    .header-banner .slogan span {
-        font-weight: 300; 
-        font-size: 16px; 
-        opacity: 0.9;
-        display: block;
-        margin-top: 5px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .header-banner .career-img {
-        margin-left: auto;
-        height: 120px;
-        width: 180px;
-        object-fit: cover;
-        border-radius: 12px;
-        border: 3px solid rgba(255,255,255,0.8);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    
-    .month-row-table {
+
+    body { font-size: 9pt; color: #0f172a; line-height: 1.35; }
+
+    /* Reset the generic table styles inherited from base.html */
+    .agenda table, .agenda th, .agenda td { border: none; padding: 0; background: none; }
+    .agenda tr:nth-child(even) { background: none; }
+    .agenda table { margin: 0; border-collapse: separate; }
+
+    /* ---------- Cover header ---------- */
+    .cover-box {
         width: 100%;
-        margin-bottom: 35px;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+        background-color: #009E96;
+        border-radius: 12px;
+        margin-bottom: 14px;
+        overflow: hidden;
+    }
+    .cover {
+        width: 100%;
         border-collapse: collapse;
     }
-    .month-row-table tr {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+    .cover td {
+        vertical-align: middle;
+        background-color: #009E96 !important;
     }
-    .month-row-table td {
-        vertical-align: top;
+    .cover .cover-text { padding: 18px 22px; color: #ffffff; }
+    .cover .eyebrow {
+        font-size: 8pt; font-weight: 700; letter-spacing: 1.5px;
+        text-transform: uppercase; color: #e0f2fe; margin-bottom: 4px;
     }
-    .month-content {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+    .cover .title {
+        font-size: 18pt; font-weight: 800; line-height: 1.15;
+        margin: 0 0 6px 0; color: #ffffff !important;
     }
-    .month-image {
-        width: 320px;
-        height: 220px;
-        object-fit: cover;
-        border-radius: 12px;
-        background-color: #f1f5f9;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+    .cover .subtitle { font-size: 10.5pt; font-weight: 500; color: #ffffff; }
+    .cover .gestion-chip {
+        display: inline-block; margin-top: 10px; padding: 3px 12px;
+        border-radius: 16px; background-color: #0d7a74 !important;
+        color: #ffffff; font-size: 8pt; font-weight: 700; letter-spacing: 0.5px;
     }
-    
-    .month-pill {
-        display: inline-block;
-        background-color: #009E96;
-        color: white;
-        padding: 8px 24px;
-        border-radius: 30px;
-        font-weight: 800;
-        font-size: 16px;
-        margin-bottom: 20px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        page-break-after: avoid !important;
-        break-after: avoid !important;
-    }
-    .month-row.reverse .month-pill {
-        background-color: #6B3392;
+    .cover .cover-img-cell { width: 170px; padding: 12px 16px 12px 0; text-align: right; }
+    .cover .cover-img {
+        width: 150px; height: 95px; object-fit: cover;
+        border-radius: 8px; border: 2px solid rgba(255,255,255,0.85);
     }
 
-    .activity-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+    /* ---------- Summary stats ---------- */
+    .stats { width: 100%; margin-bottom: 16px !important; border-spacing: 8px 0 !important; margin-left: -8px !important; width: calc(100% + 16px); }
+    .stat {
+        background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 10px;
+        padding: 9px 12px !important; width: 25%;
     }
-    
-    .activity-card {
-        display: table;
+    .stat .num { font-size: 15pt; font-weight: 800; color: #0f172a; line-height: 1; }
+    .stat .lbl { font-size: 7pt; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
+    .stat.sc .num { color: #6B3392; }
+    .stat.ac .num { color: #00877f; }
+
+    /* ---------- Month section ---------- */
+    .month { margin-bottom: 14px; }
+    .month-head {
         width: 100%;
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        overflow: hidden;
-        page-break-inside: avoid;
-        margin-bottom: 12px;
+        border-bottom: 2px solid #e2e8f0 !important;
+        margin-bottom: 8px !important;
+        break-after: avoid; page-break-after: avoid;
     }
-    
-    .activity-date-box {
-        display: table-cell;
-        vertical-align: middle;
-        background-color: #e2e8f0;
-        padding: 12px;
-        width: 90px;
-        text-align: center;
-        border-right: 1px solid #cbd5e1;
-    }
-    
-    .activity-date-box span {
-        font-size: 11px;
-        font-weight: 700;
-        color: #334155;
-        line-height: 1.2;
-    }
-    
-    .activity-details {
-        display: table-cell;
-        vertical-align: middle;
-        padding: 12px 16px;
-    }
-    
-    .activity-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 6px;
-        line-height: 1.3;
-    }
-    
-    .activity-meta {
-        font-size: 10px;
-        color: #64748b;
-        font-weight: 600;
+    .month-head td { vertical-align: bottom; padding-bottom: 6px !important; }
+    .month-pill {
+        display: inline-block; padding: 4px 14px; border-radius: 20px;
+        color: #ffffff; font-weight: 800; font-size: 9.5pt; letter-spacing: 1.5px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
-    
-    .no-activities {
-        font-size: 14px;
-        color: #94a3b8;
-        font-style: italic;
-        padding: 20px 0;
-        text-align: center;
-        background: #f8fafc;
-        border-radius: 8px;
-        border: 1px dashed #cbd5e1;
-    }
-    
-    .footer-logos {
-        margin-top: 60px;
-        padding-top: 25px;
-        border-top: 2px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        page-break-inside: avoid;
-    }
-    .footer-logos .brand {
-        font-weight: 900;
-        font-size: 28px;
-        color: #009E96;
-        letter-spacing: 1px;
-    }
-</style>
+    .month.teal .month-pill { background: #009E96; }
+    .month.purple .month-pill { background: #6B3392; }
+    .month-year { font-size: 9pt; font-weight: 600; color: #94a3b8; margin-left: 6px; }
+    .month-count { text-align: right; font-size: 8pt; font-weight: 600; color: #64748b; }
 
-<div class="calendar-container">
-    <div class="header-banner">
-        <div class="year">{{ year }}</div>
-        <div class="slogan">
-            {{ report_title }}
-            <span>
-                {% if career_name != "Todas las carreras" %}
-                    Carrera de {{ career_name }}
-                {% else %}
-                    Todas las Carreras
+    /* Two-column grid of activity cards; rows may break across pages, cards never split */
+    .grid { width: 100%; border-spacing: 0 7px !important; margin-top: -7px !important; }
+    .grid tr { break-inside: avoid; page-break-inside: avoid; }
+    .grid td.cell { width: 50%; vertical-align: top; }
+    .grid td.cell.left { padding-right: 5px !important; }
+    .grid td.cell.right { padding-left: 5px !important; }
+
+    .card {
+        width: 100%;
+        border-radius: 9px;
+        overflow: hidden;
+    }
+    .card.sc {
+        background-color: #fdfaff !important;
+        border: 1px solid #d8b4fe !important;
+        border-left: 5.5px solid #6B3392 !important;
+    }
+    .card.ac {
+        background-color: #f0fdf9 !important;
+        border: 1px solid #99f6e4 !important;
+        border-left: 5.5px solid #009E96 !important;
+    }
+    .card td { vertical-align: middle; }
+    .date-cell {
+        width: 52px; text-align: center; padding: 9px 4px !important;
+    }
+    .card.sc .date-cell {
+        background-color: #f3e8ff !important;
+        border-right: 1px solid #d8b4fe !important;
+    }
+    .card.ac .date-cell {
+        background-color: #ccfbf1 !important;
+        border-right: 1px solid #99f6e4 !important;
+    }
+    .date-main { font-size: 13.5pt; font-weight: 800; line-height: 1; }
+    .card.sc .date-main { color: #581c87; }
+    .card.ac .date-main { color: #0f766e; }
+    .date-main.small { font-size: 8.5pt; }
+    .date-sub { font-size: 6.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+    .card.sc .date-sub { color: #7e22ce; }
+    .card.ac .date-sub { color: #115e59; }
+
+    .info-cell { padding: 8px 10px !important; }
+    .act-title { font-size: 8.8pt; font-weight: 700; line-height: 1.25; }
+    .card.sc .act-title { color: #2e1065; }
+    .card.ac .act-title { color: #134e4a; }
+
+    .chips { margin-top: 5px; }
+    .chip {
+        display: inline-block; font-size: 6.5pt; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.4px; padding: 2px 7px; border-radius: 4px; margin-right: 4px;
+    }
+    .chip.type { background: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
+    .chip.sc { background: #6B3392; color: #ffffff; font-weight: 800; }
+    .chip.ac { background: #009E96; color: #ffffff; font-weight: 800; }
+    .chip.career { background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; }
+
+    .empty {
+        text-align: center; padding: 40px 20px; color: #64748b; font-style: italic;
+        border: 1px dashed #cbd5e1; border-radius: 12px; background: #f8fafc;
+    }
+
+    .legend {
+        margin-top: 14px; padding: 8px 12px; border-radius: 8px; background: #f8fafc;
+        border: 1px solid #e2e8f0; font-size: 7.8pt; color: #475569;
+    }
+    .legend-item { display: inline-block; margin-right: 16px; font-weight: 600; }
+    .legend-badge {
+        display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 6.5pt;
+        font-weight: 800; color: #ffffff; text-transform: uppercase; margin-right: 5px;
+    }
+    .legend-badge.sc { background: #6B3392; }
+    .legend-badge.ac { background: #009E96; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="agenda">
+    <!-- Cover -->
+    <div class="cover-box">
+        <table class="cover">
+            <tr>
+                <td class="cover-text">
+                    <div class="eyebrow">Universidad Técnica Privada Cosmopolita · UNITEPC</div>
+                    <div class="title">{{ report_title }}</div>
+                    <div class="subtitle">
+                        {% if career_name != "Todas las carreras" %}Carrera de {{ career_name }}{% else %}Todas las Carreras{% endif %}
+                    </div>
+                    <span class="gestion-chip">GESTIÓN {{ gestion_name }}</span>
+                </td>
+                {% if career_image %}
+                <td class="cover-img-cell">
+                    <img class="cover-img" src="{{ career_image }}" alt="">
+                </td>
                 {% endif %}
-            </span>
-        </div>
-        {% if career_image %}
-        <img class="career-img" src="{{ career_image }}" alt="Career Cover">
-        {% endif %}
+            </tr>
+        </table>
     </div>
 
-    {% for group in grouped_agenda %}
-    <table class="month-row-table">
+    <!-- Summary -->
+    <table class="stats">
         <tr>
-        {% if group.side == 'left' %}
-            <td style="padding-right: 25px;">
-                <div class="month-content">
-                    <div class="month-pill">{{ group.month_name }}</div>
-                    {% if group.activities %}
-                        <div class="activity-list">
-                        {% for act in group.activities %}
-                            <div class="activity-card">
-                                <div class="activity-date-box">
-                                    <span>{{ format_date_range(act.start_date, act.end_date) }}</span>
-                                </div>
-                                <div class="activity-details">
-                                    <div class="activity-title">{{ act.title }}</div>
-                                    <div class="activity-meta">{{ get_activity_label(act.activity_type) }}</div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="no-activities">Sin actividades programadas para este mes</div>
-                    {% endif %}
-                </div>
-            </td>
-            {% if career_image %}
-            <td style="width: 320px;">
-                <img class="month-image" src="{{ career_image }}" alt="Image">
-            </td>
-            {% endif %}
-        {% else %}
-            <!-- Reverse layout (Image left, Content right) -->
-            {% if career_image %}
-            <td style="width: 320px; padding-right: 25px;">
-                <img class="month-image" src="{{ career_image }}" alt="Image">
-            </td>
-            {% endif %}
-            <td>
-                <div class="month-content" style="text-align: right;">
-                    <div class="month-pill" style="background-color: #6B3392;">{{ group.month_name }}</div>
-                    {% if group.activities %}
-                        <div class="activity-list">
-                        {% for act in group.activities %}
-                            <div class="activity-card" style="text-align: right;">
-                                <div class="activity-details">
-                                    <div class="activity-title">{{ act.title }}</div>
-                                    <div class="activity-meta">{{ get_activity_label(act.activity_type) }}</div>
-                                </div>
-                                <div class="activity-date-box" style="border-right: none; border-left: 1px solid #cbd5e1;">
-                                    <span>{{ format_date_range(act.start_date, act.end_date) }}</span>
-                                </div>
-                            </div>
-                        {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="no-activities">Sin actividades programadas para este mes</div>
-                    {% endif %}
-                </div>
-            </td>
-        {% endif %}
+            <td class="stat"><div class="num">{{ stats.total }}</div><div class="lbl">Actividades</div></td>
+            <td class="stat sc"><div class="num">{{ stats.scientific }}</div><div class="lbl">Científicas</div></td>
+            <td class="stat ac"><div class="num">{{ stats.academic }}</div><div class="lbl">Académicas</div></td>
+            <td class="stat"><div class="num">{{ stats.months }}</div><div class="lbl">Meses con agenda</div></td>
         </tr>
     </table>
+
+    {% if not grouped_agenda %}
+        <div class="empty">No hay actividades registradas para los filtros seleccionados.</div>
+    {% endif %}
+
+    {% for group in grouped_agenda %}
+    <div class="month {{ 'teal' if loop.index0 % 2 == 0 else 'purple' }}">
+        <table class="month-head">
+            <tr>
+                <td>
+                    <span class="month-pill">{{ group.month_name }}</span>
+                    <span class="month-year">{{ group.year }}</span>
+                </td>
+                <td class="month-count">
+                    {{ group.activities|length }} actividad{{ 'es' if group.activities|length != 1 else '' }}
+                </td>
+            </tr>
+        </table>
+
+        <table class="grid">
+            {% for row in group.rows %}
+            <tr>
+                {% for act in row %}
+                <td class="cell {{ 'left' if loop.index0 == 0 else 'right' }}">
+                    {% if act %}
+                    <table class="card {{ 'sc' if act.is_scientific else 'ac' }}">
+                        <tr>
+                            <td class="date-cell">
+                                <div class="date-main {{ 'small' if act.date_small else '' }}">{{ act.date_main }}</div>
+                                <div class="date-sub">{{ act.date_sub }}</div>
+                            </td>
+                            <td class="info-cell">
+                                <div class="act-title">{{ act.title }}</div>
+                                <div class="chips">
+                                    <span class="chip {{ 'sc' if act.is_scientific else 'ac' }}">{{ 'Científica' if act.is_scientific else 'Académica' }}</span>
+                                    <span class="chip type">{{ act.type_label }}</span>
+                                    {% if act.career_label and career_name == "Todas las carreras" %}
+                                    <span class="chip career">{{ act.career_label }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
     {% endfor %}
-    
-    <div class="footer-logos">
-        <div class="brand">UNITEPC</div>
-        <div style="font-size: 12px; color: #64748b; text-align: right; font-weight: 500;">
-            Gestión {{ gestion_name }}<br>
-            Generado el {{ current_date }}
-        </div>
+
+    <div class="legend">
+        <strong>Referencias de Actividad:</strong> &nbsp;
+        <span class="legend-item"><span class="legend-badge sc">CIENTÍFICA</span> Agenda de Investigación / Vicerrectorado (Lila / Púrpura)</span>
+        <span class="legend-item"><span class="legend-badge ac">ACADÉMICA</span> Calendario Académico Semestral (Turquesa / Menta)</span>
+        <span style="float: right; color: #94a3b8; font-size: 7.2pt;">Documento Oficial UNITEPC · {{ current_date }}</span>
     </div>
 </div>
 {% endblock %}

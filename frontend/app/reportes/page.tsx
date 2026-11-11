@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Download, Eye, X, BarChart3, TrendingUp, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Download, Eye, X, BarChart3, TrendingUp, CheckCircle2, XCircle, Clock, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import PageHeader from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import CalendarCoverModal from '@/components/reportes/CalendarCoverModal';
 import {
   api,
   type Career,
@@ -37,6 +39,7 @@ export default function ReportesPage() {
   const [seguimientoData, setSeguimientoData] = useState<SeguimientoStatsResponse | null>(null);
   const [seguimientoOpen, setSeguimientoOpen] = useState(false);
   const [loadingSeguimiento, setLoadingSeguimiento] = useState(false);
+  const [isCoverModalOpen, setIsCoverModalOpen] = useState(false);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -148,7 +151,7 @@ export default function ReportesPage() {
           } else {
             timeoutRef.current = setTimeout(
               () => pollStatus(taskId, attempt + 1),
-              2000
+              800
             );
           }
         } catch (err) {
@@ -159,7 +162,7 @@ export default function ReportesPage() {
         }
       };
 
-      timeoutRef.current = setTimeout(() => pollStatus(task_id, 1), 2000);
+      timeoutRef.current = setTimeout(() => pollStatus(task_id, 1), 600);
     } catch (err) {
       setExporting(null);
       toast.error('Error iniciando la exportación del reporte');
@@ -215,6 +218,18 @@ export default function ReportesPage() {
       <PageHeader
         title="Generación de Reportes"
         description="Selecciona una carrera y una gestión, luego exporta el reporte que necesites."
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCoverModalOpen(true)}
+            className="gap-2 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10 shadow-sm"
+          >
+            <ImageIcon className="w-4 h-4" />
+            Personalizar Portada Calendario (PDF)
+          </Button>
+        }
       />
 
       {/* Shared career/gestión selectors */}
@@ -487,6 +502,14 @@ export default function ReportesPage() {
               <Download className="w-4 h-4" />
               {exporting === 'agenda-cientifica' ? 'Generando...' : 'Exportar Científica'}
             </button>
+            <button
+              type="button"
+              onClick={() => setIsCoverModalOpen(true)}
+              className="mt-1 pt-2 border-t border-border/60 text-xs text-primary hover:underline flex items-center justify-center gap-1.5 font-medium transition-colors"
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              Personalizar fotografía de portada
+            </button>
           </div>
         </div>
       </div>
@@ -654,6 +677,13 @@ export default function ReportesPage() {
           </div>
         </div>
       )}
+
+      <CalendarCoverModal
+        isOpen={isCoverModalOpen}
+        onClose={() => setIsCoverModalOpen(false)}
+        careers={careers}
+        selectedCareerId={careerId}
+      />
     </div>
   );
 }

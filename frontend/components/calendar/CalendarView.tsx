@@ -10,8 +10,9 @@ import {
 } from 'react-big-calendar';
 import moment from 'moment';
 import 'moment/locale/es';
+import { useTheme } from 'next-themes';
 import { type MergedCalendarItem } from '@/lib/api';
-import { getEventColor } from './CalendarLegend';
+import { getEventPalette } from './CalendarLegend';
 import { Card } from '@/components/ui/card';
 import CalendarEventDetailModal from './CalendarEventDetailModal';
 import CalendarStatusEvidenceModal from './CalendarStatusEvidenceModal';
@@ -83,12 +84,12 @@ const CalendarEventContent = ({ event }: { event: CalendarEvent }) => {
   return (
     <div className="flex items-center gap-1.5 overflow-hidden w-full px-0.5">
       <span
-        className={`w-2 h-2 rounded-full shrink-0 shadow-sm ${
+        className={`w-2 h-2 rounded-full shrink-0 ${
           item.scope === 'global' || item.career_id === null
-            ? 'bg-purple-300 ring-1 ring-purple-400'
+            ? 'bg-purple-500 ring-1 ring-purple-400/50'
             : item.source_type === 'scientific'
-            ? 'bg-pink-300 ring-1 ring-white/60'
-            : 'bg-emerald-300'
+            ? 'bg-pink-500 ring-1 ring-pink-400/50'
+            : 'bg-emerald-500 ring-1 ring-emerald-400/50'
         }`}
       />
       <span className="truncate font-semibold tracking-tight">{event.title}</span>
@@ -96,27 +97,58 @@ const CalendarEventContent = ({ event }: { event: CalendarEvent }) => {
   );
 };
 
-const eventPropGetter: EventPropGetter<CalendarEvent> = (event) => {
+const CalendarAgendaEventContent = ({ event }: { event: CalendarEvent }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const item = event.resource;
-  const color = getEventColor(item);
+  const palette = getEventPalette(item);
 
-  return {
-    style: {
-      backgroundColor: color,
-      color: '#ffffff',
-      borderRadius: '6px',
-      fontSize: '0.75rem',
-      fontWeight: 600,
-      boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
-      padding: '2px 4px',
-      margin: '1px 0',
-      border: '1px solid rgba(255,255,255,0.15)',
-    },
-    className: item.source_type === 'academic' ? 'rbc-event-academic' : 'rbc-event-scientific',
-  };
+  const badgeLabel =
+    item.source_type === 'scientific'
+      ? (item.activity_type || 'científica').replace('_', ' ')
+      : (item.category || 'académica').replace('_', ' ');
+
+  return (
+    <div
+      style={{
+        backgroundColor: isDark ? palette.darkBg : palette.lightBg,
+        color: isDark ? palette.darkText : palette.lightText,
+        borderColor: isDark ? palette.darkBorder : palette.lightBorder,
+        borderLeft: `4px solid ${palette.accent}`,
+      }}
+      className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all hover:opacity-95 cursor-pointer"
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span
+          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+            item.scope === 'global' || item.career_id === null
+              ? 'bg-purple-500'
+              : item.source_type === 'scientific'
+              ? 'bg-pink-500'
+              : 'bg-emerald-500'
+          }`}
+        />
+        <span className="font-semibold text-xs sm:text-sm truncate">{event.title}</span>
+      </div>
+
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span
+          style={{
+            borderColor: isDark ? palette.darkBorder : palette.lightBorder,
+          }}
+          className="text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md border bg-white/60 dark:bg-black/25"
+        >
+          {badgeLabel}
+        </span>
+      </div>
+    </div>
+  );
 };
 
 export default function CalendarView({ items, isLoading, onStatusChange }: CalendarViewProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
   const [view, setView] = useState<View>('month');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<MergedCalendarItem | null>(null);
@@ -154,9 +186,50 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
     setSelectedEvent(event.resource);
   }, []);
 
+  const eventPropGetter: EventPropGetter<CalendarEvent> = useCallback(
+    (event) => {
+      const item = event.resource;
+
+      // In Agenda view, react-big-calendar applies eventPropGetter.style onto the <tr> row.
+      // Return empty row style so table rows remain clean and CalendarAgendaEventContent renders the pastel card.
+      if (view === 'agenda') {
+        return {
+          style: {
+            backgroundColor: 'transparent',
+            border: 'none',
+            boxShadow: 'none',
+            padding: 0,
+          },
+          className: 'rbc-agenda-row-clean',
+        };
+      }
+
+      const palette = getEventPalette(item);
+
+      return {
+        style: {
+          backgroundColor: isDark ? palette.darkBg : palette.lightBg,
+          color: isDark ? palette.darkText : palette.lightText,
+          border: `1px solid ${isDark ? palette.darkBorder : palette.lightBorder}`,
+          borderLeft: `3.5px solid ${palette.accent}`,
+          borderRadius: '6px',
+          fontSize: '0.74rem',
+          fontWeight: 600,
+          boxShadow: isDark
+            ? '0 1px 2px rgba(0, 0, 0, 0.25)'
+            : '0 1px 2px rgba(15, 23, 42, 0.06)',
+          padding: '2px 5px',
+          margin: '1px 0',
+        },
+        className: item.source_type === 'academic' ? 'rbc-event-academic' : 'rbc-event-scientific',
+      };
+    },
+    [isDark, view]
+  );
+
   if (isLoading) {
     return (
-      <Card className="rounded-xl p-8 min-h-[500px] flex items-center justify-center border-border shadow-sm">
+      <Card className="rounded-xl p-8 min-h-[500px] flex items-center justify-center border-border shadow-sm bg-surface">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
           <span className="text-sm">Cargando calendario...</span>
@@ -183,6 +256,9 @@ export default function CalendarView({ items, isLoading, onStatusChange }: Calen
           onSelectEvent={handleSelectEvent}
           components={{
             event: CalendarEventContent,
+            agenda: {
+              event: CalendarAgendaEventContent,
+            },
           }}
           popup
           style={{ height: 650 }}

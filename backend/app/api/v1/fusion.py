@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import get_db
 from app.models.models import AcademicActivity, ScientificActivity
@@ -30,8 +30,8 @@ def get_fusion_calendar(
     end_date: Optional[date] = None,
     db: Session = Depends(get_db)
 ):
-    academic_query = db.query(AcademicActivity)
-    scientific_query = db.query(ScientificActivity)
+    academic_query = db.query(AcademicActivity).options(joinedload(AcademicActivity.career))
+    scientific_query = db.query(ScientificActivity).options(joinedload(ScientificActivity.career))
     
     if career_id is not None:
         academic_query = academic_query.filter(

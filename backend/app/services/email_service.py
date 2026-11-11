@@ -37,14 +37,31 @@ class EmailService:
         text_content: Optional[str] = None,
     ) -> bool:
         """Send an email using SMTP (TLS with Gmail defaults)."""
+        success, _ = self.send_email_detailed(to_email, subject, html_content, text_content)
+        return success
+
+    def send_email_detailed(
+        self,
+        to_email: str,
+        subject: str,
+        html_content: str,
+        text_content: Optional[str] = None,
+    ) -> tuple[bool, Optional[str]]:
+        """Send an email using SMTP and return (success, error_message)."""
         if not settings.SMTP_HOST or not settings.SMTP_PORT:
-            logger.warning("SMTP host or port configuration is missing.")
-            return False
+            err = "Falta configurar SMTP_HOST o SMTP_PORT."
+            logger.warning(err)
+            return False, err
+
+        if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+            err = "Credenciales SMTP faltantes. Se requiere SMTP_USER y SMTP_PASSWORD en el archivo .env"
+            logger.warning(err)
+            return False, err
 
         msg = EmailMessage()
         msg["Subject"] = subject
 
-        from_name = settings.EMAILS_FROM_NAME or "Agenda Cientifica UNITEPC"
+        from_name = settings.EMAILS_FROM_NAME or "Agenda Científica UNITEPC"
         from_addr = settings.EMAILS_FROM_EMAIL or settings.SMTP_USER or "noreply@unitepc.edu.bo"
         msg["From"] = f"{from_name} <{from_addr}>"
         msg["To"] = to_email
@@ -59,19 +76,36 @@ class EmailService:
             with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
                 if getattr(settings, "SMTP_TLS", True):
                     server.starttls()
-                if settings.SMTP_USER and settings.SMTP_PASSWORD:
-                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 server.send_message(msg)
             logger.info(f"Email sent successfully to {to_email}")
-            return True
+            return True, None
+        except smtplib.SMTPAuthenticationError as exc:
+            err = "Fallo de autenticación SMTP: Verifica tu correo y que uses una contraseña de aplicación de 16 caracteres de Google (no tu contraseña común)."
+            logger.error(f"Failed to send email to {to_email} (auth error): {exc}")
+            return False, err
         except Exception as exc:
+            err = f"Error al enviar email: {str(exc)}"
             logger.error(f"Failed to send email to {to_email}: {exc}")
-            return False
+            return False, err
 
     def send_test_email(self, recipient_email: str) -> dict:
-        """Render and send SMTP diagnostic test email."""
+        """Render and send SMTP diagnostic test email with detailed error reporting."""
         now = datetime.now()
         timestamp_str = now.strftime("%Y-%m-%d %H:%M:%S")
+
+        if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+            return {
+                "success": False,
+                "message": (
+                    "Credenciales SMTP no configuradas. Agrega SMTP_USER (tu cuenta Gmail) "
+                    "y SMTP_PASSWORD (contraseña de aplicación de 16 letras) en el archivo .env"
+                ),
+                "smtp_host": settings.SMTP_HOST or "smtp.gmail.com",
+                "smtp_port": settings.SMTP_PORT or 587,
+                "timestamp": now,
+            }
+
         context = {
             "recipient_email": recipient_email,
             "smtp_host": settings.SMTP_HOST or "smtp.gmail.com",
@@ -80,7 +114,7 @@ class EmailService:
         }
         try:
             html_content = self.render_template("email_test.html", context)
-            success = self.send_email(
+            success, err_msg = self.send_email_detailed(
                 to_email=recipient_email,
                 subject="Prueba de Configuración SMTP - Agenda Científica UNITEPC",
                 html_content=html_content,
@@ -89,10 +123,11 @@ class EmailService:
         except Exception as e:
             logger.error(f"Error rendering test email template: {e}")
             success = False
+            err_msg = str(e)
 
         return {
             "success": success,
-            "message": f"Test email sent to {recipient_email}" if success else "Failed to send test email",
+            "message": f"Correo de prueba enviado con éxito a {recipient_email}" if success else (err_msg or "Fallo al enviar correo de prueba"),
             "smtp_host": settings.SMTP_HOST or "smtp.gmail.com",
             "smtp_port": settings.SMTP_PORT or 587,
             "timestamp": now,

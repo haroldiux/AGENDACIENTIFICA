@@ -17,10 +17,10 @@ export const activityStatusLabels: Record<string, string> = {
 };
 
 export const activityStatusClasses: Record<string, string> = {
-  scheduled: 'bg-blue-500/20 text-blue-300',
-  in_progress: 'bg-amber-500/20 text-amber-300',
-  completed: 'bg-green-500/20 text-green-300',
-  cancelled: 'bg-red-500/20 text-red-300',
+  scheduled: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30',
+  in_progress: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30',
+  completed: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/30',
+  cancelled: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30',
 };
 
 function parseLocalDate(dateStr: string): Date {

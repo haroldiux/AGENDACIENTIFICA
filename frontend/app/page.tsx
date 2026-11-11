@@ -24,17 +24,17 @@ import CareerFacultyChart from '@/components/dashboard/CareerFacultyChart';
 import AuditFeedWidget from '@/components/dashboard/AuditFeedWidget';
 
 const statusColors: Record<string, string> = {
-  scheduled: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  in_progress: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  completed: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  cancelled: 'bg-red-500/15 text-red-300 border-red-500/30',
+  scheduled: 'bg-blue-50/90 text-blue-900 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30',
+  in_progress: 'bg-amber-50/90 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30',
+  completed: 'bg-emerald-50/90 text-emerald-900 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30',
+  cancelled: 'bg-rose-50/90 text-rose-900 border-rose-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30',
 };
 
 const statusDotColors: Record<string, string> = {
-  scheduled: 'bg-blue-400',
-  in_progress: 'bg-amber-400',
-  completed: 'bg-emerald-400',
-  cancelled: 'bg-red-400',
+  scheduled: 'bg-blue-600 dark:bg-blue-400',
+  in_progress: 'bg-amber-500 dark:bg-amber-400',
+  completed: 'bg-emerald-600 dark:bg-emerald-400',
+  cancelled: 'bg-rose-600 dark:bg-red-400',
 };
 
 const statusLabels: Record<string, string> = {
@@ -153,22 +153,22 @@ export default function Dashboard() {
       <Toaster position="top-right" />
 
       {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden bg-surface rounded-2xl border border-border shadow-[var(--shadow-glass)] p-6 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800/80 dark:to-slate-900 dark:border-white/8 dark:shadow-2xl">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-blue-500/20 blur-3xl opacity-40 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-violet-500/20 blur-3xl opacity-40 pointer-events-none" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50/90 via-surface to-violet-50/70 rounded-2xl border border-indigo-200/70 shadow-[var(--shadow-glass)] p-6 dark:from-slate-900 dark:via-slate-800/80 dark:to-slate-900 dark:border-white/10 dark:shadow-2xl">
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl opacity-60 pointer-events-none dark:bg-blue-500/20 dark:opacity-40" />
+        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-violet-500/10 blur-3xl opacity-60 pointer-events-none dark:bg-violet-500/20 dark:opacity-40" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white dark:text-white">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Bienvenido, {user?.full_name || 'Usuario'}
             </h1>
-            <p className="text-slate-400 mt-1">
+            <p className="text-slate-600 dark:text-slate-400 font-medium mt-1">
               Dashboard de Analítica Científica
             </p>
           </div>
           {active_gestion.name && (
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+              <span className="px-3.5 py-1.5 rounded-full bg-indigo-100/90 border border-indigo-300/80 text-indigo-800 text-sm font-semibold shadow-sm dark:bg-blue-500/15 dark:border-blue-500/30 dark:text-blue-300">
                 Gestión Activa: {active_gestion.name}
               </span>
             </div>
@@ -179,16 +179,16 @@ export default function Dashboard() {
       {user && !user.phone_number && !user.telegram_chat_id && (
         <Link
           href="/perfil"
-          className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200 hover:bg-amber-500/15 transition-colors"
+          className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-amber-950 hover:bg-amber-100/80 transition-colors shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
         >
-          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
           <div className="flex-1">
-            <p className="font-medium text-sm">Completá tus datos de contacto</p>
-            <p className="text-xs text-amber-200/80 mt-0.5">
+            <p className="font-semibold text-sm text-amber-950 dark:text-amber-100">Completá tus datos de contacto</p>
+            <p className="text-xs text-amber-800 dark:text-amber-200/80 mt-0.5">
               Agregá tu WhatsApp o Telegram para recibir resúmenes semanales de actividades.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-amber-300">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-300">
             <User className="w-4 h-4" />
             Ir a perfil
           </div>
@@ -259,30 +259,30 @@ export default function Dashboard() {
 
         <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] flex flex-col justify-between overflow-hidden dark:bg-surface/80 dark:backdrop-blur-sm dark:border-white/6">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between dark:border-white/5">
-            <h3 className="text-sm font-semibold tracking-wide text-slate-200">
+            <h3 className="text-sm font-semibold tracking-wide text-foreground">
               Próximos Eventos Científicos
             </h3>
             <Link
               href="/calendario"
-              className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+              className="text-xs text-primary hover:underline flex items-center gap-1 font-medium transition-colors"
             >
               Ver calendario completo <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {next_events.length === 0 ? (
-            <p className="text-slate-500 text-sm py-8 text-center">
+            <p className="text-muted-foreground text-sm py-8 text-center">
               No hay eventos científicos próximos.
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto px-5 pb-4">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wider">
-                    <th className="pb-3 font-medium">Fecha</th>
-                    <th className="pb-3 font-medium">Título</th>
-                    <th className="pb-3 font-medium">Tipo</th>
-                    <th className="pb-3 font-medium">Estado</th>
+                    <th className="py-3 font-medium">Fecha</th>
+                    <th className="py-3 font-medium">Título</th>
+                    <th className="py-3 font-medium">Tipo</th>
+                    <th className="py-3 font-medium">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -296,7 +296,7 @@ export default function Dashboard() {
                       </td>
                       <td className="py-3">
                         {event.activity_type && (
-                          <span className="bg-blue-500/15 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded text-[11px]">
+                          <span className="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded text-[11px] font-medium dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30">
                             {activityTypeLabels[event.activity_type] || event.activity_type}
                           </span>
                         )}
@@ -304,7 +304,7 @@ export default function Dashboard() {
                       <td className="py-3">
                         {event.status && (
                           <span
-                            className={`px-2 py-0.5 rounded text-[11px] border ${
+                            className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
                               statusColors[event.status] || ''
                             }`}
                           >
@@ -325,45 +325,45 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Link
           href="/actividades"
-          className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-6 hover:bg-slate-800/80 hover:border-blue-500/40 transition-all duration-200 group"
+          className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] p-6 hover:bg-muted/50 hover:border-primary/40 transition-all duration-200 group dark:border-white/10 dark:bg-slate-900/60 dark:backdrop-blur-sm dark:hover:bg-slate-800/80"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-violet-500/15 text-violet-400">
+              <div className="p-3 rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400">
                 <FlaskConical className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-semibold text-white group-hover:text-blue-300 transition-colors">
+                <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                   Gestionar Actividades Científicas
                 </h4>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Crear, editar, adjuntar evidencias y dar seguimiento a actividades.
                 </p>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
 
         <Link
           href="/importar"
-          className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-6 hover:bg-slate-800/80 hover:border-blue-500/40 transition-all duration-200 group"
+          className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] p-6 hover:bg-muted/50 hover:border-primary/40 transition-all duration-200 group dark:border-white/10 dark:bg-slate-900/60 dark:backdrop-blur-sm dark:hover:bg-slate-800/80"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-emerald-500/15 text-emerald-400">
+              <div className="p-3 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
                 <FileUp className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-semibold text-white group-hover:text-blue-300 transition-colors">
+                <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                   Importar Calendario Académico
                 </h4>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Cargar planillas Excel para fusionar actividades académicas en la agenda.
                 </p>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
         </Link>
       </div>

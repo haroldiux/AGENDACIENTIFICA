@@ -28,6 +28,7 @@ htmlcov/
 backend/reports/
 *.pdf
 *.db
+celerybeat-schedule*
 
 # OS / editor
 .DS_Store

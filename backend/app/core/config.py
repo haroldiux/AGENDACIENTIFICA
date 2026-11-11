@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: str = "Agenda Cientifica UNITEPC"
     EMAILS_FROM_EMAIL: str | None = None
 
+    @field_validator("SMTP_HOST", mode="before")
+    @classmethod
+    def _empty_smtp_host(cls, value):
+        if not value:
+            return "smtp.gmail.com"
+        return value
+
     @field_validator("SMTP_PORT", mode="before")
     @classmethod
     def _empty_smtp_port(cls, value):

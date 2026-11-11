@@ -3,8 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Reporte{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Local font files (no network round-trip on every PDF render) */
+        @font-face { font-family: 'Inter'; font-weight: 400; src: url('fonts/Inter-400.ttf'); }
+        @font-face { font-family: 'Inter'; font-weight: 500; src: url('fonts/Inter-500.ttf'); }
+        @font-face { font-family: 'Inter'; font-weight: 600; src: url('fonts/Inter-600.ttf'); }
+        @font-face { font-family: 'Inter'; font-weight: 700; src: url('fonts/Inter-700.ttf'); }
+        @font-face { font-family: 'Inter'; font-weight: 800; src: url('fonts/Inter-800.ttf'); }
+        @font-face { font-family: 'Inter'; font-weight: 900; src: url('fonts/Inter-800.ttf'); }
+
         @page {
             size: A4 portrait;
             margin: 2cm;
@@ -103,19 +110,23 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    {% if not hide_base_header %}
     <div class="header">
         <h1>{% block header_title %}UNITEPC - Agenda Científica{% endblock %}</h1>
         {% if subtitle %}
         <p>{{ subtitle }}</p>
         {% endif %}
     </div>
+    {% endif %}
 
     <div class="content">
         {% block content %}{% endblock %}
     </div>
 
+    {% if not hide_base_footer %}
     <div class="footer">
         <p>Generado el {{ current_date }} - Sistema Agenda UNITEPC</p>
     </div>
+    {% endif %}
 </body>
 </html>

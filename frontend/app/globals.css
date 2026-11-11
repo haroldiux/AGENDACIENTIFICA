@@ -6,39 +6,39 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 25% 97.5%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262.1 83.3% 57.8%;
+    --primary: 262.1 83.3% 52%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
+    --secondary: 214 32% 93%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 188.7 94.5% 42.7%;
+    --muted: 214 32% 94%;
+    --muted-foreground: 215 20% 36%;
+    --accent: 188.7 94.5% 38%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84.2% 55%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262.1 83.3% 57.8%;
+    --border: 214 28% 86%;
+    --input: 214 28% 84%;
+    --ring: 262.1 83.3% 52%;
     --radius: 0.5rem;
 
-    /* ── Semantic surface tokens (light) ── */
-    --surface:          220 14% 96%;   /* card/panel background */
-    --surface-raised:   220 14% 92%;   /* slightly elevated surface */
-    --surface-hover:    220 14% 88%;   /* hover state over surface */
-    --surface-inset:    220 14% 90%;   /* inner inset elements */
-    --surface-sidebar:  220 20% 97%;   /* sidebar background */
-    --divider:          214 32% 88%;   /* subtle separator */
-    --text-primary:     222 47% 10%;   /* strong labels, headings */
-    --text-secondary:   215 16% 40%;   /* captions, subtitles */
-    --text-tertiary:    215 10% 55%;   /* timestamps, hints */
-    --icon-muted:       215 10% 55%;   /* icon in secondary actions */
-    --shadow-glass: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    /* ── Semantic surface tokens (light: crisp white cards on soft slate-50 canvas) ── */
+    --surface:          0 0% 100%;     /* pure white card/panel background */
+    --surface-raised:   210 25% 98%;   /* slightly tinted elevated surface */
+    --surface-hover:    214 32% 94%;   /* hover state over surface */
+    --surface-inset:    214 32% 95%;   /* inner inset elements */
+    --surface-sidebar:  0 0% 100%;     /* crisp white sidebar background */
+    --divider:          214 28% 86%;   /* visible clean separator */
+    --text-primary:     222 47% 11%;   /* deep ink labels, headings */
+    --text-secondary:   215 22% 34%;   /* readable captions, subtitles */
+    --text-tertiary:    215 16% 46%;   /* timestamps, hints */
+    --icon-muted:       215 16% 46%;   /* icon in secondary actions */
+    --shadow-glass: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
   }
   .dark {
     --background: 222 47% 3%;
@@ -184,15 +184,19 @@
 }
 
 .rbc-event {
-  @apply rounded text-xs px-1 min-h-[20px] bg-primary text-primary-foreground;
+  @apply rounded-md text-xs px-1.5 py-0.5 min-h-[22px] transition-transform duration-150;
+}
+
+.rbc-event:hover {
+  filter: brightness(0.97);
+}
+
+.dark .rbc-event:hover {
+  filter: brightness(1.12);
 }
 
 .rbc-event-content {
-  line-height: 1.3;
-}
-
-.rbc-event-scientific {
-  font-style: italic;
+  line-height: 1.35;
 }
 
 .rbc-show-more {
@@ -204,19 +208,31 @@
 }
 
 .rbc-agenda-view table {
-  @apply border border-border rounded-lg overflow-hidden w-full;
+  @apply border border-border rounded-xl overflow-hidden w-full bg-surface;
 }
 
 .rbc-agenda-view table thead {
-  @apply bg-muted/60;
+  @apply bg-muted/70;
 }
 
 .rbc-agenda-view table th {
-  @apply text-muted-foreground text-sm font-semibold p-2 border-b border-border;
+  @apply text-muted-foreground text-xs font-bold uppercase tracking-wider p-3 border-b border-border;
+}
+
+.rbc-agenda-view table tbody tr {
+  @apply bg-surface hover:bg-muted/40 transition-colors;
 }
 
 .rbc-agenda-view table td {
-  @apply p-2 text-foreground text-sm border-b border-border;
+  @apply p-3 text-foreground text-sm border-b border-border align-middle;
+}
+
+.rbc-agenda-date-cell {
+  @apply font-semibold text-foreground whitespace-nowrap;
+}
+
+.rbc-agenda-time-cell {
+  @apply text-muted-foreground font-medium text-xs whitespace-nowrap;
 }
 
 .rbc-time-view {

@@ -1,5 +1,6 @@
 import os
 import uuid
+from typing import Optional, List, Dict, Any
 from collections import defaultdict
 from datetime import datetime
 
@@ -36,17 +37,43 @@ CAREER_IMAGES = {
 }
 DEFAULT_CAREER_IMAGE = "https://picsum.photos/seed/unitepc/800/500"
 
+_IMAGE_MEMORY_CACHE: dict = {}
+
+
 def fetch_image_as_base64(url: str) -> str:
+    """Return a data URI for the image, cached in memory and on disk.
+
+    Downloading the cover image on every render added ~1s of network latency
+    per PDF; the cache makes subsequent renders instant and works offline.
+    """
+    import hashlib
     import httpx
-    try:
-        with httpx.Client(follow_redirects=True, timeout=15.0) as client:
-            response = client.get(url, headers={'User-Agent': 'Mozilla/5.0'})
-            response.raise_for_status()
-            b64_data = base64.b64encode(response.content).decode('utf-8')
-            return f"data:image/jpeg;base64,{b64_data}"
-    except Exception as e:
-        print(f"Error fetching image {url}: {e}")
-        return ""
+
+    if url in _IMAGE_MEMORY_CACHE:
+        return _IMAGE_MEMORY_CACHE[url]
+
+    cache_dir = os.path.join(REPORTS_DIR, ".img_cache")
+    cache_file = os.path.join(cache_dir, hashlib.sha1(url.encode()).hexdigest() + ".jpg")
+    content = None
+    if os.path.exists(cache_file):
+        with open(cache_file, "rb") as fh:
+            content = fh.read()
+    else:
+        try:
+            with httpx.Client(follow_redirects=True, timeout=6.0) as client:
+                response = client.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+                response.raise_for_status()
+                content = response.content
+            os.makedirs(cache_dir, exist_ok=True)
+            with open(cache_file, "wb") as fh:
+                fh.write(content)
+        except Exception as e:
+            print(f"Error fetching image {url}: {e}")
+            return ""
+
+    data_uri = f"data:image/jpeg;base64,{base64.b64encode(content).decode('utf-8')}"
+    _IMAGE_MEMORY_CACHE[url] = data_uri
+    return data_uri
 
 
 REPORTS_DIR = os.getenv("REPORTS_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "reports")) if os.name == "nt" else "/app/reports")
@@ -59,6 +86,25 @@ except PermissionError:
 # Templates directory in the container (relative to this file)
 TEMPLATES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "templates"))
 jinja_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+
+_FONT_CONFIG = None
+
+
+def _write_pdf(html_out: str, filepath: str) -> None:
+    """Render HTML to PDF resolving relative assets (local fonts) from the templates dir.
+
+    A single FontConfiguration is reused across renders to avoid rebuilding
+    the font cache on every report.
+    """
+    global _FONT_CONFIG
+    HTML = _get_weasyprint_html()
+    try:
+        from weasyprint.text.fonts import FontConfiguration
+        if _FONT_CONFIG is None:
+            _FONT_CONFIG = FontConfiguration()
+        HTML(string=html_out, base_url=TEMPLATES_DIR).write_pdf(filepath, font_config=_FONT_CONFIG)
+    except ImportError:
+        HTML(string=html_out, base_url=TEMPLATES_DIR).write_pdf(filepath)
 
 SPANISH_MONTHS = {
     1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio",
@@ -159,7 +205,7 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id):
 
     template = jinja_env.get_template("conflict_report.html")
     html_out = template.render(**context)
-    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
+    _write_pdf(html_out, filepath)
 
 
 def build_conflict_excel(conflicts, career_id, gestion_id):
@@ -198,47 +244,117 @@ def build_conflict_excel(conflicts, career_id, gestion_id):
     return {"status": "completed", "file_path": filepath, "file_name": filename}
 
 
-def build_research_agenda_pdf(filepath, activities, career_name, gestion_name, report_title="Calendario Académico y Científico"):
-    # Determine the target year (default to current year if no activities)
-    target_year = activities[0].start_date.year if activities else datetime.now().year
+ACADEMIC_CATEGORY_LABELS = {
+    "inicio_fin": "Inicio / Fin",
+    "examen": "Examen",
+    "feriado": "Feriado",
+    "administrativo": "Administrativo",
+    "receso": "Receso",
+    "reunion": "Reunión",
+    "curso": "Curso",
+    "general": "General",
+}
 
-    grouped = defaultdict(list)
-    if activities:
-        for act in activities:
-            grouped[(act.start_date.year, act.start_date.month)].append(act)
+
+def _type_label(value, is_scientific):
+    v = _enum_value(value)
+    if v is None:
+        return "General"
+    if is_scientific:
+        return ACTIVITY_TYPE_LABELS.get(v, str(v).replace("_", " ").title())
+    key = str(v).strip().lower()
+    return ACADEMIC_CATEGORY_LABELS.get(key, str(v).replace("_", " ").title())
+
+
+def _date_badge(start_date, end_date):
+    """Compact date block for activity cards: (main, sub, is_small)."""
+    s_abbr = SPANISH_MONTH_ABBR[start_date.month].upper()
+    if start_date == end_date:
+        return str(start_date.day), s_abbr, False
+    if (start_date.year, start_date.month) == (end_date.year, end_date.month):
+        return f"{start_date.day}–{end_date.day}", s_abbr, False
+    e_abbr = SPANISH_MONTH_ABBR[end_date.month].upper()
+    return f"{start_date.day} {s_abbr}", f"al {end_date.day} {e_abbr}", True
+
+
+def _get_cover_base64(career_id: Optional[int] = None, career_name: str = "") -> str:
+    """Return data URI for the cover image, preferring user-uploaded custom covers."""
+    covers_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "covers"))
+    if career_id is not None:
+        career_path = os.path.join(covers_dir, f"career_{career_id}.jpg")
+        if os.path.exists(career_path):
+            with open(career_path, "rb") as fh:
+                return f"data:image/jpeg;base64,{base64.b64encode(fh.read()).decode('utf-8')}"
+
+    default_path = os.path.join(covers_dir, "default.jpg")
+    if os.path.exists(default_path):
+        with open(default_path, "rb") as fh:
+            return f"data:image/jpeg;base64,{base64.b64encode(fh.read()).decode('utf-8')}"
 
     career_image_url = CAREER_IMAGES.get(career_name, DEFAULT_CAREER_IMAGE)
-    base64_image = fetch_image_as_base64(career_image_url)
+    return fetch_image_as_base64(career_image_url)
 
+
+def build_research_agenda_pdf(
+    filepath, activities, career_name, gestion_name, report_title="Calendario Académico y Científico", career_id: Optional[int] = None
+):
+    grouped = defaultdict(list)
+    for act in activities or []:
+        grouped[(act.start_date.year, act.start_date.month)].append(act)
+
+    base64_image = _get_cover_base64(career_id, career_name)
+
+    # Only months that actually contain activities are rendered: empty month
+    # blocks produced blank, unbalanced pages in the previous layout.
     grouped_list = []
-    for month in range(1, 13):
-        year_month = (target_year, month)
-        acts = grouped.get(year_month, [])
-        # Only include months that have activities, or if you want all 12, keep it. 
-        # The user's image shows ONLY the months that have activities basically (Jul-Dec), 
-        # but 12 months is fine. We will sort them correctly.
-        if acts or month in (1, 2, 3, 4, 5, 6): # Include standard semester months
-            grouped_list.append({
-                "month_name": SPANISH_MONTHS[month].upper(),
-                "month_idx": month,
-                "activities": sorted(acts, key=lambda x: x.start_date),
-                "side": "left" if len(grouped_list) % 2 == 0 else "right" # Alternate based on visible rows
+    for (year, month) in sorted(grouped.keys()):
+        acts = sorted(grouped[(year, month)], key=lambda x: (x.start_date, x.title))
+        cards = []
+        for a in acts:
+            main, sub, small = _date_badge(a.start_date, a.end_date)
+            cards.append({
+                "title": a.title,
+                "is_scientific": a.is_scientific,
+                "type_label": _type_label(a.activity_type, a.is_scientific),
+                "career_label": getattr(a, "career_name", None),
+                "date_main": main,
+                "date_sub": sub,
+                "date_small": small,
             })
+        # Two-column grid rows; pad the last row so the table stays balanced.
+        rows = [cards[i:i + 2] for i in range(0, len(cards), 2)]
+        if rows and len(rows[-1]) == 1:
+            rows[-1].append(None)
+        grouped_list.append({
+            "month_name": SPANISH_MONTHS[month].upper(),
+            "year": year,
+            "activities": cards,
+            "rows": rows,
+        })
 
+    total = len(activities or [])
+    scientific = sum(1 for a in activities or [] if a.is_scientific)
     context = {
         **DEFAULT_CONTEXT,
+        "hide_base_header": True,
+        "hide_base_footer": True,
         "grouped_agenda": grouped_list,
-        "current_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "year": gestion_name,
+        "current_date": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "report_title": report_title,
         "career_name": career_name,
         "career_image": base64_image,
-        "gestion_name": gestion_name
+        "gestion_name": gestion_name,
+        "stats": {
+            "total": total,
+            "scientific": scientific,
+            "academic": total - scientific,
+            "months": len(grouped_list),
+        },
     }
 
     template = jinja_env.get_template("research_agenda.html")
     html_out = template.render(**context)
-    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
+    _write_pdf(html_out, filepath)
 
 
 def _build_table_report(filepath, career_id, gestion_id, db, status_filter=None):
@@ -279,7 +395,7 @@ def _build_table_report(filepath, career_id, gestion_id, db, status_filter=None)
 
     template = jinja_env.get_template("activity_report.html")
     html_out = template.render(**context)
-    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
+    _write_pdf(html_out, filepath)
 
 
 def build_seguimiento_data(db, career_id, gestion_id):
@@ -415,7 +531,7 @@ def build_seguimiento_pdf(filepath, career_id, gestion_id, db):
     }
     template = jinja_env.get_template("seguimiento_report.html")
     html_out = template.render(**context)
-    _get_weasyprint_html()(string=html_out).write_pdf(filepath)
+    _write_pdf(html_out, filepath)
 
 
 @celery_app.task
@@ -466,6 +582,8 @@ def generate_pdf_report_task(
                     query_ac = query_ac.filter(AcademicActivity.gestion_id == gestion_id)
                 activities_ac = query_ac.all()
             
+            career_names = {c.id: c.name for c in db.query(Career.id, Career.name).all()}
+
             class UnifiedActivity:
                 def __init__(self, obj, is_scientific=True):
                     self.title = obj.title
@@ -473,6 +591,7 @@ def generate_pdf_report_task(
                     self.end_date = obj.end_date
                     self.activity_type = obj.activity_type if is_scientific else obj.category
                     self.is_scientific = is_scientific
+                    self.career_name = career_names.get(obj.career_id) if obj.career_id else "Global"
 
             activities = [UnifiedActivity(a, True) for a in activities_sc] + [UnifiedActivity(a, False) for a in activities_ac]
             activities.sort(key=lambda x: x.start_date)
@@ -484,7 +603,9 @@ def generate_pdf_report_task(
             else:
                 r_title = "Calendario Académico y Científico"
 
-            build_research_agenda_pdf(filepath, activities, career_name, gestion_name, r_title)
+            build_research_agenda_pdf(
+                filepath, activities, career_name, gestion_name, r_title, career_id=career_id
+            )
         else:
             _build_table_report(filepath, career_id, gestion_id, db, status_filter)
 

@@ -34,6 +34,7 @@ export default function NotificationPreferencesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testingChannel, setTestingChannel] = useState<string | null>(null);
+  const [isSendingWeekly, setIsSendingWeekly] = useState(false);
 
   // Form State
   const [prefs, setPrefs] = useState<UserNotificationPreferenceUpdate>({
@@ -120,14 +121,30 @@ export default function NotificationPreferencesPage() {
       });
 
       if (res.success) {
-        toast.success(res.message);
+        toast.success(res.message, { duration: 5000 });
       } else {
-        toast.error(res.message);
+        toast.error(res.message, { duration: 7000 });
       }
     } catch {
       toast.error(`Error al enviar la prueba para el canal ${channel}.`);
     } finally {
       setTestingChannel(null);
+    }
+  };
+
+  const handleSendWeeklyDigestNow = async () => {
+    setIsSendingWeekly(true);
+    try {
+      const res = await api.notifications.sendWeeklyDigestNow();
+      if (res.success) {
+        toast.success(res.message, { duration: 6000 });
+      } else {
+        toast.error(res.message, { duration: 8000 });
+      }
+    } catch {
+      toast.error("Error al procesar el envío de la planificación semanal.");
+    } finally {
+      setIsSendingWeekly(false);
     }
   };
 
@@ -154,8 +171,52 @@ export default function NotificationPreferencesPage() {
 
       <PageHeader
         title="Centro de Preferencias de Notificaciones"
-        description="Gestiona tus canales de comunicación (Email, WhatsApp, Telegram), frecuencias de envío y destinos de contacto."
+        description="Gestiona tus canales de comunicación (Email, WhatsApp, Telegram), frecuencias de envío y planificación semanal."
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSendWeeklyDigestNow}
+            disabled={isSendingWeekly}
+            className="flex items-center gap-2 border-primary/30 text-primary hover:bg-primary/5 shadow-sm text-xs"
+          >
+            {isSendingWeekly ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            <span>Enviar Planificación Ahora</span>
+          </Button>
+        }
       />
+
+      {/* Banner Informativo sobre Planificación Multicanal */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary mt-0.5 sm:mt-0">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">
+              Planificación Semanal Multicanal Automatizada
+            </p>
+            <p className="text-muted-foreground mt-0.5">
+              El sistema despacha automáticamente cada <strong>domingo a las 20:00</strong> el resumen de actividades de la semana a <strong>todos los canales habilitados</strong> (Email y WhatsApp de forma simultánea).
+            </p>
+          </div>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={handleSendWeeklyDigestNow}
+          disabled={isSendingWeekly}
+          className="shrink-0 flex items-center gap-2 text-xs font-medium"
+        >
+          {isSendingWeekly ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+          Probar Envío Semanal
+        </Button>
+      </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Canales de Notificación */}
@@ -202,6 +263,9 @@ export default function NotificationPreferencesPage() {
                   placeholder={user?.email ? `Default: ${user.email}` : "correo@ejemplo.com"}
                   className="w-full p-2 bg-background border border-input rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:border-primary/50 dark:bg-slate-800/60 dark:border-white/10"
                 />
+                <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">
+                  Envío HTML con tablas y badges. Requiere contraseña de aplicación de 16 caracteres de Google en el archivo <code>.env</code>.
+                </p>
               </div>
 
               <Button
@@ -250,6 +314,9 @@ export default function NotificationPreferencesPage() {
                   placeholder={user?.phone_number ? `Default: ${user.phone_number}` : "+591 70000000"}
                   className="w-full p-2 bg-background border border-input rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:border-primary/50 dark:bg-slate-800/60 dark:border-white/10"
                 />
+                <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">
+                  Formato internacional (ej: <code>59170000000</code>). Requiere token y Phone ID de Meta Cloud API en el archivo <code>.env</code>.
+                </p>
               </div>
 
               <Button

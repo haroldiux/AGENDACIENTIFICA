@@ -1,4 +1,5 @@
 import httpx
+import re
 from datetime import datetime, timedelta, timezone
 from celery.utils.log import get_task_logger
 import smtplib
@@ -71,6 +72,11 @@ def send_whatsapp_message(phone_number: str, message: str) -> bool:
         logger.warning("WhatsApp API token or Phone ID not configured.")
         return False
 
+    clean_phone = re.sub(r"[^\d]", "", phone_number)
+    if not clean_phone:
+        logger.warning(f"Invalid WhatsApp phone number: {phone_number}")
+        return False
+
     url = f"https://graph.facebook.com/v17.0/{settings.WHATSAPP_PHONE_ID}/messages"
     headers = {
         "Authorization": f"Bearer {settings.WHATSAPP_API_TOKEN}",
@@ -78,7 +84,7 @@ def send_whatsapp_message(phone_number: str, message: str) -> bool:
     }
     payload = {
         "messaging_product": "whatsapp",
-        "to": phone_number,
+        "to": clean_phone,
         "type": "text",
         "text": {"body": message}
     }
@@ -86,10 +92,10 @@ def send_whatsapp_message(phone_number: str, message: str) -> bool:
     try:
         response = httpx.post(url, headers=headers, json=payload, timeout=10.0)
         response.raise_for_status()
-        logger.info(f"WhatsApp message sent to {phone_number}")
+        logger.info(f"WhatsApp message sent to {clean_phone}")
         return True
     except httpx.HTTPError as exc:
-        logger.error(f"Failed to send WhatsApp message to {phone_number}: {exc}")
+        logger.error(f"Failed to send WhatsApp message to {clean_phone}: {exc}")
         return False
 
 
@@ -192,39 +198,54 @@ def dispatch_weekly_notifications():
             if not message:
                 continue
 
-            delivered = False
-            channel = None
+            delivered_channels = []
 
             # 1. Telegram
-            if pref.telegram_enabled or (user.telegram_chat_id and not pref.email_enabled and not pref.whatsapp_enabled):
+            if pref.telegram_enabled:
                 telegram_target = (pref.custom_telegram_chat_id or user.telegram_chat_id or "").strip()
                 if telegram_target:
-                    delivered = send_telegram_message(telegram_target, message)
-                    channel = "telegram"
+                    if send_telegram_message(telegram_target, message):
+                        delivered_channels.append("telegram")
 
             # 2. WhatsApp
-            if not delivered and (pref.whatsapp_enabled or (user.phone_number and not pref.email_enabled)):
+            if pref.whatsapp_enabled:
                 whatsapp_target = (pref.custom_whatsapp or user.phone_number or "").strip()
                 if whatsapp_target:
-                    delivered = send_whatsapp_message(whatsapp_target, message)
-                    channel = "whatsapp"
+                    if send_whatsapp_message(whatsapp_target, message):
+                        delivered_channels.append("whatsapp")
 
             # 3. Email
-            if not delivered and (pref.email_enabled or user.email):
+            if pref.email_enabled:
                 email_target = (pref.custom_email or user.email or "").strip()
                 if email_target:
-                    delivered = send_email_message(
+                    if send_email_message(
                         email_target,
                         "Agenda Científica - Actividades de la Semana",
                         message,
                         user_name=user.full_name or "Usuario",
                         academic_activities=user_academic,
                         scientific_activities=user_scientific,
-                    )
-                    channel = "email"
+                    ):
+                        delivered_channels.append("email")
 
-            if delivered:
-                logger.info(f"Weekly summary delivered to {user.email} via {channel}")
+            # Fallback if no specific channel preference was set active
+            if not delivered_channels and not pref.telegram_enabled and not pref.whatsapp_enabled and not pref.email_enabled:
+                if user.email:
+                    if send_email_message(
+                        user.email,
+                        "Agenda Científica - Actividades de la Semana",
+                        message,
+                        user_name=user.full_name or "Usuario",
+                        academic_activities=user_academic,
+                        scientific_activities=user_scientific,
+                    ):
+                        delivered_channels.append("email")
+                elif user.phone_number:
+                    if send_whatsapp_message(user.phone_number, message):
+                        delivered_channels.append("whatsapp")
+
+            if delivered_channels:
+                logger.info(f"Weekly summary delivered to {user.email} via {', '.join(delivered_channels)}")
             else:
                 logger.warning(f"Could not deliver weekly summary to {user.email}: no channel configured or all channels failed")
 

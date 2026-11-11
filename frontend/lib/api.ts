@@ -561,6 +561,28 @@ export const api = {
           params: { gestion_id, career_id },
         })
         .then((res) => res.data),
+    getCover: (careerId?: number | null) =>
+      apiClient
+        .get<{ has_custom: boolean; career_id: number | null; url: string | null }>('/reports/cover-image', {
+          params: { career_id: careerId ?? undefined },
+        })
+        .then((res) => res.data),
+    uploadCover: (file: File, careerId?: number | null) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return apiClient
+        .post<{ status: string; url: string }>('/reports/cover-image', formData, {
+          params: { career_id: careerId ?? undefined },
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        .then((res) => res.data);
+    },
+    deleteCover: (careerId?: number | null) =>
+      apiClient
+        .delete<{ status: string; message: string }>('/reports/cover-image', {
+          params: { career_id: careerId ?? undefined },
+        })
+        .then((res) => res.data),
   },
   conflicts: {
     list: (filters: ConflictFilters) =>
@@ -598,6 +620,16 @@ export const api = {
     testChannel: (data: TestChannelRequest) =>
       apiClient
         .post<TestChannelResponse>('/notifications/test-channel', data)
+        .then((res) => res.data),
+    sendWeeklyDigestNow: () =>
+      apiClient
+        .post<{
+          success: boolean;
+          message: string;
+          delivered_channels: string[];
+          errors: string[];
+          activities_count: number;
+        }>('/notifications/send-weekly-digest-now')
         .then((res) => res.data),
   },
 };

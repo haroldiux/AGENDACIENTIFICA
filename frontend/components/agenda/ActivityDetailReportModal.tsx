@@ -35,6 +35,7 @@ import {
   type ScientificActivityEvidence,
   type ScientificActivityAudit,
 } from "@/lib/api";
+import { config as appConfig } from "@/lib/config";
 import {
   activityStatusClasses,
   activityStatusLabels,
@@ -346,7 +347,7 @@ export default function ActivityDetailReportModal({
                       </div>
                     </div>
                     <a
-                      href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}${ev.file_path}`}
+                      href={`${appConfig.apiUrl.replace(/\/$/, '')}/${ev.file_path.replace(/^\//, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="print-no-export inline-flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary px-2 py-0.5 rounded text-[11px] font-medium transition-colors"

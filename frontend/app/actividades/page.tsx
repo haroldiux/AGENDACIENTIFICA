@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Activity, FileText, Calendar } from "lucide-react";
+import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Activity, FileText, Calendar, Paperclip } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
 import StatusUpdateModal from "@/components/agenda/StatusUpdateModal";
@@ -383,7 +383,23 @@ export default function ActividadesPage() {
                 {visibleActivities.map((activity) => (
                   <TableRow key={activity.id} className="border-0 px-5 py-4 hover:bg-muted/50 transition-colors group dark:hover:bg-white/5">
                     <TableCell className="font-medium text-xs py-3.5 text-foreground truncate" title={activity.title}>
-                      {activity.title}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate">{activity.title}</span>
+                        {activity.evidences && activity.evidences.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReportModalActivity(activity);
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50 px-2 py-0.5 rounded-full shrink-0 font-semibold hover:bg-purple-200 transition-colors"
+                            title={`${activity.evidences.length} respaldo(s) adjunto(s). Haz clic para ver y descargar.`}
+                          >
+                            <Paperclip className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                            {activity.evidences.length} {activity.evidences.length === 1 ? 'respaldo' : 'respaldos'}
+                          </button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap py-3.5">
                       {formatDateRange(activity.start_date, activity.end_date)}
@@ -423,13 +439,13 @@ export default function ActividadesPage() {
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap py-3.5">
                       <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        {/* Ver Informe Individual */}
+                        {/* Ver Informe Individual y Respaldos */}
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => setReportModalActivity(activity)}
-                          title="Ver informe individual de la actividad"
-                          className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                          title="Ver ficha técnica, respaldos/evidencias e historial de auditoría"
+                          className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
                         >
                           <FileText className="w-4 h-4" />
                         </Button>

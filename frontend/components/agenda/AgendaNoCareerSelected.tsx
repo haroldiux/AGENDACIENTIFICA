@@ -7,8 +7,8 @@ export default function AgendaNoCareerSelected() {
         <GraduationCap className="w-8 h-8 text-primary" />
       </div>
       <div className="space-y-2 max-w-md">
-        <h3 className="text-xl font-semibold text-white">Seleccione una carrera</h3>
-        <p className="text-slate-400 leading-relaxed">
+        <h3 className="text-xl font-semibold text-foreground">Seleccione una carrera</h3>
+        <p className="text-muted-foreground leading-relaxed">
           Elija una carrera en el filtro superior para ver su agenda científica
           organizada por mes. También puede elegir una gestión para acotar los resultados.
         </p>

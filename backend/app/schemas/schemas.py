@@ -282,10 +282,17 @@ class ScientificActivityFilterParams(BaseModel):
 
 class UserMinResponse(BaseModel):
     id: int
-    username: str
+    email: Optional[str] = None
+    username: Optional[str] = None
     full_name: Optional[str] = None
     role: str
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def populate_username_fallback(self) -> 'UserMinResponse':
+        if not self.username:
+            self.username = self.full_name or self.email or f"usuario_{self.id}"
+        return self
 
 class ScientificActivityAuditResponse(BaseModel):
     id: int
