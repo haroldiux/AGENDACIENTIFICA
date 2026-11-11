@@ -31,6 +31,30 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: str = "Agenda Cientifica UNITEPC"
     EMAILS_FROM_EMAIL: str | None = None
 
+    BACKEND_CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1",
+        "https://agenda.unitepc.pro",
+        "http://agenda.unitepc.pro",
+    ]
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value):
+        if isinstance(value, str):
+            import json
+            try:
+                return json.loads(value)
+            except Exception:
+                return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
+
     @field_validator("SMTP_HOST", mode="before")
     @classmethod
     def _empty_smtp_host(cls, value):
