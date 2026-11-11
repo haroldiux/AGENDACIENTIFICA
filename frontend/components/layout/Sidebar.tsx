@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/context/AuthContext";
+import { usePermissions, ROLE_LABELS } from "@/lib/usePermissions";
 
 const BASE_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -36,27 +37,13 @@ const BASE_NAV_ITEMS = [
   { href: "/perfil", label: "Mi Perfil", icon: User },
 ];
 
-const CATEGORY_ALLOWED_ROLES = [
-  "vicerrectorado",
-  "admin",
-  "super_admin",
-  "director_investigacion",
-  "research",
-];
-
-const USER_ADMIN_ROLES = [
-  "vicerrectorado",
-  "admin",
-  "super_admin",
-  "director_investigacion",
-];
-
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user, logout } = useUser();
+  const { canManageCategories, canManageUsers, role } = usePermissions();
 
   useEffect(() => {
     setMounted(true);
@@ -65,9 +52,6 @@ export default function Sidebar() {
   if (pathname === "/login") {
     return null;
   }
-
-  const canManageCategories = user ? CATEGORY_ALLOWED_ROLES.includes(user.role) : false;
-  const canManageUsers = user ? USER_ADMIN_ROLES.includes(user.role) : false;
 
   const navItems = [
     BASE_NAV_ITEMS[0],
@@ -92,10 +76,15 @@ export default function Sidebar() {
     <motion.aside
       initial={false}
       animate={{ width: collapsed ? "80px" : "256px" }}
-      className="bg-slate-950/95 backdrop-blur-md text-card-foreground border-r border-white/5 md:sticky md:top-0 md:h-screen flex flex-col z-20 transition-all duration-300 md:border-b-0 border-b w-full md:w-auto shrink-0"
+      className={cn(
+        "border-r border-border md:sticky md:top-0 md:h-screen flex flex-col z-20",
+        "transition-all duration-300 md:border-b-0 border-b w-full md:w-auto shrink-0",
+        "bg-surface-sidebar text-foreground",
+        "dark:bg-slate-950/95 dark:backdrop-blur-md dark:border-white/5 dark:text-card-foreground"
+      )}
     >
+      {/* Header / Logo */}
       <div className={cn("p-4 flex items-center transition-all relative", collapsed ? "flex-col gap-3 px-2 py-3 justify-center" : "justify-between")}>
-        {/* Glow behind logo */}
         <div className="absolute top-4 left-4 w-12 h-12 bg-primary/20 blur-xl rounded-full pointer-events-none" />
         <Link href="/" className="flex items-center gap-3 overflow-hidden">
           <div className="w-10 h-10 shrink-0 rounded-xl bg-primary flex items-center justify-center shadow-md">
@@ -109,7 +98,7 @@ export default function Sidebar() {
                 exit={{ opacity: 0, width: 0 }}
                 className="whitespace-nowrap"
               >
-                <p className="font-bold tracking-tight leading-tight">UNITEPC</p>
+                <p className="font-bold tracking-tight leading-tight text-foreground">UNITEPC</p>
                 <p className="text-[11px] text-muted-foreground leading-tight">
                   Agenda Científica
                 </p>
@@ -127,7 +116,8 @@ export default function Sidebar() {
         </Button>
       </div>
 
-      <nav className="flex-1 flex flex-row md:flex-col gap-2 p-3 overflow-x-auto md:overflow-hidden">
+      {/* Navigation */}
+      <nav className="flex-1 flex flex-row md:flex-col gap-1 p-3 overflow-x-auto md:overflow-hidden">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
@@ -138,7 +128,7 @@ export default function Sidebar() {
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative",
                 active
                   ? "bg-primary/15 text-primary border-l-2 border-primary"
-                  : "text-slate-400 hover:text-slate-100 hover:bg-white/5"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:text-slate-100 dark:hover:bg-white/5"
               )}
             >
               <Icon className="w-5 h-5 shrink-0" />
@@ -159,6 +149,7 @@ export default function Sidebar() {
         })}
       </nav>
 
+      {/* Department label */}
       <div className="p-4 hidden md:block">
         <AnimatePresence>
           {!collapsed && (
@@ -166,12 +157,12 @@ export default function Sidebar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="p-3 rounded-xl bg-slate-900/40 border border-white/5 overflow-hidden"
+              className="p-3 rounded-xl bg-muted border border-border overflow-hidden"
             >
-              <p className="text-slate-600 uppercase text-[10px] tracking-widest font-bold leading-relaxed whitespace-nowrap mb-1">
+              <p className="text-muted-foreground/60 uppercase text-[10px] tracking-widest font-bold leading-relaxed whitespace-nowrap mb-1">
                 Depto. de Investigación Científica
               </p>
-              <p className="text-slate-400 text-xs">
+              <p className="text-muted-foreground text-xs">
                 Calendario académico
               </p>
             </motion.div>
@@ -181,18 +172,18 @@ export default function Sidebar() {
 
       {/* User Info Badge & Logout */}
       {user && (
-        <div className="p-3 border-t border-white/5 bg-slate-900/40 mt-auto hidden md:flex flex-col gap-2">
+        <div className="p-3 border-t border-border bg-muted/40 mt-auto hidden md:flex flex-col gap-2">
           <div className="flex items-center gap-2.5 px-1 py-1">
             <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
               {user.full_name ? user.full_name[0].toUpperCase() : user.email[0].toUpperCase()}
             </div>
             {!collapsed && (
               <div className="overflow-hidden min-w-0 flex-1">
-                <p className="font-semibold text-xs truncate" title={user.full_name || user.email}>
+                <p className="font-semibold text-xs truncate text-foreground" title={user.full_name || user.email}>
                   {user.full_name || user.email}
                 </p>
                 <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium capitalize truncate max-w-full">
-                  {user.role.replace(/_/g, " ")}
+                  {(role && ROLE_LABELS[role]) || user.role.replace(/_/g, " ")}
                 </span>
               </div>
             )}
@@ -214,8 +205,8 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Theme & Onboarding Guide Toggle */}
-      <div className={cn("p-3 border-t border-white/5 bg-slate-900/40 hidden md:flex flex-col gap-1 items-center justify-center", !user && "mt-auto")}>
+      {/* Theme & Onboarding Toggle */}
+      <div className={cn("p-3 border-t border-border bg-muted/40 hidden md:flex flex-col gap-1 items-center justify-center", !user && "mt-auto")}>
         <Button
           variant="ghost"
           size="sm"
@@ -232,7 +223,7 @@ export default function Sidebar() {
             variant="ghost"
             size="sm"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className={cn("w-full flex items-center gap-2 text-xs", collapsed ? "justify-center px-0" : "justify-start px-2.5")}
+            className={cn("w-full flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground", collapsed ? "justify-center px-0" : "justify-start px-2.5")}
           >
             {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
             {!collapsed && <span>{theme === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>}

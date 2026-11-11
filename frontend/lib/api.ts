@@ -236,6 +236,7 @@ export interface MergedCalendarItem {
   activity_type?: ScientificActivityType | null;
   status?: ScientificActivityStatus | null;
   responsible_name?: string | null;
+  notes?: string | null;
 }
 
 export interface MergedCalendarResponse {

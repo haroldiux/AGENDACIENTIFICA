@@ -19,12 +19,10 @@ import AgendaFilterBar from '@/components/agenda/AgendaFilterBar';
 import AgendaNoCareerSelected from '@/components/agenda/AgendaNoCareerSelected';
 import AgendaSkeleton from '@/components/agenda/AgendaSkeleton';
 import AgendaErrorState from '@/components/agenda/AgendaErrorState';
-import { useUser } from '@/context/AuthContext';
-const READ_ONLY_ROLES = ['read_only'];
+import { usePermissions, GLOBAL_ROLES } from '@/lib/usePermissions';
 
 export default function CalendarioPage() {
-  const { user } = useUser();
-  const isReadOnly = !!user && READ_ONLY_ROLES.includes(user.role);
+  const { user, isReadOnly } = usePermissions();
 
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
@@ -61,8 +59,7 @@ export default function CalendarioPage() {
         if (!cancelled) {
           // Filter careers based on user role
           let filteredCareers = careersData;
-          const globalRoles = ['vicerrectorado', 'director_investigacion', 'super_admin', 'admin'];
-          if (user && !globalRoles.includes(user.role)) {
+          if (user && !GLOBAL_ROLES.includes(user.role as any)) {
             const userCareerIds = user.careers.map((c) => c.id);
             if (userCareerIds.length > 0) {
               filteredCareers = careersData.filter((c) => userCareerIds.includes(c.id));
@@ -87,7 +84,7 @@ export default function CalendarioPage() {
           }
           
           // Default career for restricted users with single career
-          if (filteredCareers.length === 1 && user && !globalRoles.includes(user.role) && careerId === null) {
+          if (filteredCareers.length === 1 && user && !GLOBAL_ROLES.includes(user.role as any) && careerId === null) {
             setCareerId(filteredCareers[0].id);
           }
         }
@@ -265,7 +262,7 @@ export default function CalendarioPage() {
       />
 
       {/* Top bar with filters and actions */}
-      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+      <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-4 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between dark:bg-surface/80 dark:backdrop-blur-sm dark:border-white/6">
         <AgendaFilterBar
           careers={careers}
           gestiones={gestiones}
@@ -278,11 +275,11 @@ export default function CalendarioPage() {
 
         <div className="flex items-center gap-3 shrink-0">
           <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground mr-2">
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-medium dark:text-emerald-400">
               <BookOpen className="w-3.5 h-3.5" />
               {academicCount} académicas
             </span>
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-600 border border-purple-500/20 font-medium dark:text-purple-400">
               <FlaskConical className="w-3.5 h-3.5" />
               {scientificCount} científicas
             </span>
@@ -343,13 +340,13 @@ export default function CalendarioPage() {
       {/* Search + type filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar actividad por nombre..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:border-primary/50 text-slate-100 placeholder:text-slate-500"
+            className="w-full pl-10 pr-10 py-2 bg-surface border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:border-primary/50 text-foreground placeholder:text-muted-foreground dark:bg-slate-800/60 dark:border-white/10"
           />
           {searchQuery && (
             <button
@@ -360,7 +357,7 @@ export default function CalendarioPage() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-1 bg-slate-900/60 backdrop-blur-sm p-1 rounded-lg border border-white/6 shrink-0 shadow-lg">
+        <div className="flex items-center gap-1 bg-surface p-1 rounded-lg border border-border shrink-0 shadow-[var(--shadow-glass)] dark:bg-slate-900/60 dark:border-white/6">
           {[
             { id: 'all', label: 'Todas', icon: LayoutGrid },
             { id: 'academic', label: 'Académicas', icon: BookOpen },
@@ -371,8 +368,8 @@ export default function CalendarioPage() {
               onClick={() => setTypeFilter(id as any)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
                 typeFilter === id
-                  ? 'bg-slate-800/60 shadow text-slate-200 border border-white/10'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-muted shadow-sm text-foreground border border-border font-semibold dark:bg-slate-800/60 dark:border-white/10'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />

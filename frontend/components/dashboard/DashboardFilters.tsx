@@ -30,27 +30,27 @@ export default function DashboardFilters({
   disabled = false,
 }: DashboardFiltersProps) {
   return (
-    <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-4 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+    <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] p-4 flex flex-col md:flex-row gap-4 md:items-center justify-between dark:bg-slate-900/60 dark:border-white/6">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-          <Filter className="w-4 h-4 text-blue-400" />
+          <Filter className="w-4 h-4 text-blue-500 dark:text-blue-400" />
         </div>
-        <span className="text-sm font-semibold tracking-wide text-slate-200">Filtros de Análisis</span>
+        <span className="text-sm font-semibold tracking-wide text-foreground">Filtros de Análisis</span>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 flex-1 md:max-w-xl">
         {/* Gestion Filter */}
         <div className="flex-1 relative flex items-center">
-          <Calendar className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
-            <select
-              value={selectedGestionId ?? ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                onGestionChange(val ? Number(val) : null);
-              }}
-              disabled={disabled}
-              className="w-full bg-slate-800/60 text-slate-100 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-all disabled:opacity-50 appearance-none"
-            >
+          <Calendar className="w-4 h-4 text-muted-foreground absolute left-3 pointer-events-none" />
+          <select
+            value={selectedGestionId ?? ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              onGestionChange(val ? Number(val) : null);
+            }}
+            disabled={disabled}
+            className="w-full bg-background text-foreground border border-input rounded-xl pl-9 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all disabled:opacity-50 appearance-none dark:bg-slate-800/80 dark:border-white/10"
+          >
             <option value="">Todas las gestiones</option>
             {gestiones.map((g) => (
               <option key={g.id} value={g.id}>
@@ -62,16 +62,16 @@ export default function DashboardFilters({
 
         {/* Career Filter */}
         <div className="flex-1 relative flex items-center">
-          <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
-            <select
-              value={selectedCareerId ?? ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                onCareerChange(val ? Number(val) : null);
-              }}
-              disabled={disabled}
-              className="w-full bg-slate-800/60 text-slate-100 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-all disabled:opacity-50 appearance-none"
-            >
+          <GraduationCap className="w-4 h-4 text-muted-foreground absolute left-3 pointer-events-none" />
+          <select
+            value={selectedCareerId ?? ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              onCareerChange(val ? Number(val) : null);
+            }}
+            disabled={disabled}
+            className="w-full bg-background text-foreground border border-input rounded-xl pl-9 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all disabled:opacity-50 appearance-none dark:bg-slate-800/80 dark:border-white/10"
+          >
             <option value="">Todas las carreras</option>
             {careers.map((c) => (
               <option key={c.id} value={c.id}>

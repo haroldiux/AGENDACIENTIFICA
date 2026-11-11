@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, Activity, FileText, Calendar } from "lucide-react";
+import { Plus, Upload, Trash2, Pencil, Loader2, Search, X, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Activity, FileText, Calendar } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import ActivityModal from "./components/ActivityModal";
 import StatusUpdateModal from "@/components/agenda/StatusUpdateModal";
@@ -26,30 +26,14 @@ import {
   activityTypeLabels,
   formatDateRange,
 } from "@/components/agenda/agenda-helpers";
-import { useUser } from "@/context/AuthContext";
+import { usePermissions } from "@/lib/usePermissions";
 
 type SortKey = "nombre" | "fecha" | "tipo" | "carrera" | "estado";
 
-const GLOBAL_ROLES = ["super_admin", "admin", "vicerrectorado", "director_investigacion"];
-const READ_ONLY_ROLES = ["read_only"];
-
-function isReadOnlyUser(user: { role: string } | null): boolean {
-  return !!user && READ_ONLY_ROLES.includes(user.role);
-}
-
-function canManageActivity(
-  user: { role: string; careers: { id: number }[] } | null,
-  activity: ScientificActivity
-): boolean {
-  if (!user) return false;
-  if (isReadOnlyUser(user)) return false;
-  if (GLOBAL_ROLES.includes(user.role)) return true;
-  if (activity.career_id == null) return false;
-  return user.careers.some((c) => c.id === activity.career_id);
-}
+const PAGE_SIZE = 15;
 
 export default function ActividadesPage() {
-  const { user } = useUser();
+  const { user, isGlobalRole, isReadOnly, canManageActivity } = usePermissions();
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
@@ -66,6 +50,7 @@ export default function ActividadesPage() {
   const [reportModalActivity, setReportModalActivity] = useState<ScientificActivity | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   // Sort state — default: fecha ASC
   const [sortState, setSortState] = useState<{ col: SortKey; dir: "asc" | "desc" }>({
@@ -133,7 +118,7 @@ export default function ActividadesPage() {
     .filter((a) => {
       // 1. Role-based visibility filtering
       if (!user) return false;
-      if (GLOBAL_ROLES.includes(user.role) || isReadOnlyUser(user)) return true;
+      if (isGlobalRole || isReadOnly) return true;
       
       const userCareerIds = user.careers.map(c => c.id);
       const isGlobalActivity = a.career_id === null || a.career_id === undefined;
@@ -174,7 +159,12 @@ export default function ActividadesPage() {
       return sortState.dir === "asc" ? cmp : -cmp;
     });
 
-  const visibleActivities = sortedActivities;
+  const totalPages = Math.max(1, Math.ceil(sortedActivities.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const visibleActivities = sortedActivities.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   const openCreateModal = () => {
     setEditingActivity(null);
@@ -223,7 +213,7 @@ export default function ActividadesPage() {
         title="Actividades Científicas"
         description="Crea, edita y da seguimiento a las actividades de investigación por carrera y gestión."
         actions={
-          !isReadOnlyUser(user) ? (
+          !isReadOnly ? (
             <>
               <Button
                 variant="outline"
@@ -289,8 +279,8 @@ export default function ActividadesPage() {
             onGestionChange={setGestionId}
           />
         </div>
-        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg p-4 flex flex-col gap-1.5 md:w-56">
-          <label htmlFor="status-select" className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1 block">
+        <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] p-4 flex flex-col gap-1.5 md:w-56 dark:bg-slate-900/60 dark:border-white/6">
+          <label htmlFor="status-select" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">
             Estado
           </label>
           <select
@@ -299,7 +289,7 @@ export default function ActividadesPage() {
             onChange={(e) =>
               setStatusFilter(e.target.value as ScientificActivityStatus | "")
             }
-            className="w-full bg-slate-800/60 border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
+            className="w-full bg-background border border-input text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors dark:bg-slate-800/80 dark:border-white/10"
           >
             <option value="">Todos los estados</option>
             {Object.entries(activityStatusLabels).map(([value, label]) => (
@@ -313,13 +303,13 @@ export default function ActividadesPage() {
 
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
           placeholder="Buscar por título, responsable o tipo de actividad..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-10 py-2.5 bg-slate-900/60 border border-white/10 rounded-2xl text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-slate-100 placeholder:text-slate-500 backdrop-blur-sm shadow-sm"
+          className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border rounded-2xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground shadow-sm dark:bg-slate-900/60 dark:border-white/10"
         />
         {searchQuery && (
           <button
@@ -331,18 +321,18 @@ export default function ActividadesPage() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl overflow-hidden">
+      <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden dark:bg-slate-900/60 dark:border-white/6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-destructive text-sm">{error}</p>
             <Button
               variant="outline"
               onClick={loadActivities}
-              className="mt-4 border-white/10 text-slate-300"
+              className="mt-4"
             >
               Reintentar
             </Button>
@@ -353,49 +343,49 @@ export default function ActividadesPage() {
           </div>
         ) : (
           <div className="w-full overflow-hidden">
-            <Table className="w-full table-fixed divide-y divide-white/5">
+            <Table className="w-full table-fixed divide-y divide-border dark:divide-white/5">
               <TableHeader>
-                <TableRow className="border-b border-white/5 hover:bg-transparent">
+                <TableRow className="border-b border-border hover:bg-transparent dark:border-white/5">
                   <TableHead
-                    className="w-[28%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
+                    className="w-[28%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("nombre")}
                   >
                     Nombre <SortIcon col="nombre" />
                   </TableHead>
                   <TableHead
-                    className="w-[16%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
+                    className="w-[16%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("fecha")}
                   >
                     Fecha <SortIcon col="fecha" />
                   </TableHead>
                   <TableHead
-                    className="w-[13%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
+                    className="w-[13%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("tipo")}
                   >
                     Tipo <SortIcon col="tipo" />
                   </TableHead>
                   <TableHead
-                    className="w-[16%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
+                    className="w-[16%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("carrera")}
                   >
                     Carrera <SortIcon col="carrera" />
                   </TableHead>
                   <TableHead
-                    className="w-[13%] cursor-pointer select-none text-slate-400 hover:text-slate-200"
+                    className="w-[13%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("estado")}
                   >
                     Estado <SortIcon col="estado" />
                   </TableHead>
-                  <TableHead className="w-[14%] text-right text-slate-400">Acciones</TableHead>
+                  <TableHead className="w-[14%] text-right text-muted-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="divide-y divide-white/5">
+              <TableBody className="divide-y divide-border dark:divide-white/5">
                 {visibleActivities.map((activity) => (
-                  <TableRow key={activity.id} className="border-0 px-5 py-4 hover:bg-white/5 transition-colors group">
-                    <TableCell className="font-medium text-xs py-3.5 text-slate-200 truncate" title={activity.title}>
+                  <TableRow key={activity.id} className="border-0 px-5 py-4 hover:bg-muted/50 transition-colors group dark:hover:bg-white/5">
+                    <TableCell className="font-medium text-xs py-3.5 text-foreground truncate" title={activity.title}>
                       {activity.title}
                     </TableCell>
-                    <TableCell className="text-xs text-slate-400 whitespace-nowrap py-3.5">
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap py-3.5">
                       {formatDateRange(activity.start_date, activity.end_date)}
                     </TableCell>
                     <TableCell className="py-3.5">
@@ -404,11 +394,11 @@ export default function ActividadesPage() {
                           activity.activity_type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-400 truncate py-3.5" title={careerName(activity.career_id)}>
+                    <TableCell className="text-xs text-muted-foreground truncate py-3.5" title={careerName(activity.career_id)}>
                       {careerName(activity.career_id)}
                     </TableCell>
                     <TableCell className="py-3.5">
-                      {canManageActivity(user, activity) ? (
+                      {canManageActivity(activity) ? (
                         <button
                           type="button"
                           onClick={() => setStatusModalActivity(activity)}
@@ -444,7 +434,7 @@ export default function ActividadesPage() {
                           <FileText className="w-4 h-4" />
                         </Button>
 
-                        {canManageActivity(user, activity) && (
+                        {canManageActivity(activity) && (
                           <>
                             {/* Cambiar Estado */}
                             <Button
@@ -462,7 +452,7 @@ export default function ActividadesPage() {
                               size="icon"
                               onClick={() => openEditModal(activity)}
                               title="Editar actividad"
-                              className="h-8 w-8 text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/5"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
@@ -489,6 +479,39 @@ export default function ActividadesPage() {
                 ))}
               </TableBody>
             </Table>
+
+            {sortedActivities.length > PAGE_SIZE && (
+              <div className="flex items-center justify-between px-5 py-3.5 border-t border-border text-xs text-muted-foreground dark:border-white/5">
+                <span>
+                  Mostrando {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, sortedActivities.length)} de {sortedActivities.length} actividades
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="h-8 px-2.5 text-xs gap-1"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    Anterior
+                  </Button>
+                  <span className="font-medium text-foreground px-1">
+                    {safePage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="h-8 px-2.5 text-xs gap-1"
+                  >
+                    Siguiente
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

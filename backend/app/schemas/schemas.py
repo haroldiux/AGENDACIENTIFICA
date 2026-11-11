@@ -330,6 +330,7 @@ class MergedCalendarItem(BaseModel):
     activity_type: Optional[ScientificActivityType] = None
     status: Optional[ScientificActivityStatus] = None
     responsible_name: Optional[str] = None
+    notes: Optional[str] = None
 
 class MergedCalendarResponse(BaseModel):
     items: List[MergedCalendarItem]

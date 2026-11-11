@@ -26,19 +26,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api, type ActivityCategory } from "@/lib/api";
-import { useUser } from "@/context/AuthContext";
-
-const ALLOWED_ROLES = [
-  "vicerrectorado",
-  "admin",
-  "super_admin",
-  "director_investigacion",
-  "research",
-];
+import { usePermissions } from "@/lib/usePermissions";
 
 export default function CategoryManagementPage() {
-  const { user, isLoading: isAuthLoading } = useUser();
-  const canManage = user ? ALLOWED_ROLES.includes(user.role) : false;
+  const { isLoading: isAuthLoading, canManageCategories: canManage } = usePermissions();
 
   const [categories, setCategories] = useState<ActivityCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -246,13 +237,13 @@ export default function CategoryManagementPage() {
       {/* Filter and Control Bar */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar por nombre, código o descripción..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm focus:outline-none focus:ring-1 focus:border-primary/50 text-slate-100 placeholder:text-slate-500"
+            className="w-full pl-10 pr-10 py-2 bg-surface border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:border-primary/50 text-foreground placeholder:text-muted-foreground dark:bg-slate-800/60 dark:border-white/10"
           />
           {searchQuery && (
             <button
@@ -266,11 +257,11 @@ export default function CategoryManagementPage() {
 
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-slate-400">Ámbito:</label>
+            <label className="text-xs font-medium text-muted-foreground">Ámbito:</label>
             <select
               value={scopeFilter}
               onChange={(e) => setScopeFilter(e.target.value)}
-              className="bg-slate-800/60 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
+              className="bg-surface border border-border rounded-xl px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:border-primary/50 dark:bg-slate-800/60 dark:border-white/10"
             >
               <option value="">Todos los ámbitos</option>
               <option value="both">Ambos</option>
@@ -292,10 +283,10 @@ export default function CategoryManagementPage() {
       </div>
 
       {/* Categories Table */}
-      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden">
+      <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden dark:bg-slate-900/60 dark:border-white/10">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
           <div className="text-center py-12">
@@ -314,56 +305,56 @@ export default function CategoryManagementPage() {
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-800/40 border-b border-white/5 text-xs text-slate-500 uppercase tracking-wide">
+              <TableHeader className="bg-muted/50 border-b border-border text-xs text-muted-foreground uppercase tracking-wide dark:bg-slate-800/40 dark:border-white/5">
                 <TableRow className="border-b-0 hover:bg-transparent">
-                  <TableHead className="text-slate-500 w-[80px]">Color</TableHead>
-                  <TableHead className="text-slate-500">Nombre</TableHead>
-                  <TableHead className="text-slate-500">Código</TableHead>
-                  <TableHead className="text-slate-500">Ámbito</TableHead>
-                  <TableHead className="text-slate-500">Descripción</TableHead>
-                  <TableHead className="text-slate-500">Estado</TableHead>
-                  <TableHead className="text-slate-500 text-right">Acciones</TableHead>
+                  <TableHead className="text-muted-foreground w-[80px]">Color</TableHead>
+                  <TableHead className="text-muted-foreground">Nombre</TableHead>
+                  <TableHead className="text-muted-foreground">Código</TableHead>
+                  <TableHead className="text-muted-foreground">Ámbito</TableHead>
+                  <TableHead className="text-muted-foreground">Descripción</TableHead>
+                  <TableHead className="text-muted-foreground">Estado</TableHead>
+                  <TableHead className="text-muted-foreground text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visibleCategories.map((cat) => (
-                  <TableRow key={cat.id} className={`border-b border-white/4 hover:bg-white/3 transition-colors ${!cat.is_active ? "opacity-60 bg-slate-800/20" : ""}`}>
-                    <TableCell className="px-4 py-3 text-sm text-slate-300">
+                  <TableRow key={cat.id} className={`border-b border-border hover:bg-muted/40 transition-colors dark:border-white/5 dark:hover:bg-white/5 ${!cat.is_active ? "opacity-60 bg-muted/20 dark:bg-slate-800/20" : ""}`}>
+                    <TableCell className="px-4 py-3 text-sm text-foreground">
                       <div className="flex items-center gap-2">
                         <span
-                          className="w-5 h-5 rounded-lg border border-white/10 inline-block shadow-sm"
+                          className="w-5 h-5 rounded-lg border border-border inline-block shadow-sm dark:border-white/10"
                           style={{ backgroundColor: cat.color || "#3B82F6" }}
                           title={cat.color || "#3B82F6"}
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm font-semibold text-slate-200">{cat.name}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-slate-300">
+                    <TableCell className="px-4 py-3 text-sm font-semibold text-foreground">{cat.name}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-foreground">
                       <Badge variant="outline" className="font-mono text-xs">
                         {cat.code}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-slate-300">{getScopeBadge(cat.scope)}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-slate-400 max-w-xs truncate">
+                    <TableCell className="px-4 py-3 text-sm text-foreground">{getScopeBadge(cat.scope)}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
                       {cat.description || "—"}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-slate-300">
+                    <TableCell className="px-4 py-3 text-sm text-foreground">
                       {cat.is_active ? (
-                        <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                        <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
                           Activa
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-slate-500/10 text-slate-400 border-slate-500/20">
+                        <Badge variant="secondary" className="bg-muted text-muted-foreground border-border">
                           Inactiva
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-slate-300 text-right whitespace-nowrap">
+                    <TableCell className="px-4 py-3 text-sm text-foreground text-right whitespace-nowrap">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => openEditModal(cat)}
-                        className="text-slate-400 hover:text-slate-200 mr-1"
+                        className="text-muted-foreground hover:text-foreground mr-1"
                       >
                         <Pencil className="w-3.5 h-3.5 mr-1" />
                         Editar
@@ -398,15 +389,15 @@ export default function CategoryManagementPage() {
       {/* Category Create / Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="rounded-2xl border border-white/6 bg-slate-900/90 backdrop-blur-md shadow-2xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <div className="rounded-2xl border border-border bg-card text-card-foreground shadow-2xl p-6 w-full max-w-md dark:bg-slate-900/95 dark:border-white/10">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-foreground">
               <Tag className="w-5 h-5 text-primary" />
               {editingCategory ? "Editar Categoría" : "Nueva Categoría"}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   Nombre de Categoría *
                 </label>
                 <input
@@ -415,12 +406,12 @@ export default function CategoryManagementPage() {
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Ej: Simposio Internacional"
                   required
-                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
+                  className="w-full p-2 bg-background border border-input rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   Código Único *
                 </label>
                 <input
@@ -431,13 +422,13 @@ export default function CategoryManagementPage() {
                   }
                   placeholder="Ej: SIMPOSIO"
                   required
-                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm font-mono text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50 uppercase"
+                  className="w-full p-2 bg-background border border-input rounded-lg text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:border-primary/50 uppercase"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Ámbito</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Ámbito</label>
                   <select
                     value={formData.scope}
                     onChange={(e) =>
@@ -446,7 +437,7 @@ export default function CategoryManagementPage() {
                         scope: e.target.value as "academic" | "scientific" | "both",
                       }))
                     }
-                    className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-xl text-sm text-slate-200 focus:outline-none focus:ring-1 focus:border-primary/50"
+                    className="w-full p-2 bg-background border border-input rounded-xl text-sm text-foreground focus:outline-none focus:ring-1 focus:border-primary/50"
                   >
                     <option value="both">Ambos (Académico / Científico)</option>
                     <option value="academic">Académico</option>
@@ -455,7 +446,7 @@ export default function CategoryManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1 flex items-center gap-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
                     <Palette className="w-3.5 h-3.5 text-primary" />
                     Color Identificador
                   </label>
@@ -464,21 +455,21 @@ export default function CategoryManagementPage() {
                       type="color"
                       value={formData.color}
                       onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
-                      className="w-9 h-9 rounded cursor-pointer border border-white/10 bg-transparent p-0.5"
+                      className="w-9 h-9 rounded cursor-pointer border border-input bg-transparent p-0.5"
                     />
                     <input
                       type="text"
                       value={formData.color}
                       onChange={(e) => setFormData((prev) => ({ ...prev, color: e.target.value }))}
                       placeholder="#3B82F6"
-                      className="flex-1 p-2 bg-slate-800/60 border border-white/10 rounded-lg text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50"
+                      className="flex-1 p-2 bg-background border border-input rounded-lg text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:border-primary/50"
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   Descripción (Opcional)
                 </label>
                 <textarea
@@ -486,7 +477,7 @@ export default function CategoryManagementPage() {
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Detalles adicionales sobre los eventos clasificados bajo esta categoría..."
                   rows={3}
-                  className="w-full p-2 bg-slate-800/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-primary/50 resize-none"
+                  className="w-full p-2 bg-background border border-input rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:border-primary/50 resize-none"
                 />
               </div>
 

@@ -153,13 +153,13 @@ export default function Dashboard() {
       <Toaster position="top-right" />
 
       {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800/80 to-slate-900 rounded-2xl border border-white/8 shadow-2xl p-6">
+      <div className="relative overflow-hidden bg-surface rounded-2xl border border-border shadow-[var(--shadow-glass)] p-6 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800/80 dark:to-slate-900 dark:border-white/8 dark:shadow-2xl">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-blue-500/20 blur-3xl opacity-40 pointer-events-none" />
         <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-violet-500/20 blur-3xl opacity-40 pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-white dark:text-white">
               Bienvenido, {user?.full_name || 'Usuario'}
             </h1>
             <p className="text-slate-400 mt-1">
@@ -217,12 +217,12 @@ export default function Dashboard() {
           total={counts.total_scientific}
         />
 
-        <div className="lg:col-span-2 rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl p-0 flex flex-col justify-between">
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-            <h3 className="text-sm font-semibold tracking-wide text-slate-200">
+        <div className="lg:col-span-2 rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] p-0 flex flex-col justify-between dark:bg-surface/80 dark:backdrop-blur-sm dark:border-white/6">
+          <div className="px-5 py-4 border-b border-border flex items-center justify-between dark:border-white/5">
+            <h3 className="text-sm font-semibold tracking-wide text-foreground">
               Estado de Actividades Científicas
             </h3>
-            <span className="text-xs text-slate-500">Total: {counts.total_scientific}</span>
+            <span className="text-xs text-muted-foreground">Total: {counts.total_scientific}</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 my-auto">
@@ -239,7 +239,7 @@ export default function Dashboard() {
                     <span className={`w-2 h-2 rounded-full ${statusDotColors[stKey] || 'bg-slate-400'}`} />
                     <span className="text-xs font-medium">{statusLabels[stKey] || stKey}</span>
                   </div>
-                  <p className="text-3xl font-extrabold mt-2 text-white">{cnt}</p>
+                  <p className="text-3xl font-extrabold mt-2 text-foreground">{cnt}</p>
                 </div>
               );
             })}
@@ -257,8 +257,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AuditFeedWidget audits={recent_audits || []} />
 
-        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-xl flex flex-col justify-between overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] flex flex-col justify-between overflow-hidden dark:bg-surface/80 dark:backdrop-blur-sm dark:border-white/6">
+          <div className="px-5 py-4 border-b border-border flex items-center justify-between dark:border-white/5">
             <h3 className="text-sm font-semibold tracking-wide text-slate-200">
               Próximos Eventos Científicos
             </h3>
@@ -278,7 +278,7 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-border text-slate-400 text-xs uppercase tracking-wider">
+                  <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wider">
                     <th className="pb-3 font-medium">Fecha</th>
                     <th className="pb-3 font-medium">Título</th>
                     <th className="pb-3 font-medium">Tipo</th>
@@ -287,11 +287,11 @@ export default function Dashboard() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {next_events.map((event) => (
-                    <tr key={event.id} className="hover:bg-slate-900/40 transition-colors">
-                      <td className="py-3 text-xs font-mono whitespace-nowrap text-slate-300">
+                    <tr key={event.id} className="hover:bg-muted/40 transition-colors dark:hover:bg-slate-900/40">
+                      <td className="py-3 text-xs font-mono whitespace-nowrap text-foreground/80">
                         {formatShortDate(event.start_date)}
                       </td>
-                      <td className="py-3 font-medium text-xs text-white max-w-[160px] truncate">
+                      <td className="py-3 font-medium text-xs text-foreground max-w-[160px] truncate">
                         {event.title}
                       </td>
                       <td className="py-3">

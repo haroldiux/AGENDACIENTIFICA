@@ -91,7 +91,8 @@ def get_fusion_calendar(
                 career_name=act.career.name if act.career else None,
                 activity_type=act.activity_type,
                 status=act.status,
-                responsible_name=act.responsible_name
+                responsible_name=act.responsible_name,
+                notes=act.notes
             )
         )
         

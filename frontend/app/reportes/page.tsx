@@ -218,9 +218,9 @@ export default function ReportesPage() {
       />
 
       {/* Shared career/gestión selectors */}
-      <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-4 flex flex-col md:flex-row gap-4">
+      <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-4 flex flex-col md:flex-row gap-4 dark:bg-slate-900/60 dark:border-white/10">
         <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="report-career" className="text-xs text-slate-400 font-medium">
+          <label htmlFor="report-career" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             Carrera
           </label>
           <select
@@ -228,7 +228,7 @@ export default function ReportesPage() {
             value={careerId ?? ''}
             onChange={(e) => setCareerId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-slate-800/60 border border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50"
+            className="bg-background border border-input text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 dark:bg-slate-800/80 dark:border-white/10"
           >
             <option value="">Seleccione una carrera</option>
             {careers.map((career) => (
@@ -240,7 +240,7 @@ export default function ReportesPage() {
         </div>
 
         <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="report-gestion" className="text-xs text-slate-400 font-medium">
+          <label htmlFor="report-gestion" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             Gestión
           </label>
           <select
@@ -248,7 +248,7 @@ export default function ReportesPage() {
             value={gestionId ?? ''}
             onChange={(e) => setGestionId(e.target.value ? Number(e.target.value) : null)}
             disabled={selectorsDisabled}
-            className="bg-slate-800/60 border border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50"
+            className="bg-background border border-input text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 dark:bg-slate-800/80 dark:border-white/10"
           >
             <option value="">Seleccione una gestión</option>
             {gestiones.map((gestion) => (
@@ -260,7 +260,7 @@ export default function ReportesPage() {
         </div>
 
         <div className="flex flex-col gap-1 flex-1">
-          <label htmlFor="report-status" className="text-xs text-slate-400 font-medium">
+          <label htmlFor="report-status" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             Filtrar por Estado (Opcional)
           </label>
           <select
@@ -268,7 +268,7 @@ export default function ReportesPage() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             disabled={selectorsDisabled}
-            className="bg-slate-800/60 border border-white/10 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary/50 disabled:opacity-50"
+            className="bg-background border border-input text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 dark:bg-slate-800/80 dark:border-white/10"
           >
             <option value="">Todos los estados</option>
             <option value="scheduled">Programadas</option>
@@ -280,13 +280,13 @@ export default function ReportesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+        <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-6 flex flex-col gap-4 dark:bg-slate-900/60 dark:border-white/10">
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 flex items-center justify-center">
             <BarChart3 className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-medium text-lg">Seguimiento y Cumplimiento</h4>
-            <p className="text-sm text-slate-400 mt-1">
+            <h4 className="font-semibold text-lg text-foreground">Seguimiento y Cumplimiento</h4>
+            <p className="text-sm text-muted-foreground mt-1">
               Estadísticas de avance por carrera: Completadas, En Desarrollo, Canceladas y % de ejecución.
             </p>
           </div>
@@ -338,13 +338,13 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
+        <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-6 flex flex-col gap-4 dark:bg-slate-900/60 dark:border-white/10">
           <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-medium text-lg">Reporte de Conflictos</h4>
-            <p className="text-sm text-slate-400 mt-1">
+            <h4 className="font-semibold text-lg text-foreground">Reporte de Conflictos</h4>
+            <p className="text-sm text-muted-foreground mt-1">
               Lista de cruces detectados entre agenda académica y científica.
             </p>
           </div>
@@ -412,13 +412,13 @@ export default function ReportesPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
-          <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+        <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-6 flex flex-col gap-4 dark:bg-slate-900/60 dark:border-white/10">
+          <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-medium text-lg">Agenda Consolidada</h4>
-            <p className="text-sm text-slate-400 mt-1">
+            <h4 className="font-semibold text-lg text-foreground">Agenda Consolidada</h4>
+            <p className="text-sm text-muted-foreground mt-1">
               Exportación completa del calendario fusionado por carrera.
             </p>
           </div>
@@ -440,13 +440,13 @@ export default function ReportesPage() {
           </button>
         </div>
 
-        <div className="rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg overflow-hidden p-6 flex flex-col gap-4">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
+        <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-6 flex flex-col gap-4 dark:bg-slate-900/60 dark:border-white/10">
+          <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-medium text-lg">Agendas PDF (Visual)</h4>
-            <p className="text-sm text-slate-400 mt-1">
+            <h4 className="font-semibold text-lg text-foreground">Agendas PDF (Visual)</h4>
+            <p className="text-sm text-muted-foreground mt-1">
               Exporta las actividades en un calendario ilustrado listo para imprimir.
             </p>
           </div>
@@ -493,13 +493,13 @@ export default function ReportesPage() {
 
       {conflictsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="rounded-2xl border border-white/6 bg-slate-900/90 backdrop-blur-md shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <h3 className="font-medium text-lg">Conflictos detectados</h3>
+          <div className="rounded-2xl border border-border bg-card text-card-foreground shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col dark:bg-slate-900/95 dark:border-white/10">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/5">
+              <h3 className="font-semibold text-lg text-foreground">Conflictos detectados</h3>
               <button
                 type="button"
                 onClick={() => setConflictsOpen(false)}
-                className="p-1 rounded hover:bg-white/10"
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                 aria-label="Cerrar"
               >
                 <X className="w-5 h-5" />
@@ -507,33 +507,33 @@ export default function ReportesPage() {
             </div>
             <div className="p-4 overflow-auto">
               {loadingConflicts ? (
-                <p className="text-sm text-slate-400">Cargando conflictos...</p>
+                <p className="text-sm text-muted-foreground">Cargando conflictos...</p>
               ) : conflicts.length === 0 ? (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   No se encontraron conflictos para la carrera y gestión
                   seleccionadas.
                 </p>
               ) : (
-                <ul className="divide-y divide-white/5">
+                <ul className="divide-y divide-border dark:divide-white/5">
                   {conflicts.map((conflict) => (
                     <li
                       key={`${conflict.academic_id}-${conflict.scientific_id}`}
                       className="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
                     >
                       <div>
-                        <p className="font-medium text-slate-200">
+                        <p className="font-medium text-foreground">
                           {conflict.academic_title}
                         </p>
-                        <p className="text-slate-400 text-xs">
+                        <p className="text-muted-foreground text-xs">
                           Académica · {conflict.academic_start_date} al{' '}
                           {conflict.academic_end_date}
                         </p>
                       </div>
                       <div className="md:text-right">
-                        <p className="font-medium text-slate-200">
+                        <p className="font-medium text-foreground">
                           {conflict.scientific_title}
                         </p>
-                        <p className="text-slate-400 text-xs">
+                        <p className="text-muted-foreground text-xs">
                           Científica ·{' '}
                           {conflict.scientific_start_date} al{' '}
                           {conflict.scientific_end_date}
@@ -551,16 +551,16 @@ export default function ReportesPage() {
       {/* Seguimiento y Cumplimiento Metrics Modal */}
       {seguimientoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="rounded-2xl border border-white/6 bg-slate-900/90 backdrop-blur-md shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <div className="rounded-2xl border border-border bg-card text-card-foreground shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col dark:bg-slate-900/95 dark:border-white/10">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/5">
               <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-semibold text-lg">Métricas de Avance y Cumplimiento</h3>
+                <BarChart3 className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                <h3 className="font-semibold text-lg text-foreground">Métricas de Avance y Cumplimiento</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setSeguimientoOpen(false)}
-                className="p-1 rounded hover:bg-white/10"
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                 aria-label="Cerrar"
               >
                 <X className="w-5 h-5" />
@@ -569,54 +569,54 @@ export default function ReportesPage() {
 
             <div className="p-6 overflow-y-auto space-y-6">
               {loadingSeguimiento ? (
-                <p className="text-sm text-slate-400 text-center py-8">Cargando métricas de avance por carrera...</p>
+                <p className="text-sm text-muted-foreground text-center py-8">Cargando métricas de avance por carrera...</p>
               ) : !seguimientoData ? (
-                <p className="text-sm text-slate-400 text-center py-8">No se pudieron cargar los datos de avance.</p>
+                <p className="text-sm text-muted-foreground text-center py-8">No se pudieron cargar los datos de avance.</p>
               ) : (
                 <>
                   {/* Institutional Summary KPIs */}
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    <div className="bg-muted/30 border border-border p-3 rounded-lg text-center">
+                    <div className="bg-muted/50 border border-border p-3 rounded-lg text-center">
                       <div className="text-xl font-bold text-foreground">{seguimientoData.totals.total}</div>
                       <div className="text-xs text-muted-foreground font-medium uppercase mt-0.5">Total Actividades</div>
                     </div>
                     <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg text-center">
-                      <div className="text-xl font-bold text-blue-400">{seguimientoData.totals.in_progress}</div>
-                      <div className="text-xs text-blue-400/80 font-medium uppercase mt-0.5">En Desarrollo</div>
+                      <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{seguimientoData.totals.in_progress}</div>
+                      <div className="text-xs text-blue-600/80 dark:text-blue-400/80 font-medium uppercase mt-0.5">En Desarrollo</div>
                     </div>
                     <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg text-center">
-                      <div className="text-xl font-bold text-emerald-400">{seguimientoData.totals.completed}</div>
-                      <div className="text-xs text-emerald-400/80 font-medium uppercase mt-0.5">Completadas</div>
+                      <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{seguimientoData.totals.completed}</div>
+                      <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 font-medium uppercase mt-0.5">Completadas</div>
                     </div>
                     <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-center">
-                      <div className="text-xl font-bold text-rose-400">{seguimientoData.totals.cancelled}</div>
-                      <div className="text-xs text-rose-400/80 font-medium uppercase mt-0.5">Canceladas</div>
+                      <div className="text-xl font-bold text-rose-600 dark:text-rose-400">{seguimientoData.totals.cancelled}</div>
+                      <div className="text-xs text-rose-600/80 dark:text-rose-400/80 font-medium uppercase mt-0.5">Canceladas</div>
                     </div>
                     <div className="bg-purple-500/10 border border-purple-500/20 p-3 rounded-lg text-center col-span-2 sm:col-span-1">
-                      <div className="text-xl font-bold text-purple-400">{seguimientoData.totals.completion_rate}%</div>
-                      <div className="text-xs text-purple-400/80 font-medium uppercase mt-0.5">% Cumplimiento</div>
+                      <div className="text-xl font-bold text-purple-600 dark:text-purple-400">{seguimientoData.totals.completion_rate}%</div>
+                      <div className="text-xs text-purple-600/80 dark:text-purple-400/80 font-medium uppercase mt-0.5">% Cumplimiento</div>
                     </div>
                   </div>
 
                   {/* Careers Breakdown List */}
                   <div className="space-y-4">
                     <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <TrendingUp className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                       Avance por Carrera / Alcance
                     </h4>
 
                     <div className="space-y-3">
                       {seguimientoData.careers_summary.map((row) => (
-                        <div key={row.career_name} className="bg-muted/20 border border-border p-4 rounded-xl space-y-2">
+                        <div key={row.career_name} className="bg-muted/30 border border-border p-4 rounded-xl space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <span className="font-semibold text-sm text-foreground">{row.career_name}</span>
-                            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                               {row.completion_rate}% Completado
                             </span>
                           </div>
 
                           {/* Progress bar */}
-                          <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden flex">
+                          <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden flex">
                             <div
                               style={{ width: `${row.total > 0 ? (row.completed / row.total) * 100 : 0}%` }}
                               className="bg-emerald-500 h-full"
@@ -638,11 +638,11 @@ export default function ReportesPage() {
                           <div className="flex flex-wrap items-center justify-between text-xs text-muted-foreground pt-1">
                             <div className="flex items-center gap-4">
                               <span>Total: <strong className="text-foreground">{row.total}</strong></span>
-                              <span className="text-blue-400 font-medium">En Desarrollo: <strong>{row.in_progress}</strong></span>
-                              <span className="text-emerald-400 font-medium">Completadas: <strong>{row.completed}</strong></span>
-                              <span className="text-rose-400 font-medium">Canceladas: <strong>{row.cancelled}</strong></span>
+                              <span className="text-blue-600 dark:text-blue-400 font-medium">En Desarrollo: <strong>{row.in_progress}</strong></span>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Completadas: <strong>{row.completed}</strong></span>
+                              <span className="text-rose-600 dark:text-rose-400 font-medium">Canceladas: <strong>{row.cancelled}</strong></span>
                             </div>
-                            <span className="text-slate-400">Programadas: {row.scheduled}</span>
+                            <span className="text-muted-foreground">Programadas: {row.scheduled}</span>
                           </div>
                         </div>
                       ))}

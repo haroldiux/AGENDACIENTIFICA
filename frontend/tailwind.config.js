@@ -49,6 +49,18 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* ── Semantic surface tokens ── */
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          raised: "hsl(var(--surface-raised))",
+          hover: "hsl(var(--surface-hover))",
+          inset: "hsl(var(--surface-inset))",
+          sidebar: "hsl(var(--surface-sidebar))",
+        },
+        divider: "hsl(var(--divider))",
+        "text-primary": "hsl(var(--text-primary))",
+        "text-secondary": "hsl(var(--text-secondary))",
+        "text-tertiary": "hsl(var(--text-tertiary))",
       },
       borderRadius: {
         lg: "var(--radius)",

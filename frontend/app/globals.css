@@ -26,6 +26,19 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 262.1 83.3% 57.8%;
     --radius: 0.5rem;
+
+    /* ── Semantic surface tokens (light) ── */
+    --surface:          220 14% 96%;   /* card/panel background */
+    --surface-raised:   220 14% 92%;   /* slightly elevated surface */
+    --surface-hover:    220 14% 88%;   /* hover state over surface */
+    --surface-inset:    220 14% 90%;   /* inner inset elements */
+    --surface-sidebar:  220 20% 97%;   /* sidebar background */
+    --divider:          214 32% 88%;   /* subtle separator */
+    --text-primary:     222 47% 10%;   /* strong labels, headings */
+    --text-secondary:   215 16% 40%;   /* captions, subtitles */
+    --text-tertiary:    215 10% 55%;   /* timestamps, hints */
+    --icon-muted:       215 10% 55%;   /* icon in secondary actions */
+    --shadow-glass: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
   }
   .dark {
     --background: 222 47% 3%;
@@ -47,6 +60,19 @@
     --border: 217 32% 14%;
     --input: 217 32% 14%;
     --ring: 262.1 83.3% 57.8%;
+
+    /* ── Semantic surface tokens (dark) ── */
+    --surface:          222 47% 7%;    /* card/panel background */
+    --surface-raised:   222 40% 10%;   /* slightly elevated surface */
+    --surface-hover:    222 40% 12%;   /* hover state over surface */
+    --surface-inset:    222 47% 5%;    /* inner inset elements */
+    --surface-sidebar:  222 50% 4%;    /* sidebar background */
+    --divider:          217 32% 14%;   /* subtle separator */
+    --text-primary:     210 40% 96%;   /* strong labels, headings */
+    --text-secondary:   215 20% 65%;   /* captions, subtitles */
+    --text-tertiary:    215 15% 45%;   /* timestamps, hints */
+    --icon-muted:       215 15% 50%;   /* icon in secondary actions */
+    --shadow-glass: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
   }
 }
 
@@ -60,17 +86,39 @@
 }
 
 @layer components {
+  /* ── Glass surface — adapts to both themes ── */
   .glass-card {
-    @apply rounded-2xl border border-white/6 bg-slate-900/60 backdrop-blur-sm shadow-lg;
+    @apply rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)];
   }
   .glass-card-hero {
-    @apply rounded-2xl border border-white/8 bg-gradient-to-br from-slate-900 via-slate-800/80 to-slate-900 shadow-2xl;
+    @apply rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-raised shadow-xl;
+  }
+  /* Dark-only glassy effect that falls back gracefully */
+  .dark .glass-card {
+    @apply bg-surface/80 backdrop-blur-sm border-white/10;
+  }
+  .dark .glass-card-hero {
+    @apply from-slate-900 via-slate-800/80 to-slate-900 border-white/10 shadow-2xl;
   }
   .section-row {
     @apply px-5 py-4 flex items-center gap-4;
   }
   .icon-tile {
     @apply w-8 h-8 rounded-lg flex items-center justify-center shrink-0;
+  }
+
+  /* ── Panel / widget surface ── */
+  .panel {
+    @apply rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)];
+  }
+  .panel-header {
+    @apply px-5 py-4 border-b border-border flex items-center justify-between;
+  }
+  .dark .panel {
+    @apply bg-surface/80 backdrop-blur-sm border-white/10;
+  }
+  .dark .panel-header {
+    @apply border-white/10;
   }
 }
 
@@ -96,7 +144,7 @@
 }
 
 .rbc-header {
-  @apply bg-muted/50 border-b border-border text-muted-foreground text-xs font-semibold uppercase tracking-wide py-2;
+  @apply bg-muted/60 border-b border-border text-muted-foreground text-xs font-semibold uppercase tracking-wide py-2;
 }
 
 .rbc-month-view {
@@ -116,19 +164,19 @@
 }
 
 .rbc-off-range-bg {
-  @apply bg-muted/20;
+  @apply bg-muted/30;
 }
 
 .rbc-off-range {
-  @apply text-muted-foreground;
+  @apply text-muted-foreground/50;
 }
 
 .rbc-today {
-  @apply bg-primary/5;
+  @apply bg-primary/10;
 }
 
 .rbc-date-cell {
-  @apply text-sm text-foreground/80 p-1.5;
+  @apply text-sm text-foreground/70 p-1.5;
 }
 
 .rbc-date-cell.rbc-now {
@@ -156,11 +204,11 @@
 }
 
 .rbc-agenda-view table {
-  @apply border border-border rounded-lg overflow-hidden;
+  @apply border border-border rounded-lg overflow-hidden w-full;
 }
 
 .rbc-agenda-view table thead {
-  @apply bg-muted/50;
+  @apply bg-muted/60;
 }
 
 .rbc-agenda-view table th {
@@ -176,7 +224,7 @@
 }
 
 .rbc-time-header {
-  @apply bg-muted/50;
+  @apply bg-muted/60;
 }
 
 .rbc-time-header-content {
@@ -199,6 +247,7 @@
   border: none;
 }
 
+/* ── Toolbar ── */
 .rbc-toolbar {
   @apply flex flex-wrap gap-3 mb-4 items-center;
 }
@@ -212,18 +261,24 @@
 }
 
 .rbc-btn-group button {
-  @apply bg-background border border-input text-foreground px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground;
+  @apply bg-background border border-border text-foreground px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors hover:bg-muted;
 }
 
 .rbc-btn-group button.rbc-active {
-  @apply bg-accent text-accent-foreground;
+  @apply bg-primary text-primary-foreground border-primary;
 }
 
 /* Popup overlay */
 .rbc-overlay {
-  @apply bg-popover/95 backdrop-blur-md border border-border rounded-lg shadow-lg;
+  @apply bg-popover border border-border rounded-lg shadow-lg;
 }
 
 .rbc-overlay-header {
   @apply text-muted-foreground text-sm font-semibold border-b border-border py-2 px-3;
+}
+
+/* ── Light mode: row backgrounds in agenda/time views ── */
+.rbc-agenda-date-cell,
+.rbc-agenda-time-cell {
+  @apply text-muted-foreground;
 }
