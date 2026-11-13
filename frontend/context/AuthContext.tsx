@@ -11,6 +11,8 @@ export interface User {
   telegram_chat_id?: string | null;
   is_active: boolean;
   role: string;
+  sede_id?: number | null;
+  sede?: { id: number; name: string } | null;
   careers: { id: number; name: string }[];
 }
 

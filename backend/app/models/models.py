@@ -14,6 +14,8 @@ class RoleEnum(str, enum.Enum):
     vicerrectorado = "vicerrectorado"
     director_investigacion = "director_investigacion"
     jefe_investigacion = "jefe_investigacion"
+    vicerrector_sede = "vicerrector_sede"
+    director_academico_sede = "director_academico_sede"
 
 class User(Base):
     __tablename__ = "users"
@@ -26,7 +28,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     phone_number = Column(String, nullable=True)
     telegram_chat_id = Column(String, nullable=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True)
 
+    sede = relationship("Sede", backref="users")
     careers = relationship("Career", secondary="user_career", back_populates="users")
     notification_preference = relationship("UserNotificationPreference", uselist=False, back_populates="user", cascade="all, delete-orphan")
 
@@ -99,6 +103,7 @@ class AcademicActivity(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     career_id = Column(Integer, ForeignKey("careers.id"), nullable=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True)
     gestion_id = Column(Integer, ForeignKey("gestiones.id"))
     category_id = Column(Integer, ForeignKey("activity_categories.id"), nullable=True)
     title = Column(String, index=True, nullable=False)
@@ -108,8 +113,12 @@ class AcademicActivity(Base):
     end_time = Column(String, nullable=True)
     category = Column(String, nullable=False)
     origin_color = Column(String)
+    regimen = Column(String, default="semestral", nullable=True)
+    plan_estudio = Column(String, nullable=True)
+    pilar = Column(String, default="academica", nullable=True)
 
     career = relationship("Career", back_populates="academic_activities")
+    sede = relationship("Sede")
     gestion = relationship("Gestion", back_populates="academic_activities")
     activity_category = relationship("ActivityCategory")
 
@@ -132,6 +141,7 @@ class ScientificActivity(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     career_id = Column(Integer, ForeignKey("careers.id"), nullable=True)
+    sede_id = Column(Integer, ForeignKey("sedes.id"), nullable=True)
     gestion_id = Column(Integer, ForeignKey("gestiones.id"))
     category_id = Column(Integer, ForeignKey("activity_categories.id"), nullable=True)
     title = Column(String, index=True, nullable=False)
@@ -144,10 +154,14 @@ class ScientificActivity(Base):
     status = Column(Enum(ScientificActivityStatus), default=ScientificActivityStatus.scheduled, nullable=False)
     evidence_url = Column(String)
     notes = Column(Text)
+    regimen = Column(String, default="semestral", nullable=True)
+    plan_estudio = Column(String, nullable=True)
+    pilar = Column(String, default="investigacion", nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     career = relationship("Career", back_populates="scientific_activities")
+    sede = relationship("Sede")
     gestion = relationship("Gestion", back_populates="scientific_activities")
     evidences = relationship("ScientificActivityEvidence", back_populates="scientific_activity", cascade="all, delete-orphan")
     audits = relationship("ScientificActivityAudit", back_populates="scientific_activity", cascade="all, delete-orphan")

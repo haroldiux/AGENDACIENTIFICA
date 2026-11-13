@@ -47,27 +47,60 @@ def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-def check_activity_scope_permission(user: User, career_id: Optional[int]) -> None:
+def check_activity_scope_permission(
+    user: User,
+    career_id: Optional[int],
+    sede_id: Optional[int] = None,
+    pilar: Optional[str] = None
+) -> None:
     """
     Validates if the user has permission to manage (create/update/delete) an activity
-    with the specified career_id (None indicates global scope).
+    with the specified career_id, sede_id, and pilar.
     Raises HTTP 403 Forbidden if unauthorized.
     """
+    # 1. Enforce specialized pillar constraints:
+    if pilar:
+        pilar_norm = pilar.strip().lower()
+        if user.role == RoleEnum.director_academico_sede and pilar_norm != "academica":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="El rol Dirección Académica de Sede sólo puede gestionar actividades académicas",
+            )
+        if user.role == RoleEnum.jefe_investigacion and pilar_norm != "investigacion":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="El rol Jefatura de Investigación sólo puede gestionar actividades de investigación",
+            )
+
+    # 2. Global allowed roles (National / Super Admin)
     global_allowed_roles = {
         RoleEnum.super_admin,
         RoleEnum.admin,
         RoleEnum.vicerrectorado,
-        RoleEnum.director_investigacion,
         RoleEnum.research,
     }
+    if user.role in global_allowed_roles:
+        return
+
+    # 3. Sede-scoped roles: vicerrector_sede, director_academico_sede, director_investigacion (Cochabamba)
+    sede_scoped_roles = {
+        RoleEnum.vicerrector_sede,
+        RoleEnum.director_academico_sede,
+        RoleEnum.director_investigacion,
+    }
+    if user.role in sede_scoped_roles:
+        if user.sede_id is not None and sede_id is not None and user.sede_id != sede_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No está autorizado para gestionar actividades de otra sede",
+            )
+        return
+
+    # 4. Career-scoped roles: coordinator, jefe_investigacion
     career_scoped_roles = {
         RoleEnum.coordinator,
         RoleEnum.jefe_investigacion,
     }
-
-    if user.role in global_allowed_roles:
-        return
-
     if user.role in career_scoped_roles:
         if career_id is None:
             raise HTTPException(
@@ -90,7 +123,7 @@ def check_activity_scope_permission(user: User, career_id: Optional[int]) -> Non
 def check_category_manage_permission(user: User) -> None:
     """
     Validates if the user has permission to manage activity categories.
-    Allowed roles: vicerrectorado, admin, super_admin, director_investigacion.
+    Allowed roles: vicerrectorado, admin, super_admin, director_investigacion, vicerrector_sede.
     Raises HTTP 403 Forbidden if unauthorized.
     """
     allowed_roles = {
@@ -98,6 +131,7 @@ def check_category_manage_permission(user: User) -> None:
         RoleEnum.admin,
         RoleEnum.super_admin,
         RoleEnum.director_investigacion,
+        RoleEnum.vicerrector_sede,
         RoleEnum.research,
     }
     if user.role not in allowed_roles:

@@ -112,3 +112,40 @@ Esta carpeta contiene las **plantillas oficiales de importación** organizadas y
      > *"No tienes permisos para registrar actividades en la carrera 'Medicina'"*.
 6. **Vista en el Calendario (`/calendario`)**:
    * Filtrando por **Ingeniería de Sistemas**, el usuario ve fusionados los hitos de Vicerrectorado + Dirección de Investigación + Jefatura de Sistemas + Dirección de Sistemas en una única vista mensual armónica.
+
+---
+
+## 4. Actualización de Sedes, Pilares Institucionales y Pensum
+
+### 🏢 Las 8 Sedes Oficiales UNITEPC
+El sistema reconoce las 8 sedes oficiales:
+1. **Cochabamba** (Sede Central — cuenta con Dirección de Investigación exclusiva a cargo de la Dra. María Lorena Orellana)
+2. **La Paz**
+3. **El Alto**
+4. **Santa Cruz**
+5. **Cobija**
+6. **Guayaramerín**
+7. **Puerto Quijarro**
+8. **Ivirgarzama**
+
+### 🎯 Los 4 Pilares de Actividades
+Todas las actividades pueden categorizarse en uno de los 4 pilares:
+1. `academica` (Académica / Curricular)
+2. `investigacion` (Investigación Científica)
+3. `interaccion_social` (Interacción Social / Extensión)
+4. `internacionalizacion` (Internacionalización y Convenios)
+
+### 👥 Jerarquía de Roles Actualizada
+* **Vicerrector Académico Institucional (Nacional)**: Planifica y rige a nivel nacional sobre los 4 pilares.
+* **Vicerrector de Sede**: Planifica sobre su sede en los 4 pilares. En sedes sin Dirección de Investigación, absorbe la gestión científica de su sede.
+* **Dirección de Investigación (Cochabamba)**: Planifica y supervisa en los 4 pilares con enfoque transversal de investigación.
+* **Dirección Académica de Sede**: Estrictamente restringido al pilar **Académico** de su sede.
+* **Jefatura de Investigación por Carrera**: Estrictamente restringido al pilar **Investigación** de su carrera.
+* **Dirección de Carrera (Coordinación)**: Planifica sobre su carrera en los 4 pilares (Académica, Investigación, Interacción Social, Internacionalización).
+
+### 📑 Columnas Opcionales en Plantillas Excel
+Para segmentar actividades por sede, pensum y pilar, se pueden incluir las columnas opcionales:
+* `sede` o `id_sede`: Nombre o ID de la sede (ej. `Cochabamba`, `La Paz`).
+* `pilar`: `academica`, `investigacion`, `interaccion_social`, o `internacionalizacion`.
+* `regimen`: `semestral` o `anual`.
+* `plan_estudio` o `plan`: Código o nombre del pensum (ej. `Plan 2023`).

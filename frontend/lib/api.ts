@@ -43,7 +43,15 @@ export type RoleEnum =
   | 'vicerrectorado'
   | 'director_investigacion'
   | 'jefe_investigacion'
+  | 'vicerrector_sede'
+  | 'director_academico_sede'
   | 'read_only';
+
+// --- Sede ---
+export interface Sede {
+  id: number;
+  name: string;
+}
 
 // --- Career / Gestion ---
 
@@ -58,10 +66,17 @@ export interface AcademicActivity {
   title: string;
   start_date: string;
   end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
   category?: string | null;
   category_id?: number | null;
   origin_color?: string | null;
   career_id?: number | null;
+  sede_id?: number | null;
+  sede?: Sede | null;
+  regimen?: string | null;
+  plan_estudio?: string | null;
+  pilar?: string | null;
   gestion_id: number;
   activity_category?: ActivityCategory | null;
 }
@@ -123,6 +138,11 @@ export interface ScientificActivity {
   responsible_name: string;
   notes?: string | null;
   career_id?: number | null;
+  sede_id?: number | null;
+  sede?: Sede | null;
+  regimen?: string | null;
+  plan_estudio?: string | null;
+  pilar?: string | null;
   gestion_id: number;
   status: ScientificActivityStatus;
   evidence_url?: string | null;
@@ -137,6 +157,10 @@ export interface ScientificActivity {
 export interface ScientificActivityFilters {
   career_id?: number;
   gestion_id?: number;
+  sede_id?: number;
+  regimen?: string;
+  plan_estudio?: string;
+  pilar?: string;
   start_date?: string;
   end_date?: string;
 }
@@ -228,9 +252,14 @@ export interface MergedCalendarItem {
   start_time?: string | null;
   end_time?: string | null;
   source_type: SourceType;
-  scope: 'global' | 'career';
+  scope: 'global' | 'sede' | 'career';
   career_id?: number | null;
   career_name?: string | null;
+  sede_id?: number | null;
+  sede_name?: string | null;
+  regimen?: string | null;
+  plan_estudio?: string | null;
+  pilar?: string | null;
   category?: string | null;
   origin_color?: string | null;
   activity_type?: ScientificActivityType | null;
@@ -246,6 +275,10 @@ export interface MergedCalendarResponse {
 export interface MergedCalendarFilters {
   career_id?: number;
   gestion_id?: number;
+  sede_id?: number;
+  regimen?: string;
+  plan_estudio?: string;
+  pilar?: string;
   start_date?: string;
   end_date?: string;
 }
@@ -378,6 +411,7 @@ export interface UserAdminUpdate {
   phone_number?: string | null;
   telegram_chat_id?: string | null;
   role?: RoleEnum | null;
+  sede_id?: number | null;
   is_active?: boolean | null;
   career_ids?: number[] | null;
   password?: string | null;
@@ -390,6 +424,7 @@ export interface UserCreateData {
   phone_number?: string | null;
   telegram_chat_id?: string | null;
   role: RoleEnum;
+  sede_id?: number | null;
   career_ids?: number[];
 }
 
@@ -400,6 +435,8 @@ export interface UserResponseItem {
   phone_number?: string | null;
   telegram_chat_id?: string | null;
   role: RoleEnum;
+  sede_id?: number | null;
+  sede?: Sede | null;
   is_active: boolean;
   careers: Career[];
 }
@@ -496,6 +533,9 @@ export const api = {
   },
   careers: {
     list: () => apiClient.get<Career[]>('/careers/').then((res) => res.data),
+  },
+  sedes: {
+    list: () => apiClient.get<Sede[]>('/sedes/').then((res) => res.data),
   },
   gestiones: {
     list: () => apiClient.get<Gestion[]>('/gestiones/').then((res) => res.data),

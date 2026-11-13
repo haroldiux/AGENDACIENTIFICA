@@ -15,6 +15,7 @@ import {
   type ActivityCategory,
   type Career,
   type Gestion,
+  type Sede,
   type ScientificActivity,
   type ScientificActivityEvidence,
   type ScientificActivityStatus,
@@ -62,6 +63,7 @@ export default function ActivityModal({
 
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
   const [categories, setCategories] = useState<ActivityCategory[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGlobal, setIsGlobal] = useState(false);
@@ -70,6 +72,11 @@ export default function ActivityModal({
   const [isUploading, setIsUploading] = useState(false);
   const [deletingEvidenceId, setDeletingEvidenceId] = useState<number | null>(null);
 
+  const defaultPilar =
+    user?.role === "director_academico_sede"
+      ? "academica"
+      : "investigacion";
+
   const [formData, setFormData] = useState({
     title: "",
     start_date: "",
@@ -77,10 +84,28 @@ export default function ActivityModal({
     activity_type: "",
     responsible_name: "",
     career_id: "",
+    sede_id: user?.sede_id ? String(user.sede_id) : "",
+    regimen: "semestral",
+    plan_estudio: "",
+    pilar: defaultPilar,
     gestion_id: "",
     status: "scheduled" as ScientificActivityStatus,
     category_id: "",
     collaboration_career_ids: [] as number[],
+  });
+
+  const isPilarDisabled = user?.role === "director_academico_sede" || user?.role === "jefe_investigacion";
+  const isSedeDisabled = !!user?.sede_id && ["vicerrector_sede", "director_academico_sede", "director_investigacion"].includes(user?.role ?? "");
+
+  const allowedPilares = [
+    { value: "investigacion", label: "Investigación Científica" },
+    { value: "academica", label: "Académico / Docencia" },
+    { value: "interaccion_social", label: "Interacción Social" },
+    { value: "internacionalizacion", label: "Internacionalización" },
+  ].filter((p) => {
+    if (user?.role === "director_academico_sede") return p.value === "academica";
+    if (user?.role === "jefe_investigacion") return p.value === "investigacion";
+    return true;
   });
 
   useEffect(() => {
@@ -89,11 +114,13 @@ export default function ActivityModal({
     Promise.all([
       api.careers.list(),
       api.gestiones.list(),
+      api.sedes.list(),
       api.categories.list("scientific"),
     ])
-      .then(([c, g, catList]) => {
+      .then(([c, g, sList, catList]) => {
         setCareers(c);
         setGestiones(g);
+        setSedes(sList);
         setCategories(catList);
 
         // Req 1B — derive careers available to this user
@@ -115,6 +142,10 @@ export default function ActivityModal({
             activity_type: activity.activity_type,
             responsible_name: activity.responsible_name ?? "",
             career_id: global ? "" : String(activity.career_id),
+            sede_id: activity.sede_id ? String(activity.sede_id) : (user?.sede_id ? String(user.sede_id) : ""),
+            regimen: activity.regimen ?? "semestral",
+            plan_estudio: activity.plan_estudio ?? "",
+            pilar: activity.pilar ?? defaultPilar,
             gestion_id: String(activity.gestion_id),
             status: activity.status,
             category_id: activity.category_id ? String(activity.category_id) : "",
@@ -153,6 +184,10 @@ export default function ActivityModal({
             activity_type: "",
             responsible_name: "",
             career_id: defaultCareerId,
+            sede_id: user?.sede_id ? String(user.sede_id) : "",
+            regimen: "semestral",
+            plan_estudio: "",
+            pilar: defaultPilar,
             gestion_id: defaultGestionId,
             status: "scheduled",
             category_id: "",
@@ -214,6 +249,7 @@ export default function ActivityModal({
     try {
       const career_id = isGlobal ? null : (formData.career_id ? Number(formData.career_id) : null);
       const category_id = formData.category_id ? Number(formData.category_id) : null;
+      const sede_id = formData.sede_id ? Number(formData.sede_id) : null;
 
       if (isEdit && activity) {
         await api.scientific.update(activity.id, {
@@ -223,6 +259,10 @@ export default function ActivityModal({
           activity_type: formData.activity_type,
           responsible_name: formData.responsible_name || "Sin responsable",
           career_id: career_id,
+          sede_id: sede_id,
+          regimen: formData.regimen,
+          plan_estudio: formData.plan_estudio || null,
+          pilar: formData.pilar,
           category_id: category_id,
           collaboration_career_ids: formData.collaboration_career_ids,
         });
@@ -238,6 +278,10 @@ export default function ActivityModal({
           activity_type: formData.activity_type,
           responsible_name: formData.responsible_name || "Sin responsable",
           career_id: career_id,
+          sede_id: sede_id,
+          regimen: formData.regimen,
+          plan_estudio: formData.plan_estudio || null,
+          pilar: formData.pilar,
           gestion_id: Number(formData.gestion_id),
           category_id: category_id,
           collaboration_career_ids: formData.collaboration_career_ids,
@@ -319,6 +363,64 @@ export default function ActivityModal({
                 value={formData.end_date}
                 onChange={handleChange}
                 required
+                className="w-full p-2.5 bg-background border border-input rounded-lg focus:outline-none focus:border-primary/50 text-foreground text-sm dark:bg-slate-800/60 dark:border-white/10"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Sede Académica</label>
+              <select
+                name="sede_id"
+                value={formData.sede_id}
+                onChange={handleChange}
+                disabled={isSedeDisabled}
+                className="w-full p-2.5 bg-background border border-input rounded-lg focus:outline-none focus:border-primary/50 text-foreground text-sm disabled:opacity-50 dark:bg-slate-800/60 dark:border-white/10"
+              >
+                <option value="">Nacional / Todas las sedes</option>
+                {sedes.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Pilar Institucional *</label>
+              <select
+                name="pilar"
+                value={formData.pilar}
+                onChange={handleChange}
+                disabled={isPilarDisabled}
+                className="w-full p-2.5 bg-background border border-input rounded-lg focus:outline-none focus:border-primary/50 text-foreground text-sm disabled:opacity-50 dark:bg-slate-800/60 dark:border-white/10"
+              >
+                {allowedPilares.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Régimen</label>
+              <select
+                name="regimen"
+                value={formData.regimen}
+                onChange={handleChange}
+                className="w-full p-2.5 bg-background border border-input rounded-lg focus:outline-none focus:border-primary/50 text-foreground text-sm dark:bg-slate-800/60 dark:border-white/10"
+              >
+                <option value="semestral">Semestral</option>
+                <option value="anual">Anual</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Plan de Estudio (Pensum)</label>
+              <input
+                type="text"
+                name="plan_estudio"
+                placeholder="Ej. Plan 2023, Plan 2018"
+                value={formData.plan_estudio}
+                onChange={handleChange}
                 className="w-full p-2.5 bg-background border border-input rounded-lg focus:outline-none focus:border-primary/50 text-foreground text-sm dark:bg-slate-800/60 dark:border-white/10"
               />
             </div>

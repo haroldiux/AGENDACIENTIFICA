@@ -38,6 +38,10 @@ class ActivityCreate(BaseModel):
     category_id: Optional[int] = None
     responsible_name: Optional[str] = None
     career_id: Optional[int] = None
+    sede_id: Optional[int] = None
+    regimen: Optional[str] = "semestral"
+    plan_estudio: Optional[str] = None
+    pilar: Optional[str] = None
     gestion_id: int
     is_scientific: bool = False
 
@@ -64,6 +68,8 @@ class RoleEnum(str, Enum):
     vicerrectorado = "vicerrectorado"
     director_investigacion = "director_investigacion"
     jefe_investigacion = "jefe_investigacion"
+    vicerrector_sede = "vicerrector_sede"
+    director_academico_sede = "director_academico_sede"
 
 # --- Token Schemas ---
 class Token(BaseModel):
@@ -80,6 +86,7 @@ class UserBase(BaseModel):
     phone_number: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     role: RoleEnum = RoleEnum.teacher
+    sede_id: Optional[int] = None
 
 class UserCreate(UserBase):
     password: str
@@ -90,11 +97,13 @@ class UserUpdate(BaseModel):
     phone_number: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     email: Optional[str] = None
+    sede_id: Optional[int] = None
 
 class UserResponse(UserBase):
     id: int
     is_active: bool
     careers: List[CareerResponse] = []
+    sede: Optional[SedeResponse] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -106,6 +115,7 @@ class UserAdminUpdate(BaseModel):
     role: Optional[RoleEnum] = None
     is_active: Optional[bool] = None
     career_ids: Optional[List[int]] = None
+    sede_id: Optional[int] = None
     password: Optional[str] = None
 
 class PaginatedUserResponse(BaseModel):
@@ -189,6 +199,10 @@ class AcademicActivityBase(BaseModel):
     category: Optional[str] = "GENERAL"
     category_id: Optional[int] = None
     origin_color: Optional[str] = None
+    sede_id: Optional[int] = None
+    regimen: Optional[str] = "semestral"
+    plan_estudio: Optional[str] = None
+    pilar: Optional[str] = "academica"
 
 class AcademicActivityCreate(AcademicActivityBase):
     career_id: Optional[int] = None
@@ -204,12 +218,17 @@ class AcademicActivityUpdate(BaseModel):
     category_id: Optional[int] = None
     origin_color: Optional[str] = None
     career_id: Optional[int] = None
+    sede_id: Optional[int] = None
+    regimen: Optional[str] = None
+    plan_estudio: Optional[str] = None
+    pilar: Optional[str] = None
 
 class AcademicActivityResponse(AcademicActivityBase):
     id: int
     career_id: Optional[int] = None
     gestion_id: int
     activity_category: Optional[ActivityCategoryResponse] = None
+    sede: Optional[SedeResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
 # --- Scientific Activity Evidence Schemas ---
@@ -243,6 +262,10 @@ class ScientificActivityBase(BaseModel):
     responsible_name: str
     notes: Optional[str] = None
     category_id: Optional[int] = None
+    sede_id: Optional[int] = None
+    regimen: Optional[str] = "semestral"
+    plan_estudio: Optional[str] = None
+    pilar: Optional[str] = "investigacion"
 
 class ScientificActivityCreate(ScientificActivityBase):
     career_id: Optional[int] = None
@@ -262,6 +285,10 @@ class ScientificActivityUpdate(BaseModel):
     career_id: Optional[int] = None
     category_id: Optional[int] = None
     collaboration_career_ids: Optional[List[int]] = []
+    sede_id: Optional[int] = None
+    regimen: Optional[str] = None
+    plan_estudio: Optional[str] = None
+    pilar: Optional[str] = None
 
 class ScientificActivityStatusUpdate(BaseModel):
     status: ScientificActivityStatus
@@ -271,6 +298,10 @@ class ScientificActivityStatusUpdate(BaseModel):
 class ScientificActivityFilterParams(BaseModel):
     career_id: Optional[int] = Field(default=None, ge=1)
     gestion_id: Optional[int] = Field(default=None, ge=1)
+    sede_id: Optional[int] = Field(default=None, ge=1)
+    regimen: Optional[str] = Field(default=None)
+    plan_estudio: Optional[str] = Field(default=None)
+    pilar: Optional[str] = Field(default=None)
     start_date: Optional[date] = Field(default=None)
     end_date: Optional[date] = Field(default=None)
 
@@ -314,6 +345,7 @@ class ScientificActivityResponse(ScientificActivityBase):
     evidences: List[ScientificActivityEvidenceResponse] = []
     audits: List[ScientificActivityAuditResponse] = []
     activity_category: Optional[ActivityCategoryResponse] = None
+    sede: Optional[SedeResponse] = None
     collaboration_career_ids: List[int] = []
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -331,6 +363,11 @@ class MergedCalendarItem(BaseModel):
     scope: str = "career" # 'global' or 'career'
     career_id: Optional[int] = None
     career_name: Optional[str] = None
+    sede_id: Optional[int] = None
+    sede_name: Optional[str] = None
+    regimen: Optional[str] = None
+    plan_estudio: Optional[str] = None
+    pilar: Optional[str] = None
     category: Optional[str] = None
     category_id: Optional[int] = None
     origin_color: Optional[str] = None
@@ -354,6 +391,10 @@ class ActivityRowValidator(BaseModel):
     category_id: Optional[int] = None
     responsible_name: Optional[str] = None
     career_id: Optional[int] = None
+    sede_id: Optional[int] = None
+    regimen: Optional[str] = "semestral"
+    plan_estudio: Optional[str] = None
+    pilar: Optional[str] = None
     gestion_id: int
     is_scientific: bool = False
 

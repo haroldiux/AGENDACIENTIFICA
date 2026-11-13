@@ -14,7 +14,8 @@ def create_activity(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.require_read_only_get),
 ) -> Any:
-    deps.check_activity_scope_permission(current_user, activity.career_id)
+    inferred_pilar = activity.pilar or ('investigacion' if activity.is_scientific else 'academica')
+    deps.check_activity_scope_permission(current_user, activity.career_id, activity.sede_id, inferred_pilar)
 
     # Verify relations
     career = db.query(Career).filter(Career.id == activity.career_id).first()
@@ -32,6 +33,10 @@ def create_activity(
             start_date=activity.start_date,
             end_date=activity.end_date,
             career_id=activity.career_id,
+            sede_id=activity.sede_id,
+            regimen=activity.regimen or "semestral",
+            plan_estudio=activity.plan_estudio,
+            pilar=inferred_pilar,
             gestion_id=activity.gestion_id,
             activity_type=activity.activity_type,
             responsible_name=activity.responsible_name,
@@ -45,6 +50,10 @@ def create_activity(
             start_date=activity.start_date,
             end_date=activity.end_date,
             career_id=activity.career_id,
+            sede_id=activity.sede_id,
+            regimen=activity.regimen or "semestral",
+            plan_estudio=activity.plan_estudio,
+            pilar=inferred_pilar,
             gestion_id=activity.gestion_id,
             category=activity.category
         )
@@ -58,6 +67,10 @@ def create_activity(
         "start_date": str(new_act.start_date),
         "end_date": str(new_act.end_date),
         "career_id": new_act.career_id,
+        "sede_id": new_act.sede_id,
+        "regimen": new_act.regimen,
+        "plan_estudio": new_act.plan_estudio,
+        "pilar": new_act.pilar,
         "gestion_id": new_act.gestion_id,
         "is_scientific": activity.is_scientific,
     }

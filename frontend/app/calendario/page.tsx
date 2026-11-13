@@ -9,6 +9,7 @@ import {
   api,
   type Career,
   type Gestion,
+  type Sede,
   type MergedCalendarItem,
   type ReportType,
 } from '@/lib/api';
@@ -26,8 +27,12 @@ export default function CalendarioPage() {
 
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
   const [gestionId, setGestionId] = useState<number | null>(null);
+  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [pilarFilter, setPilarFilter] = useState<string>('');
+  const [regimenFilter, setRegimenFilter] = useState<string>('');
   const [items, setItems] = useState<MergedCalendarItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,9 +57,10 @@ export default function CalendarioPage() {
     let cancelled = false;
     const loadSelectors = async () => {
       try {
-        const [careersData, gestionesData] = await Promise.all([
+        const [careersData, gestionesData, sedesData] = await Promise.all([
           api.careers.list(),
           api.gestiones.list(),
+          api.sedes.list(),
         ]);
         if (!cancelled) {
           // Filter careers based on user role
@@ -67,6 +73,12 @@ export default function CalendarioPage() {
           }
           setCareers(filteredCareers);
           setGestiones(gestionesData);
+          setSedes(sedesData);
+
+          // If user belongs to a specific sede, preselect it
+          if (user?.sede_id && sedeId === null) {
+            setSedeId(user.sede_id);
+          }
           
           // Select active gestion by checking current date
           const today = new Date();
@@ -109,6 +121,9 @@ export default function CalendarioPage() {
         const data = await api.fusion.getMerged({
           career_id: careerId ?? undefined,
           gestion_id: gestionId ?? undefined,
+          sede_id: sedeId ?? undefined,
+          pilar: pilarFilter || undefined,
+          regimen: regimenFilter || undefined,
         });
         if (!cancelled) {
           setItems(data.items ?? []);
@@ -132,7 +147,7 @@ export default function CalendarioPage() {
     return () => {
       cancelled = true;
     };
-  }, [careerId, gestionId, retryToken]);
+  }, [careerId, gestionId, sedeId, pilarFilter, regimenFilter, retryToken]);
 
   // Clean up any active polling timeout on unmount.
   useEffect(() => {
@@ -266,10 +281,17 @@ export default function CalendarioPage() {
         <AgendaFilterBar
           careers={careers}
           gestiones={gestiones}
+          sedes={sedes}
           careerId={careerId}
           gestionId={gestionId}
+          sedeId={sedeId}
+          pilarFilter={pilarFilter}
+          regimenFilter={regimenFilter}
           onCareerChange={setCareerId}
           onGestionChange={setGestionId}
+          onSedeChange={setSedeId}
+          onPilarChange={setPilarFilter}
+          onRegimenChange={setRegimenFilter}
           disabled={exporting}
         />
 

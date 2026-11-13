@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.db.session import SessionLocal
-from app.models.models import RoleEnum, User
+from app.models.models import RoleEnum, User, Sede
 from app.core.security import get_password_hash
 
 def seed_roles():
@@ -39,6 +39,9 @@ def seed_roles():
             else:
                 print(f"User already exists: {email}")
         # Ensure official Director of Research Dra. María Lorena Orellana Aguilar
+        cbba_sede = db.query(Sede).filter(Sede.name.ilike("%Cochabamba%")).first()
+        cbba_id = cbba_sede.id if cbba_sede else None
+
         directora_email = "morellana_med@unitepc.edu.bo"
         directora = db.query(User).filter(User.email == directora_email).first()
         if not directora:
@@ -46,6 +49,7 @@ def seed_roles():
                 email=directora_email,
                 full_name="Dra. María Lorena Orellana Aguilar",
                 role=RoleEnum.director_investigacion,
+                sede_id=cbba_id,
                 hashed_password=password_hash,
                 is_active=True
             )
@@ -58,6 +62,9 @@ def seed_roles():
                 db.rollback()
                 print(f"Failed to create user {directora_email}: {e}")
         else:
+            if cbba_id and directora.sede_id != cbba_id:
+                directora.sede_id = cbba_id
+                db.commit()
             print(f"User already exists: {directora_email}")
 
         print(f"Total users created: {created_count}")

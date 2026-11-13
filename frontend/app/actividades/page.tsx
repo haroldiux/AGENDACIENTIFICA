@@ -17,6 +17,7 @@ import {
   api,
   type Career,
   type Gestion,
+  type Sede,
   type ScientificActivity,
   type ScientificActivityStatus,
 } from "@/lib/api";
@@ -36,8 +37,12 @@ export default function ActividadesPage() {
   const { user, isGlobalRole, isReadOnly, canManageActivity } = usePermissions();
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
   const [gestionId, setGestionId] = useState<number | null>(null);
+  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [pilarFilter, setPilarFilter] = useState<string>("");
+  const [regimenFilter, setRegimenFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<ScientificActivityStatus | "">("");
 
   const [activities, setActivities] = useState<ScientificActivity[]>([]);
@@ -61,11 +66,15 @@ export default function ActividadesPage() {
   // Load selector options once on mount.
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.careers.list(), api.gestiones.list()])
-      .then(([careersData, gestionesData]) => {
+    Promise.all([api.careers.list(), api.gestiones.list(), api.sedes.list()])
+      .then(([careersData, gestionesData, sedesData]) => {
         if (!cancelled) {
           setCareers(careersData);
           setGestiones(gestionesData);
+          setSedes(sedesData);
+          if (user?.sede_id && sedeId === null) {
+            setSedeId(user.sede_id);
+          }
         }
       })
       .catch(() => {
@@ -74,7 +83,7 @@ export default function ActividadesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   const loadActivities = useCallback(async () => {
     setIsLoading(true);
@@ -83,6 +92,9 @@ export default function ActividadesPage() {
       const data = await api.scientific.list({
         career_id: careerId ?? undefined,
         gestion_id: gestionId ?? undefined,
+        sede_id: sedeId ?? undefined,
+        pilar: pilarFilter || undefined,
+        regimen: regimenFilter || undefined,
       });
       setActivities(data);
     } catch (err) {
@@ -94,7 +106,7 @@ export default function ActividadesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [careerId, gestionId]);
+  }, [careerId, gestionId, sedeId, pilarFilter, regimenFilter]);
 
   // Fetch activities when filters change.
   useEffect(() => {
@@ -273,10 +285,17 @@ export default function ActividadesPage() {
           <AgendaFilterBar
             careers={careers}
             gestiones={gestiones}
+            sedes={sedes}
             careerId={careerId}
             gestionId={gestionId}
+            sedeId={sedeId}
+            pilarFilter={pilarFilter}
+            regimenFilter={regimenFilter}
             onCareerChange={setCareerId}
             onGestionChange={setGestionId}
+            onSedeChange={setSedeId}
+            onPilarChange={setPilarFilter}
+            onRegimenChange={setRegimenFilter}
           />
         </div>
         <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] p-4 flex flex-col gap-1.5 md:w-56 dark:bg-slate-900/60 dark:border-white/6">
@@ -405,13 +424,27 @@ export default function ActividadesPage() {
                       {formatDateRange(activity.start_date, activity.end_date)}
                     </TableCell>
                     <TableCell className="py-3.5">
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                        {activityTypeLabels[activity.activity_type] ??
-                          activity.activity_type}
-                      </Badge>
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                          {activityTypeLabels[activity.activity_type] ??
+                            activity.activity_type}
+                        </Badge>
+                        {activity.pilar && activity.pilar !== "investigacion" && (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] px-2 py-0.2 rounded-full whitespace-nowrap capitalize">
+                            {activity.pilar.replace("_", " ")}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground truncate py-3.5" title={careerName(activity.career_id)}>
-                      {careerName(activity.career_id)}
+                      <div className="font-medium text-foreground">{careerName(activity.career_id)}</div>
+                      {activity.sede && (
+                        <div className="text-[10px] text-muted-foreground/80 flex items-center gap-1 mt-0.5">
+                          <span>📍 {activity.sede.name}</span>
+                          {activity.regimen && <span>• {activity.regimen}</span>}
+                          {activity.plan_estudio && <span>• {activity.plan_estudio}</span>}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="py-3.5">
                       {canManageActivity(activity) ? (

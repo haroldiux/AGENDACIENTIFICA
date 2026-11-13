@@ -26,12 +26,16 @@ def format_ical_escape(text: str) -> str:
 def get_fusion_calendar(
     career_id: Optional[int] = None,
     gestion_id: Optional[int] = None,
+    sede_id: Optional[int] = None,
+    regimen: Optional[str] = None,
+    plan_estudio: Optional[str] = None,
+    pilar: Optional[str] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
     db: Session = Depends(get_db)
 ):
-    academic_query = db.query(AcademicActivity).options(joinedload(AcademicActivity.career))
-    scientific_query = db.query(ScientificActivity).options(joinedload(ScientificActivity.career))
+    academic_query = db.query(AcademicActivity).options(joinedload(AcademicActivity.career), joinedload(AcademicActivity.sede))
+    scientific_query = db.query(ScientificActivity).options(joinedload(ScientificActivity.career), joinedload(ScientificActivity.sede))
     
     if career_id is not None:
         academic_query = academic_query.filter(
@@ -44,6 +48,26 @@ def get_fusion_calendar(
     if gestion_id:
         academic_query = academic_query.filter(AcademicActivity.gestion_id == gestion_id)
         scientific_query = scientific_query.filter(ScientificActivity.gestion_id == gestion_id)
+
+    if sede_id is not None:
+        academic_query = academic_query.filter(
+            or_(AcademicActivity.sede_id == sede_id, AcademicActivity.sede_id.is_(None))
+        )
+        scientific_query = scientific_query.filter(
+            or_(ScientificActivity.sede_id == sede_id, ScientificActivity.sede_id.is_(None))
+        )
+
+    if regimen:
+        academic_query = academic_query.filter(AcademicActivity.regimen == regimen)
+        scientific_query = scientific_query.filter(ScientificActivity.regimen == regimen)
+
+    if plan_estudio:
+        academic_query = academic_query.filter(AcademicActivity.plan_estudio == plan_estudio)
+        scientific_query = scientific_query.filter(ScientificActivity.plan_estudio == plan_estudio)
+
+    if pilar:
+        academic_query = academic_query.filter(AcademicActivity.pilar == pilar)
+        scientific_query = scientific_query.filter(ScientificActivity.pilar == pilar)
         
     if start_date:
         academic_query = academic_query.filter(AcademicActivity.end_date >= start_date)
@@ -68,9 +92,14 @@ def get_fusion_calendar(
                 start_time=getattr(act, 'start_time', None),
                 end_time=getattr(act, 'end_time', None),
                 source_type="academic",
-                scope="global" if act.career_id is None else "career",
+                scope="global" if (act.career_id is None and act.sede_id is None) else ("sede" if act.career_id is None else "career"),
                 career_id=act.career_id,
                 career_name=act.career.name if act.career else None,
+                sede_id=act.sede_id,
+                sede_name=act.sede.name if act.sede else None,
+                regimen=act.regimen,
+                plan_estudio=act.plan_estudio,
+                pilar=act.pilar or "academica",
                 category=act.category,
                 origin_color=act.origin_color
             )
@@ -86,9 +115,14 @@ def get_fusion_calendar(
                 start_time=getattr(act, 'start_time', None),
                 end_time=getattr(act, 'end_time', None),
                 source_type="scientific",
-                scope="global" if act.career_id is None else "career",
+                scope="global" if (act.career_id is None and act.sede_id is None) else ("sede" if act.career_id is None else "career"),
                 career_id=act.career_id,
                 career_name=act.career.name if act.career else None,
+                sede_id=act.sede_id,
+                sede_name=act.sede.name if act.sede else None,
+                regimen=act.regimen,
+                plan_estudio=act.plan_estudio,
+                pilar=act.pilar or "investigacion",
                 activity_type=act.activity_type,
                 status=act.status,
                 responsible_name=act.responsible_name,

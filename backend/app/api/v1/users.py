@@ -416,6 +416,7 @@ def create_user(
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name,
         role=user_in.role,
+        sede_id=user_in.sede_id,
         is_active=True,
     )
     

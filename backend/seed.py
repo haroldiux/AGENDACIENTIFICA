@@ -38,9 +38,14 @@ from app.models.models import (
 
 
 SEDES = [
-    "Sede El Alto",
-    "Sede La Paz",
     "Sede Cochabamba",
+    "Sede La Paz",
+    "Sede El Alto",
+    "Sede Santa Cruz",
+    "Sede Cobija",
+    "Sede Guayaramerín",
+    "Sede Puerto Quijarro",
+    "Sede Ivirgarzama",
 ]
 
 GESTIONES = [

@@ -11,7 +11,7 @@ from openpyxl.utils import get_column_letter
 
 from app.db.session import get_db
 from app.api.deps import require_read_only_get, check_activity_scope_permission
-from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, ActivityCategory, User, ScientificActivityStatus
+from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, ActivityCategory, User, ScientificActivityStatus, Sede, RoleEnum
 from app.schemas.schemas import ActivityRowValidator, ScientificActivityType
 
 router = APIRouter()
@@ -397,6 +397,12 @@ async def upload_excel(
         "nombre_responsable": "responsible_name",
         "id_carrera": "career_id",
         "carrera": "career_id",
+        "id_sede": "sede_id",
+        "sede": "sede_id",
+        "regimen": "regimen",
+        "plan_estudio": "plan_estudio",
+        "plan": "plan_estudio",
+        "pilar": "pilar",
         "id_gestion": "gestion_id",
         "gestion": "gestion_id",
         "es_cientifica": "is_scientific",
@@ -410,6 +416,15 @@ async def upload_excel(
         career_map[c.name.strip().upper()] = c.id
         career_map[f"{c.id} - {c.name}".strip().upper()] = c.id
         career_map[f"{c.name} ({c.id})".strip().upper()] = c.id
+
+    # Build Sede lookup dictionary
+    sedes_all = db.query(Sede).all()
+    sede_map = {}
+    for s in sedes_all:
+        sede_map[str(s.id)] = s.id
+        sede_map[s.name.strip().upper()] = s.id
+        clean_name = s.name.upper().replace("SEDE", "").strip()
+        sede_map[clean_name] = s.id
 
     # Build Gestion lookup dictionary
     gestiones_all = db.query(Gestion).all()
@@ -438,6 +453,14 @@ async def upload_excel(
             if raw in career_map:
                 renamed["career_id"] = career_map[raw]
 
+        # Normalize sede_id / sede
+        if "sede_id" in renamed and pd.notnull(renamed["sede_id"]):
+            raw = str(renamed["sede_id"]).strip().upper()
+            if raw.endswith(".0"):
+                raw = raw[:-2]
+            if raw in sede_map:
+                renamed["sede_id"] = sede_map[raw]
+
         # Normalize gestion_id / gestion
         if "gestion_id" in renamed and pd.notnull(renamed["gestion_id"]):
             raw = str(renamed["gestion_id"]).strip().upper()
@@ -445,6 +468,18 @@ async def upload_excel(
                 raw = raw[:-2]
             if raw in gestion_map:
                 renamed["gestion_id"] = gestion_map[raw]
+
+        # Normalize regimen
+        if "regimen" in renamed and pd.notnull(renamed["regimen"]):
+            renamed["regimen"] = str(renamed["regimen"]).strip().lower()
+
+        # Normalize plan_estudio
+        if "plan_estudio" in renamed and pd.notnull(renamed["plan_estudio"]):
+            renamed["plan_estudio"] = str(renamed["plan_estudio"]).strip()
+
+        # Normalize pilar
+        if "pilar" in renamed and pd.notnull(renamed["pilar"]):
+            renamed["pilar"] = str(renamed["pilar"]).strip().lower()
 
         # Normalize is_scientific
         if "is_scientific" in renamed and pd.notnull(renamed["is_scientific"]):
@@ -510,6 +545,10 @@ async def upload_excel(
                     "category_id": category_id,
                     "responsible_name": validated.responsible_name or "Unknown",
                     "career_id": validated.career_id,
+                    "sede_id": validated.sede_id,
+                    "regimen": validated.regimen or "semestral",
+                    "plan_estudio": validated.plan_estudio,
+                    "pilar": validated.pilar or "investigacion",
                     "gestion_id": validated.gestion_id,
                     "status": "scheduled",
                 })
@@ -535,6 +574,10 @@ async def upload_excel(
                     "category": category_code,
                     "category_id": category_id,
                     "career_id": validated.career_id,
+                    "sede_id": validated.sede_id,
+                    "regimen": validated.regimen or "semestral",
+                    "plan_estudio": validated.plan_estudio,
+                    "pilar": validated.pilar or "academica",
                     "gestion_id": validated.gestion_id,
                 })
         except ValidationError as e:
@@ -544,36 +587,53 @@ async def upload_excel(
     career_id_to_name = {c.id: c.name for c in careers_all}
 
     # Safe scope permission filter per row
-    def user_can_manage_career(user: User, career_id: int | None) -> bool:
-        allowed_global_roles = {"super_admin", "admin", "vicerrectorado", "director_investigacion"}
+    def user_can_manage_row(user: User, career_id: int | None, sede_id: int | None = None, pilar: str | None = None) -> bool:
+        if pilar:
+            p = pilar.strip().lower()
+            if user.role == RoleEnum.director_academico_sede and p != "academica":
+                return False
+            if user.role == RoleEnum.jefe_investigacion and p != "investigacion":
+                return False
+
+        allowed_global_roles = {"super_admin", "admin", "vicerrectorado"}
         user_role_str = user.role.value if hasattr(user.role, "value") else str(user.role)
         if user_role_str in allowed_global_roles:
             return True
+
+        if user_role_str in {"vicerrector_sede", "director_academico_sede", "director_investigacion"}:
+            if user.sede_id is not None and sede_id is not None and user.sede_id != sede_id:
+                return False
+            return True
+
         user_career_ids = [c.id for c in user.careers]
         return career_id is not None and career_id in user_career_ids
 
     permitted_academic = []
     for row in valid_academic:
         c_id = row.get("career_id")
-        if user_can_manage_career(current_user, c_id):
+        s_id = row.get("sede_id")
+        p_val = row.get("pilar")
+        if user_can_manage_row(current_user, c_id, s_id, p_val):
             permitted_academic.append(row)
         else:
-            c_name = career_id_to_name.get(c_id, f"ID {c_id}")
+            c_name = career_id_to_name.get(c_id, f"ID {c_id}") if c_id else "Institucional"
             errors.append({
                 "row": row.get("_excel_row", "Académicas"),
-                "error": f"No tienes permisos para registrar actividades en la carrera '{c_name}'"
+                "error": f"No tienes permisos para registrar actividades en '{c_name}'"
             })
 
     permitted_scientific = []
     for row in valid_scientific:
         c_id = row.get("career_id")
-        if user_can_manage_career(current_user, c_id):
+        s_id = row.get("sede_id")
+        p_val = row.get("pilar")
+        if user_can_manage_row(current_user, c_id, s_id, p_val):
             permitted_scientific.append(row)
         else:
-            c_name = career_id_to_name.get(c_id, f"ID {c_id}")
+            c_name = career_id_to_name.get(c_id, f"ID {c_id}") if c_id else "Institucional"
             errors.append({
                 "row": row.get("_excel_row", "Científicas"),
-                "error": f"No tienes permisos para registrar actividades en la carrera '{c_name}'"
+                "error": f"No tienes permisos para registrar actividades en '{c_name}'"
             })
 
     valid_academic = permitted_academic

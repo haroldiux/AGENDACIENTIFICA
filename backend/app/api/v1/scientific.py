@@ -59,6 +59,10 @@ def record_audit(db: Session, activity_id: int, user_id: Optional[int], action: 
 def get_scientific_activities(
     career_id: Optional[int] = Query(default=None, ge=1),
     gestion_id: Optional[int] = Query(default=None, ge=1),
+    sede_id: Optional[int] = Query(default=None, ge=1),
+    regimen: Optional[str] = Query(default=None),
+    plan_estudio: Optional[str] = Query(default=None),
+    pilar: Optional[str] = Query(default=None),
     start_date: Optional[date] = Query(default=None),
     end_date: Optional[date] = Query(default=None),
     skip: int = 0,
@@ -70,6 +74,10 @@ def get_scientific_activities(
         filters = ScientificActivityFilterParams.model_validate({
             "career_id": career_id,
             "gestion_id": gestion_id,
+            "sede_id": sede_id,
+            "regimen": regimen,
+            "plan_estudio": plan_estudio,
+            "pilar": pilar,
             "start_date": start_date,
             "end_date": end_date,
         })
@@ -80,6 +88,10 @@ def get_scientific_activities(
         db,
         career_id=filters.career_id,
         gestion_id=filters.gestion_id,
+        sede_id=filters.sede_id,
+        regimen=filters.regimen,
+        plan_estudio=filters.plan_estudio,
+        pilar=filters.pilar,
         start_date=filters.start_date,
         end_date=filters.end_date,
         skip=skip,
@@ -93,7 +105,7 @@ def create_scientific_activity(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_read_only_get),
 ):
-    check_activity_scope_permission(current_user, activity.career_id)
+    check_activity_scope_permission(current_user, activity.career_id, activity.sede_id, activity.pilar or "investigacion")
 
     if activity.career_id is not None:
         career = db.query(Career).filter(Career.id == activity.career_id).first()
@@ -144,11 +156,13 @@ def update_scientific_activity(
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    check_activity_scope_permission(current_user, db_activity.career_id)
+    check_activity_scope_permission(current_user, db_activity.career_id, db_activity.sede_id, db_activity.pilar or "investigacion")
 
     update_data = activity_update.model_dump(exclude_unset=True)
     if "career_id" in update_data and update_data["career_id"] != db_activity.career_id:
-        check_activity_scope_permission(current_user, update_data["career_id"])
+        target_sede = update_data.get("sede_id", db_activity.sede_id)
+        target_pilar = update_data.get("pilar", db_activity.pilar or "investigacion")
+        check_activity_scope_permission(current_user, update_data["career_id"], target_sede, target_pilar)
 
     if "category_id" in update_data and update_data["category_id"] is not None:
         cat = db.query(ActivityCategory).filter(ActivityCategory.id == update_data["category_id"]).first()

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -12,11 +12,29 @@ router = APIRouter()
 def get_academic_activities(
     skip: int = 0,
     limit: int = 100,
+    career_id: Optional[int] = None,
+    gestion_id: Optional[int] = None,
+    sede_id: Optional[int] = None,
+    regimen: Optional[str] = None,
+    plan_estudio: Optional[str] = None,
+    pilar: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_read_only_get),
 ):
-    activities = db.query(AcademicActivity).offset(skip).limit(limit).all()
-    return activities
+    query = db.query(AcademicActivity)
+    if career_id is not None:
+        query = query.filter(AcademicActivity.career_id == career_id)
+    if gestion_id is not None:
+        query = query.filter(AcademicActivity.gestion_id == gestion_id)
+    if sede_id is not None:
+        query = query.filter(AcademicActivity.sede_id == sede_id)
+    if regimen:
+        query = query.filter(AcademicActivity.regimen == regimen)
+    if plan_estudio:
+        query = query.filter(AcademicActivity.plan_estudio == plan_estudio)
+    if pilar:
+        query = query.filter(AcademicActivity.pilar == pilar)
+    return query.offset(skip).limit(limit).all()
 
 @router.post("/", response_model=AcademicActivityResponse, status_code=status.HTTP_201_CREATED)
 def create_academic_activity(
@@ -24,7 +42,7 @@ def create_academic_activity(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_read_only_get),
 ):
-    check_activity_scope_permission(current_user, activity.career_id)
+    check_activity_scope_permission(current_user, activity.career_id, activity.sede_id, activity.pilar or "academica")
 
     if activity.career_id is not None:
         career = db.query(Career).filter(Career.id == activity.career_id).first()
@@ -60,7 +78,7 @@ def update_academic_activity(
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    check_activity_scope_permission(current_user, db_activity.career_id)
+    check_activity_scope_permission(current_user, db_activity.career_id, db_activity.sede_id, db_activity.pilar or "academica")
 
     update_data = activity_update.model_dump(exclude_unset=True)
     if "career_id" in update_data and update_data["career_id"] != db_activity.career_id:
