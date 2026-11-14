@@ -1,5 +1,6 @@
+from typing import Optional
 from datetime import date
-
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.models import AcademicActivity, ScientificActivity, ScientificActivityStatus
@@ -11,25 +12,30 @@ def _overlaps(start_a: date, end_a: date, start_b: date, end_b: date) -> bool:
     return start_a <= end_b and start_b <= end_a
 
 
-def find_conflicts(db: Session, career_id: int, gestion_id: int) -> list[ConflictItem]:
+def find_conflicts(db: Session, career_id: Optional[int], gestion_id: int) -> list[ConflictItem]:
     """Return overlapping academic/scientific activity pairs for a career and gestión.
 
+    If career_id is provided, includes both career-specific and global activities.
+    If career_id is None, detects conflicts across all activities for that gestión.
     Cancelled scientific activities are excluded from detection.
     """
-    academics = (
-        db.query(AcademicActivity)
-        .filter(AcademicActivity.career_id == career_id)
-        .filter(AcademicActivity.gestion_id == gestion_id)
-        .all()
-    )
-
-    scientifics = (
+    academic_query = db.query(AcademicActivity).filter(AcademicActivity.gestion_id == gestion_id)
+    scientific_query = (
         db.query(ScientificActivity)
-        .filter(ScientificActivity.career_id == career_id)
         .filter(ScientificActivity.gestion_id == gestion_id)
         .filter(ScientificActivity.status != ScientificActivityStatus.cancelled)
-        .all()
     )
+
+    if career_id is not None:
+        academic_query = academic_query.filter(
+            or_(AcademicActivity.career_id == career_id, AcademicActivity.career_id.is_(None))
+        )
+        scientific_query = scientific_query.filter(
+            or_(ScientificActivity.career_id == career_id, ScientificActivity.career_id.is_(None))
+        )
+
+    academics = academic_query.all()
+    scientifics = scientific_query.all()
 
     conflicts: list[ConflictItem] = []
     for academic in academics:

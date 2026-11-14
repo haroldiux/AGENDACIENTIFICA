@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -12,8 +13,8 @@ router = APIRouter()
 
 @router.get("/", response_model=ConflictListResponse)
 def get_conflicts(
-    career_id: int = Query(..., ge=1),
     gestion_id: int = Query(..., ge=1),
+    career_id: Optional[int] = Query(None, ge=1),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_read_only_get),
 ):

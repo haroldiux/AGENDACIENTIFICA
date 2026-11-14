@@ -1,23 +1,193 @@
 {% extends "base.html" %}
 
-{% block title %}Reporte de Conflictos{% endblock %}
-{% block header_title %}Reporte de Conflictos{% endblock %}
+{% block title %}Reporte de Conflictos - UNITEPC{% endblock %}
+
+{% block extra_css %}
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 1.5cm 1.4cm 1.7cm 1.4cm;
+        @bottom-left {
+            content: "UNITEPC · Reporte Oficial de Conflictos · Gestión {{ gestion_name }}";
+            font-family: 'Inter', sans-serif;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
+        @bottom-right {
+            content: "Página " counter(page) " de " counter(pages);
+            font-family: 'Inter', sans-serif;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
+    }
+
+    body { font-size: 9pt; color: #0f172a; line-height: 1.35; font-family: 'Inter', sans-serif; }
+
+    /* Cover header */
+    .cover-box {
+        width: 100%;
+        background-color: #BE123C;
+        border-radius: 12px;
+        margin-bottom: 14px;
+        overflow: hidden;
+    }
+    .cover { width: 100%; border-collapse: collapse; }
+    .cover td { vertical-align: middle; background-color: #BE123C !important; }
+    .cover .cover-text { padding: 18px 22px; color: #ffffff; }
+    .cover .eyebrow {
+        font-size: 8pt; font-weight: 700; letter-spacing: 1.5px;
+        text-transform: uppercase; color: #ffe4e6; margin-bottom: 4px;
+    }
+    .cover .title {
+        font-size: 17pt; font-weight: 800; line-height: 1.15;
+        margin: 0 0 6px 0; color: #ffffff !important;
+    }
+    .cover .subtitle { font-size: 10pt; font-weight: 500; color: #ffffff; }
+    .cover .gestion-chip {
+        display: inline-block; margin-top: 10px; padding: 3px 12px;
+        border-radius: 16px; background-color: #9f1239 !important;
+        color: #ffffff; font-size: 8pt; font-weight: 700; letter-spacing: 0.5px;
+    }
+    .cover .cover-img-cell { width: 170px; padding: 12px 16px 12px 0; text-align: right; }
+    .cover .cover-img {
+        width: 150px; height: 95px; object-fit: cover;
+        border-radius: 8px; border: 2px solid rgba(255,255,255,0.85);
+    }
+
+    /* Summary stats */
+    .stats { width: 100%; margin-bottom: 16px !important; border-spacing: 8px 0 !important; margin-left: -8px !important; width: calc(100% + 16px); }
+    .stat {
+        background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 10px;
+        padding: 9px 12px !important; width: 33.33%; text-align: center;
+    }
+    .stat .num { font-size: 16pt; font-weight: 800; color: #0f172a; line-height: 1; }
+    .stat .lbl { font-size: 7.5pt; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
+    .stat.crit .num { color: #e11d48; }
+    .stat.ac .num { color: #009E96; }
+    .stat.sc .num { color: #6B3392; }
+
+    /* Month section */
+    .month-head {
+        width: 100%;
+        border-bottom: 2px solid #e2e8f0 !important;
+        margin-top: 16px;
+        margin-bottom: 10px !important;
+        break-after: avoid; page-break-after: avoid;
+    }
+    .month-pill {
+        display: inline-block; padding: 4px 14px; border-radius: 20px;
+        color: #ffffff; font-weight: 800; font-size: 9pt; letter-spacing: 1.5px;
+        text-transform: uppercase; background: #e11d48;
+    }
+
+    /* Conflict card */
+    .conflict-card {
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #fecdd3;
+        border-left: 5.5px solid #e11d48;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .conflict-table { width: 100%; border-collapse: collapse; }
+    .conflict-table td { padding: 10px 12px; vertical-align: top; border: none; }
+    .event-col { width: 44%; }
+    .vs-col {
+        width: 12%; text-align: center; vertical-align: middle !important;
+        font-weight: 800; color: #e11d48; font-size: 11pt;
+    }
+
+    .badge {
+        display: inline-block; padding: 2.5px 8px; border-radius: 4px;
+        font-size: 7.5pt; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+    .badge-ac { background: #CCFBF1; color: #0F766E; border: 1px solid #99F6E4; }
+    .badge-sc { background: #F3E8FF; color: #581C87; border: 1px solid #E9D5FF; }
+    .event-title { font-size: 9.5pt; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
+    .event-dates { font-size: 8pt; font-weight: 600; color: #64748b; }
+
+    .no-conflicts-box {
+        text-align: center; padding: 40px 20px; background: #f0fdf4;
+        border: 1px solid #bbf7d0; border-radius: 12px; margin-top: 20px;
+    }
+    .no-conflicts-title { font-size: 14pt; font-weight: 800; color: #166534; margin-bottom: 6px; }
+    .no-conflicts-desc { font-size: 9pt; color: #15803d; }
+</style>
+{% endblock %}
 
 {% block content %}
-    {% if not grouped_conflicts %}
-        <p>No se encontraron conflictos para los filtros seleccionados.</p>
-    {% else %}
-        {% for group in grouped_conflicts %}
-            <h2 class="text-primary" style="margin-top: 20px;">{{ group.label }}</h2>
-            {% for item in group.activities %}
-            <div style="background-color: #FFF3F3; border: 1px solid #DDDDDD; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
-                <p style="margin: 4px 0;"><b>Actividad académica:</b> {{ item.academic_title }}</p>
-                <p style="margin: 4px 0;">Fechas académicas: {{ format_date_range(item.academic_start_date, item.academic_end_date) }}</p>
-                <p style="margin: 4px 0;"><b>Actividad científica:</b> {{ item.scientific_title }}</p>
-                <p style="margin: 4px 0;">Tipo científico: {{ get_activity_label(item.scientific_type) }}</p>
-                <p style="margin: 4px 0;">Fechas científicas: {{ format_date_range(item.scientific_start_date, item.scientific_end_date) }}</p>
-            </div>
-            {% endfor %}
-        {% endfor %}
-    {% endif %}
+<div class="cover-box">
+    <table class="cover">
+        <tr>
+            <td class="cover-text">
+                <div class="eyebrow">Universidad Técnica Privada Cosmopolita · UNITEPC</div>
+                <h1 class="title">Reporte de Choques y Conflictos de Horario</h1>
+                <div class="subtitle">{{ career_name }}</div>
+                <div class="gestion-chip">Gestión {{ gestion_name }}</div>
+            </td>
+            {% if cover_image_b64 %}
+            <td class="cover-img-cell">
+                <img class="cover-img" src="data:image/jpeg;base64,{{ cover_image_b64 }}" alt="Portada">
+            </td>
+            {% endif %}
+        </tr>
+    </table>
+</div>
+
+<table class="stats">
+    <tr>
+        <td class="stat crit">
+            <div class="num">{{ total_conflicts }}</div>
+            <div class="lbl">Conflictos Detectados</div>
+        </td>
+        <td class="stat ac">
+            <div class="num">{{ unique_academic }}</div>
+            <div class="lbl">Académicas Afectadas</div>
+        </td>
+        <td class="stat sc">
+            <div class="num">{{ unique_scientific }}</div>
+            <div class="lbl">Científicas en Cruce</div>
+        </td>
+    </tr>
+</table>
+
+{% if not grouped_conflicts %}
+<div class="no-conflicts-box">
+    <div class="no-conflicts-title">✓ Sin Conflictos Registrados</div>
+    <div class="no-conflicts-desc">
+        No se detectaron cruces de fechas entre actividades académicas y eventos de investigación científica para los filtros seleccionados.
+    </div>
+</div>
+{% else %}
+    {% for group in grouped_conflicts %}
+    <div class="month-head">
+        <span class="month-pill">{{ group.label }}</span>
+    </div>
+
+    {% for item in group.activities %}
+    <div class="conflict-card">
+        <table class="conflict-table">
+            <tr>
+                <td class="event-col">
+                    <span class="badge badge-ac">Académica</span>
+                    <div class="event-title">{{ item.academic_title }}</div>
+                    <div class="event-dates">📅 {{ format_date_range(item.academic_start_date, item.academic_end_date) }}</div>
+                </td>
+                <td class="vs-col">
+                    ⚡<br>CRUCE
+                </td>
+                <td class="event-col">
+                    <span class="badge badge-sc">Científica · {{ get_activity_label(item.scientific_type) }}</span>
+                    <div class="event-title">{{ item.scientific_title }}</div>
+                    <div class="event-dates">📅 {{ format_date_range(item.scientific_start_date, item.scientific_end_date) }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    {% endfor %}
+    {% endfor %}
+{% endif %}
 {% endblock %}

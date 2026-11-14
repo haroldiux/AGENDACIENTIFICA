@@ -187,7 +187,7 @@ def _conflict_month_group(conflicts):
     return grouped
 
 
-def build_conflict_pdf(filepath, conflicts, career_id, gestion_id):
+def build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db: Session = None):
     grouped = _conflict_month_group(conflicts) if conflicts else {}
     grouped_list = []
     for (year, month) in sorted(grouped.keys()):
@@ -196,11 +196,36 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id):
             "activities": grouped[(year, month)]
         })
 
+    career_name = "Todas las carreras / General"
+    gestion_name = "Todas las gestiones"
+    if db:
+        if career_id:
+            c = db.query(Career).filter(Career.id == career_id).first()
+            if c:
+                career_name = c.name
+        if gestion_id:
+            g = db.query(Gestion).filter(Gestion.id == gestion_id).first()
+            if g:
+                gestion_name = g.name
+
+    cover_image_b64 = _get_cover_base64(career_id, career_name)
+    total_conflicts = len(conflicts)
+    unique_academic = len({c.academic_id for c in conflicts})
+    unique_scientific = len({c.scientific_id for c in conflicts})
+
     context = {
         **DEFAULT_CONTEXT,
         "grouped_conflicts": grouped_list,
+        "total_conflicts": total_conflicts,
+        "unique_academic": unique_academic,
+        "unique_scientific": unique_scientific,
+        "career_name": career_name,
+        "gestion_name": gestion_name,
+        "cover_image_b64": cover_image_b64,
         "current_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "subtitle": f"Carrera ID: {career_id} — Gestión ID: {gestion_id}"
+        "now_str": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "report_title": "Reporte de Choques y Conflictos de Horario",
+        "subtitle": f"{career_name} — {gestion_name}"
     }
 
     template = jinja_env.get_template("conflict_report.html")
@@ -208,37 +233,94 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id):
     _write_pdf(html_out, filepath)
 
 
-def build_conflict_excel(conflicts, career_id, gestion_id):
+def build_conflict_excel(conflicts, career_id, gestion_id, db: Session = None):
     from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
     filename = f"conflict_report_{uuid.uuid4().hex}.xlsx"
     filepath = os.path.join(REPORTS_DIR, filename)
+
+    career_name = "Todas las carreras / General"
+    gestion_name = "Todas las gestiones"
+    if db:
+        if career_id:
+            c = db.query(Career).filter(Career.id == career_id).first()
+            if c:
+                career_name = c.name
+        if gestion_id:
+            g = db.query(Gestion).filter(Gestion.id == gestion_id).first()
+            if g:
+                gestion_name = g.name
 
     wb = Workbook()
     ws = wb.active
     ws.title = "Conflictos"
 
-    ws.append(["Reporte de Conflictos"])
-    ws.append([f"Carrera ID: {career_id} — Gestión ID: {gestion_id}"])
-    ws.append([f"Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}"])
-    ws.append([])
-    ws.append([
-        "Título académico",
-        "Fechas académicas",
-        "Título científico",
-        "Tipo científico",
-        "Fechas científicas",
-    ])
+    # Header title styling
+    title_font = Font(name="Calibri", size=14, bold=True, color="FFFFFF")
+    title_fill = PatternFill(start_color="BE123C", end_color="BE123C", fill_type="solid")
+    sub_font = Font(name="Calibri", size=10, italic=True, color="475569")
+    hdr_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    hdr_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
 
-    for item in conflicts:
+    ws.merge_cells("A1:E1")
+    ws["A1"] = "UNIVERSIDAD TÉCNICA PRIVADA COSMOPOLITA · REPORTE OFICIAL DE CONFLICTOS"
+    ws["A1"].font = title_font
+    ws["A1"].fill = title_fill
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 28
+
+    ws.merge_cells("A2:E2")
+    ws["A2"] = f"Carrera: {career_name}   |   Gestión: {gestion_name}   |   Generado: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+    ws["A2"].font = sub_font
+    ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[2].height = 20
+
+    ws.append([])
+    headers = [
+        "Título Actividad Académica",
+        "Rango Fechas Académicas",
+        "Título Actividad Científica",
+        "Tipo Científico",
+        "Rango Fechas Científicas",
+    ]
+    ws.append(headers)
+    ws.row_dimensions[4].height = 24
+    for col_idx in range(1, 6):
+        cell = ws.cell(row=4, column=col_idx)
+        cell.font = hdr_font
+        cell.fill = hdr_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    thin_border = Border(
+        left=Side(style="thin", color="E2E8F0"),
+        right=Side(style="thin", color="E2E8F0"),
+        top=Side(style="thin", color="E2E8F0"),
+        bottom=Side(style="thin", color="E2E8F0"),
+    )
+
+    for row_idx, item in enumerate(conflicts, start=5):
         scientific_type_label = get_activity_label(item.scientific_type)
-        ws.append([
+        row_vals = [
             item.academic_title,
             _format_date_range(item.academic_start_date, item.academic_end_date),
             item.scientific_title,
             scientific_type_label,
             _format_date_range(item.scientific_start_date, item.scientific_end_date),
-        ])
+        ]
+        ws.append(row_vals)
+        ws.row_dimensions[row_idx].height = 20
+        for col_idx in range(1, 6):
+            c = ws.cell(row=row_idx, column=col_idx)
+            c.border = thin_border
+            c.alignment = Alignment(vertical="center", horizontal="left" if col_idx in (1, 3) else "center")
+
+    # Column widths
+    ws.column_dimensions["A"].width = 38
+    ws.column_dimensions["B"].width = 24
+    ws.column_dimensions["C"].width = 38
+    ws.column_dimensions["D"].width = 22
+    ws.column_dimensions["E"].width = 24
 
     wb.save(filepath)
     return {"status": "completed", "file_path": filepath, "file_name": filename}
@@ -547,7 +629,7 @@ def generate_pdf_report_task(
             build_seguimiento_pdf(filepath, career_id, gestion_id, db)
         elif report_type == "conflict":
             conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
-            build_conflict_pdf(filepath, conflicts, career_id, gestion_id)
+            build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db)
         elif report_type in ["agenda-completa", "agenda-academica", "agenda-cientifica", "research-agenda"]:
             career = (
                 db.query(Career).filter(Career.id == career_id).first()
@@ -626,7 +708,7 @@ def generate_excel_report_task(
     try:
         if report_type == "conflict":
             conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
-            return build_conflict_excel(conflicts, career_id, gestion_id)
+            return build_conflict_excel(conflicts, career_id, gestion_id, db)
 
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill, Alignment, Border, Side

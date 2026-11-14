@@ -140,6 +140,9 @@ def get_fusion_calendar(
 def export_ical_stream(
     career_id: Optional[int] = Query(None),
     gestion_id: Optional[int] = Query(None),
+    sede_id: Optional[int] = Query(None),
+    regimen: Optional[str] = Query(None),
+    pilar: Optional[str] = Query(None),
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
@@ -150,6 +153,9 @@ def export_ical_stream(
     fusion_resp = get_fusion_calendar(
         career_id=career_id,
         gestion_id=gestion_id,
+        sede_id=sede_id,
+        regimen=regimen,
+        pilar=pilar,
         start_date=start_date,
         end_date=end_date,
         db=db,
