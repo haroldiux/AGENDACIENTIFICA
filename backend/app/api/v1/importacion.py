@@ -377,8 +377,9 @@ async def upload_excel(
                (pd.isna(end_raw) or str(end_raw).strip().lower() in ["", "nan", "none"]):
                 continue
 
-            # Infer is_scientific from sheet name if not specified
-            if "es_cientifica" not in rec and "is_scientific" not in rec:
+            # Infer is_scientific from sheet name if not specified or if null/blank
+            raw_sci = rec.get("es_cientifica", rec.get("is_scientific"))
+            if raw_sci is None or pd.isna(raw_sci) or str(raw_sci).strip().lower() in ["", "nan", "none"]:
                 if "científica" in sheet_name.lower() or "cientifica" in sheet_name.lower():
                     rec["es_cientifica"] = True
                 elif "académica" in sheet_name.lower() or "academica" in sheet_name.lower():
@@ -469,6 +470,15 @@ async def upload_excel(
             if raw in gestion_map:
                 renamed["gestion_id"] = gestion_map[raw]
 
+        # Auto-infer / Auto-correct gestion_id from start_date
+        s_date = renamed.get("start_date")
+        if s_date and hasattr(s_date, "year"):
+            current_g = next((g for g in gestiones_all if g.id == renamed.get("gestion_id")), None)
+            if not current_g or not (current_g.start_date <= s_date <= current_g.end_date):
+                matching_g = next((g for g in gestiones_all if g.start_date <= s_date <= g.end_date), None)
+                if matching_g:
+                    renamed["gestion_id"] = matching_g.id
+
         # Normalize regimen
         if "regimen" in renamed and pd.notnull(renamed["regimen"]):
             renamed["regimen"] = str(renamed["regimen"]).strip().lower()
@@ -519,8 +529,21 @@ async def upload_excel(
                 raw_type = (validated.activity_type.value if hasattr(validated.activity_type, 'value')
                             else str(validated.activity_type or ''))
                 if not raw_type and not validated.category:
-                    errors.append({"row": i + 2, "error": "activity_type or category is required for scientific activities"})
-                    continue
+                    t_lower = (validated.title or "").lower()
+                    if "feria" in t_lower:
+                        raw_type = "feria"
+                    elif "congreso" in t_lower:
+                        raw_type = "congreso"
+                    elif any(w in t_lower for w in ["webinar", "taller", "curso", "capacitaci", "panel", "charla", "asesor"]):
+                        raw_type = "webinar"
+                    elif "olimpiada" in t_lower:
+                        raw_type = "olimpiada"
+                    elif "defensa" in t_lower or "tesis" in t_lower:
+                        raw_type = "defensa"
+                    elif "master" in t_lower:
+                        raw_type = "master_class"
+                    else:
+                        raw_type = "congreso"
 
                 # Match dynamic category by type or category string
                 lookup_key = (raw_type or validated.category or '').strip().upper()
