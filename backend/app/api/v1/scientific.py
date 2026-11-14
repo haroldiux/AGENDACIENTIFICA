@@ -47,13 +47,16 @@ STATUS_LABELS_ES = {
 }
 
 def record_audit(db: Session, activity_id: int, user_id: Optional[int], action: str, description: str):
-    audit = ScientificActivityAudit(
-        scientific_activity_id=activity_id,
-        user_id=user_id,
-        action=action,
-        description=description,
-    )
-    db.add(audit)
+    try:
+        audit = ScientificActivityAudit(
+            scientific_activity_id=activity_id,
+            user_id=user_id,
+            action=action,
+            description=description,
+        )
+        db.add(audit)
+    except Exception as e:
+        print(f"Warning: could not record audit: {e}")
 
 @router.get("/", response_model=List[ScientificActivityResponse])
 def get_scientific_activities(
@@ -237,7 +240,12 @@ def update_scientific_status(
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    check_activity_scope_permission(current_user, db_activity.career_id)
+    check_activity_scope_permission(
+        current_user,
+        career_id=db_activity.career_id,
+        sede_id=db_activity.sede_id,
+        pilar=db_activity.pilar,
+    )
             
     db_activity.status = status_update.status
     if status_update.evidence_url is not None:
@@ -254,8 +262,15 @@ def update_scientific_status(
         f"Estado modificado a '{st_label}'. Observaciones/Motivo: '{status_update.notes or 'Sin observaciones'}'"
     )
 
-    db.commit()
-    db.refresh(db_activity)
+    try:
+        db.commit()
+        db.refresh(db_activity)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al guardar cambios de estado: {str(e)}"
+        )
     return db_activity
 
 # --- Evidence Endpoints ---

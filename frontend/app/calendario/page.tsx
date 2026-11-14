@@ -295,7 +295,7 @@ export default function CalendarioPage() {
           disabled={exporting}
         />
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
           <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground mr-2">
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-medium dark:text-emerald-400">
               <BookOpen className="w-3.5 h-3.5" />

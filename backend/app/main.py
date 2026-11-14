@@ -42,20 +42,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-cors_origins = list(settings.BACKEND_CORS_ORIGINS) if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS else [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:3002",
+cors_origins = [
+    f"http://localhost:{port}" for port in range(3000, 3016)
+] + [
+    f"http://127.0.0.1:{port}" for port in range(3000, 3016)
+] + [
     "http://localhost",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "http://127.0.0.1:3002",
     "http://127.0.0.1",
     "https://agenda.unitepc.pro",
     "http://agenda.unitepc.pro",
 ]
-if "https://agenda.unitepc.pro" not in cors_origins:
-    cors_origins.append("https://agenda.unitepc.pro")
+if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS:
+    for o in settings.BACKEND_CORS_ORIGINS:
+        if str(o) not in cors_origins:
+            cors_origins.append(str(o))
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,6 +65,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from fastapi.responses import JSONResponse
+from fastapi import Request
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()
+    origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Error interno del servidor: {str(exc)}"},
+        headers={
+            "Access-Control-Allow-Origin": origin if origin else "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
 
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

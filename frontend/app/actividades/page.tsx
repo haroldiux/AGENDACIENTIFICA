@@ -361,41 +361,41 @@ export default function ActividadesPage() {
             <AgendaEmptyState />
           </div>
         ) : (
-          <div className="w-full overflow-hidden">
-            <Table className="w-full table-fixed divide-y divide-border dark:divide-white/5">
+          <div className="w-full overflow-x-auto">
+            <Table className="w-full min-w-[780px] divide-y divide-border dark:divide-white/5">
               <TableHeader>
                 <TableRow className="border-b border-border hover:bg-transparent dark:border-white/5">
                   <TableHead
-                    className="w-[28%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                    className="min-w-[220px] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("nombre")}
                   >
                     Nombre <SortIcon col="nombre" />
                   </TableHead>
                   <TableHead
-                    className="w-[16%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                    className="min-w-[130px] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("fecha")}
                   >
                     Fecha <SortIcon col="fecha" />
                   </TableHead>
                   <TableHead
-                    className="w-[13%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                    className="min-w-[120px] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("tipo")}
                   >
                     Tipo <SortIcon col="tipo" />
                   </TableHead>
                   <TableHead
-                    className="w-[16%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                    className="min-w-[150px] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("carrera")}
                   >
                     Carrera <SortIcon col="carrera" />
                   </TableHead>
                   <TableHead
-                    className="w-[13%] cursor-pointer select-none text-muted-foreground hover:text-foreground"
+                    className="min-w-[120px] cursor-pointer select-none text-muted-foreground hover:text-foreground"
                     onClick={() => handleSort("estado")}
                   >
                     Estado <SortIcon col="estado" />
                   </TableHead>
-                  <TableHead className="w-[14%] text-right text-muted-foreground">Acciones</TableHead>
+                  <TableHead className="min-w-[100px] text-right text-muted-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-border dark:divide-white/5">

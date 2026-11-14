@@ -298,3 +298,44 @@
 .rbc-agenda-time-cell {
   @apply text-muted-foreground;
 }
+
+/* ── Mobile Responsive Overrides for Calendar ── */
+@media (max-width: 640px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .rbc-toolbar-label {
+    order: 1;
+    font-size: 1rem;
+    margin-bottom: 2px;
+    width: 100%;
+    text-align: center;
+  }
+  .rbc-btn-group {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    order: 2;
+  }
+  .rbc-btn-group button {
+    flex: 1;
+    text-align: center;
+    padding: 6px 4px;
+    font-size: 0.72rem;
+  }
+  .rbc-header {
+    font-size: 0.65rem;
+    padding: 4px 1px;
+  }
+  .rbc-date-cell {
+    font-size: 0.72rem;
+    padding: 2px;
+  }
+  .rbc-event {
+    font-size: 0.65rem;
+    padding: 1px 3px;
+    min-height: 18px;
+  }
+}

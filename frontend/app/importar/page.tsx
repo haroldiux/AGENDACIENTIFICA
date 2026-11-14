@@ -146,7 +146,7 @@ export default function ImportarPage() {
         onDrop={handleDrop}
         onClick={() => !file && inputRef.current?.click()}
         className={`
-          rounded-2xl p-12 text-center cursor-pointer transition-all
+          rounded-2xl p-6 sm:p-12 text-center cursor-pointer transition-all
           ${isDragging ? "border-2 border-dashed border-primary bg-primary/10" : "border-2 border-dashed border-border bg-surface shadow-[var(--shadow-glass)] dark:bg-slate-800/20 dark:border-white/10"}
           ${file ? "cursor-default" : "hover:border-primary/50 hover:bg-muted/50 dark:hover:bg-primary/5"}
         `}
@@ -179,7 +179,7 @@ export default function ImportarPage() {
               <p className="text-foreground font-semibold">{file.name}</p>
               <p className="text-muted-foreground text-sm">{(file.size / 1024).toFixed(1)} KB</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <button
                 onClick={(e) => {
                   e.stopPropagation();

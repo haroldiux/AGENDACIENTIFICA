@@ -304,7 +304,7 @@ export default function CategoryManagementPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[650px]">
               <TableHeader className="bg-muted/50 border-b border-border text-xs text-muted-foreground uppercase tracking-wide dark:bg-slate-800/40 dark:border-white/5">
                 <TableRow className="border-b-0 hover:bg-transparent">
                   <TableHead className="text-muted-foreground w-[80px]">Color</TableHead>

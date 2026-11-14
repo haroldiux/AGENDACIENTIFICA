@@ -343,7 +343,7 @@ export default function ActivityModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Fecha Inicio *</label>
               <input
@@ -368,7 +368,7 @@ export default function ActivityModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Sede Académica</label>
               <select
@@ -400,7 +400,7 @@ export default function ActivityModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Régimen</label>
               <select
@@ -426,7 +426,7 @@ export default function ActivityModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Req 1B — Career dropdown pre-fill + lock */}
             <div>
               <label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1.5 block">Carrera {!isGlobal && "*"}</label>
