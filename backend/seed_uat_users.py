@@ -13,8 +13,8 @@ def seed_users():
     db = SessionLocal()
     try:
         users = [
-            {"email": "admin@unitepc.edu.bo", "role": Role.admin, "password": "password"},
-            {"email": "teacher@unitepc.edu.bo", "role": Role.teacher, "password": "password"},
+            {"email": "admin@unitepc.edu.bo", "role": Role.admin, "password": "unitepc123"},
+            {"email": "teacher@unitepc.edu.bo", "role": Role.teacher, "password": "unitepc123"},
         ]
         
         for user_data in users:

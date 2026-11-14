@@ -17,11 +17,14 @@ def create_super_admin() -> None:
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.email == settings.SUPER_ADMIN_EMAIL).first()
+        hashed_password = get_password_hash(settings.SUPER_ADMIN_PASSWORD)
         if user:
-            logger.info(f"Super admin user {settings.SUPER_ADMIN_EMAIL} already exists.")
+            user.hashed_password = hashed_password
+            user.is_active = True
+            db.commit()
+            logger.info(f"Super admin user {settings.SUPER_ADMIN_EMAIL} updated with current password.")
             return
 
-        hashed_password = get_password_hash(settings.SUPER_ADMIN_PASSWORD)
         super_admin = User(
             email=settings.SUPER_ADMIN_EMAIL,
             hashed_password=hashed_password,

@@ -37,7 +37,14 @@ def seed_roles():
                     db.rollback()
                     print(f"Failed to create user {email}: {e}")
             else:
-                print(f"User already exists: {email}")
+                from app.core.security import verify_password
+                if not verify_password("unitepc123", existing_user.hashed_password):
+                    existing_user.hashed_password = password_hash
+                    existing_user.is_active = True
+                    db.commit()
+                    print(f"Updated password to unitepc123 for user: {email}")
+                else:
+                    print(f"User already exists with valid password: {email}")
         # Ensure official Director of Research Dra. María Lorena Orellana Aguilar
         cbba_sede = db.query(Sede).filter(Sede.name.ilike("%Cochabamba%")).first()
         cbba_id = cbba_sede.id if cbba_sede else None

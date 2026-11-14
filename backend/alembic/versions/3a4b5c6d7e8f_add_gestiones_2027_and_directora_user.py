@@ -17,8 +17,8 @@ down_revision: Union[str, None] = '299cc48a1ccb'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-# Pre-computed bcrypt hash for 'unitepc123' to avoid runtime passlib/bcrypt incompatibility in Python 3.12
-DEFAULT_HASHED_PASSWORD = "$2b$12$paBWNItBp3XyTjZ5E0BQA.mlGFFaWW5L38WN3Tm/MA4pjd0q6PDte"
+# Pre-computed bcrypt hash for 'unitepc123' (60 chars)
+DEFAULT_HASHED_PASSWORD = "$2b$12$fAz9uwFmKTxYzaUEF30fUeTvMmZDJt//BJv728KfRUgOTj0JbkFOa"
 
 CAREERS_DATA = [
     ("Medicina", "Facultad de Ciencias de la Salud"),

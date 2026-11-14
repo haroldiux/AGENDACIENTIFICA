@@ -60,7 +60,7 @@ def seed_users():
     db = SessionLocal()
     try:
         careers_map = {c.name: c for c in db.query(Career).all()}
-        hashed_pwd = bcrypt.hashpw(b"admin123", bcrypt.gensalt()).decode("utf-8")
+        hashed_pwd = bcrypt.hashpw(b"unitepc123", bcrypt.gensalt()).decode("utf-8")
 
         for udata in INITIAL_USERS:
             existing = db.query(User).filter(User.email == udata["email"]).first()

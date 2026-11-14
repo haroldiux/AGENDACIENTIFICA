@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
     
     SUPER_ADMIN_EMAIL: str = "admin@unitepc.edu.bo"
-    SUPER_ADMIN_PASSWORD: str = "admin123"
+    SUPER_ADMIN_PASSWORD: str = "unitepc123"
     
     NOTIFICATION_DAYS_AHEAD: int = 7
     WHATSAPP_API_TOKEN: str | None = None

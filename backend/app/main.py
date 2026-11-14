@@ -1,13 +1,45 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.v1.api import api_router
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure core admin user credentials on startup
+    from app.db.session import SessionLocal
+    from app.models.models import User, RoleEnum
+    from app.core.security import get_password_hash, verify_password
+    db = SessionLocal()
+    try:
+        admin = db.query(User).filter(User.email == "admin@unitepc.edu.bo").first()
+        if not admin:
+            admin = User(
+                email="admin@unitepc.edu.bo",
+                full_name="Administrador General UNITEPC",
+                role=RoleEnum.super_admin,
+                hashed_password=get_password_hash("unitepc123"),
+                is_active=True,
+            )
+            db.add(admin)
+            db.commit()
+        else:
+            if not verify_password("unitepc123", admin.hashed_password):
+                admin.hashed_password = get_password_hash("unitepc123")
+                admin.is_active = True
+                db.commit()
+    except Exception as e:
+        print(f"Notice on startup ensuring core admin: {e}")
+    finally:
+        db.close()
+    yield
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 cors_origins = list(settings.BACKEND_CORS_ORIGINS) if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS else [
