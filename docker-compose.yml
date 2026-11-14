@@ -19,6 +19,7 @@ services:
       dockerfile: Dockerfile
     container_name: unitepc_backend
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql://user:password@db:5432/agenda
       - REDIS_URL=redis://redis:6379/0
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
@@ -43,6 +44,7 @@ services:
       dockerfile: Dockerfile
     container_name: unitepc_worker
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql://user:password@db:5432/agenda
       - REDIS_URL=redis://redis:6379/0
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
@@ -65,6 +67,7 @@ services:
       dockerfile: Dockerfile
     container_name: unitepc_celery_beat
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql://user:password@db:5432/agenda
       - REDIS_URL=redis://redis:6379/0
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}

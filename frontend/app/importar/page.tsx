@@ -7,17 +7,36 @@ import { api } from "@/lib/api";
 import PageHeader from "@/components/layout/PageHeader";
 import { config as appConfig } from "@/lib/config";
 
+interface UploadError {
+  row: number | string;
+  sheet?: string;
+  column?: string;
+  activity?: string;
+  message?: string;
+  error: string;
+}
+
+interface UploadDuplicate {
+  row?: number | string;
+  sheet?: string;
+  title: string;
+}
+
+interface UploadConflict {
+  row?: number | string;
+  sheet?: string;
+  activity_title: string;
+  conflicting_title: string;
+  dates: string;
+  career_id: number;
+}
+
 interface UploadResult {
   inserted_count: number;
   duplicate_count?: number;
-  duplicates?: { row: number; title: string }[];
-  errors: { row: number | string; error: string }[];
-  conflicts?: {
-    activity_title: string;
-    conflicting_title: string;
-    dates: string;
-    career_id: number;
-  }[];
+  duplicates?: UploadDuplicate[];
+  errors: UploadError[];
+  conflicts?: UploadConflict[];
 }
 
 export default function ImportarPage() {
@@ -229,7 +248,7 @@ export default function ImportarPage() {
               <div className="max-h-40 overflow-y-auto space-y-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
                 {result.duplicates.map((d, idx) => (
                   <div key={idx} className="text-xs text-amber-800 dark:text-amber-200">
-                    • <span className="font-semibold text-amber-900 dark:text-amber-100">{d.title}</span> {d.row ? `(Fila ${d.row})` : ''} ya se encuentra registrada en la base de datos.
+                    • <span className="font-semibold text-amber-900 dark:text-amber-100">{d.title}</span> {d.sheet ? `[Hoja: ${d.sheet}]` : ""} {d.row ? `(Fila ${d.row})` : ""} ya se encuentra registrada en la base de datos.
                   </div>
                 ))}
               </div>
@@ -245,7 +264,7 @@ export default function ImportarPage() {
               <div className="max-h-48 overflow-y-auto space-y-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
                 {result.conflicts.map((c, idx) => (
                   <div key={idx} className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
-                    • <span className="font-semibold text-amber-900 dark:text-amber-100">{c.activity_title}</span> se cruza en fechas ({c.dates}) con la actividad <span className="font-semibold text-amber-900 dark:text-amber-100">&quot;{c.conflicting_title}&quot;</span>.
+                    • <span className="font-semibold text-amber-900 dark:text-amber-100">{c.activity_title}</span> {c.row ? `(Fila ${c.row})` : ""} se cruza en fechas ({c.dates}) con la actividad <span className="font-semibold text-amber-900 dark:text-amber-100">&quot;{c.conflicting_title}&quot;</span>.
                   </div>
                 ))}
               </div>
@@ -253,15 +272,52 @@ export default function ImportarPage() {
           )}
 
           {result.errors && result.errors.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-destructive flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                Detalle de errores:
-              </p>
-              <div className="max-h-48 overflow-y-auto space-y-1 rounded-lg bg-muted border border-border p-3">
+            <div className="space-y-3 pt-2 border-t border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <p className="text-sm font-semibold text-destructive flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  Detalle de errores ({result.errors.length}):
+                </p>
+                <span className="text-xs text-muted-foreground">
+                  Identificá la celda por su Fila y Columna en tu Excel
+                </span>
+              </div>
+
+              <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
                 {result.errors.map((err, idx) => (
-                  <div key={idx} className="text-xs text-destructive font-mono">
-                    Fila {err.row}: {err.error}
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 p-3.5 space-y-2 shadow-xs transition-colors hover:border-destructive/30"
+                  >
+                    {/* Header: Row, Sheet, Column, Activity Badges */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md font-bold bg-destructive text-destructive-foreground shadow-xs">
+                        Fila {err.row}
+                      </span>
+                      {err.sheet && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-medium bg-secondary text-secondary-foreground border border-border">
+                          Hoja: <span className="font-semibold ml-1">{err.sheet}</span>
+                        </span>
+                      )}
+                      {err.column && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                          Columna: <span className="ml-1 underline">{err.column}</span>
+                        </span>
+                      )}
+                      {err.activity && err.activity !== "Sin título" && (
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-md font-medium bg-primary/10 text-primary border border-primary/20 max-w-xs truncate"
+                          title={err.activity}
+                        >
+                          Actividad: <span className="italic ml-1 truncate">{err.activity}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Explanatory Message */}
+                    <p className="text-xs text-foreground/90 font-medium leading-relaxed">
+                      {err.message || err.error}
+                    </p>
                   </div>
                 ))}
               </div>

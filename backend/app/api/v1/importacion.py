@@ -321,6 +321,106 @@ def download_template(
 # Upload Excel
 # ---------------------------------------------------------------------------
 
+COLUMN_USER_LABELS = {
+    "title": "titulo",
+    "start_date": "fecha_inicio",
+    "end_date": "fecha_fin",
+    "gestion_id": "gestion",
+    "career_id": "carrera",
+    "sede_id": "sede",
+    "category": "categoria",
+    "activity_type": "tipo_actividad",
+    "responsible_name": "nombre_responsable",
+    "regimen": "regimen",
+    "plan_estudio": "plan_estudio",
+    "pilar": "pilar",
+    "is_scientific": "es_cientifica",
+}
+
+FIELD_DESCRIPTIONS = {
+    "title": "nombre o título de la actividad",
+    "start_date": "fecha de inicio en formato DD/MM/AAAA",
+    "end_date": "fecha de fin en formato DD/MM/AAAA",
+    "gestion_id": "semestre o gestión (ej. '1-2027' o '2-2027')",
+    "career_id": "nombre o ID de la carrera",
+    "sede_id": "nombre o ID de la sede oficial",
+    "category": "código o nombre de la categoría",
+    "activity_type": "tipo de actividad (congreso, webinar, feria, taller, etc.)",
+    "responsible_name": "nombre del responsable",
+    "regimen": "régimen académico ('semestral' o 'anual')",
+    "plan_estudio": "plan de estudios / pensum",
+    "pilar": "pilar ('academica', 'investigacion', 'interaccion_social', 'internacionalizacion')",
+}
+
+def format_excel_error(row_num: int | str, sheet_name: str, column_name: str, activity_title: str, explanation: str) -> dict:
+    clean_title = str(activity_title or "").strip()
+    if not clean_title or clean_title.lower() in ["nan", "none", "sin título"]:
+        clean_title = "Sin título"
+    else:
+        clean_title = clean_title[:70]
+
+    full_message = f"Fila {row_num} (Hoja: '{sheet_name}', Columna: '{column_name}'): {explanation}"
+    if clean_title != "Sin título":
+        full_message = f"Fila {row_num} (Hoja: '{sheet_name}', Columna: '{column_name}', Actividad: '{clean_title}'): {explanation}"
+
+    return {
+        "row": row_num,
+        "sheet": sheet_name,
+        "column": column_name,
+        "activity": clean_title,
+        "message": explanation,
+        "error": full_message,
+    }
+
+def parse_pydantic_validation_error(e: ValidationError, excel_row: int | str, sheet_name: str, title_val: str) -> list[dict]:
+    res_errors = []
+    for err in e.errors():
+        loc = err.get("loc", ())
+        field_name = str(loc[-1]) if loc else "general"
+        err_type = str(err.get("type", ""))
+        raw_msg = str(err.get("msg", ""))
+        col_label = COLUMN_USER_LABELS.get(field_name, field_name)
+
+        if err_type == "missing":
+            if field_name == "title":
+                msg = "El título o nombre de la actividad es obligatorio y la celda está vacía."
+            elif field_name == "start_date":
+                msg = "La fecha de inicio es obligatoria y la celda está vacía. Ingrese una fecha válida en formato DD/MM/AAAA."
+            elif field_name == "end_date":
+                msg = "La fecha de fin es obligatoria y la celda está vacía. Ingrese una fecha válida en formato DD/MM/AAAA."
+            elif field_name == "gestion_id":
+                msg = "La gestión académica es obligatoria (ej. '1-2027' o '2-2027'). Verifique que la celda tenga una gestión válida o que la fecha corresponda a un semestre registrado."
+            elif field_name == "career_id":
+                msg = "La carrera es obligatoria y está vacía. Ingrese el nombre exacto de la carrera según la hoja 'Referencia'."
+            elif field_name == "category":
+                msg = "La categoría es obligatoria para actividades académicas (ej. EXAMEN, CLASE, GENERAL)."
+            elif field_name == "activity_type":
+                msg = "El tipo de actividad es obligatorio para actividades científicas (ej. CONGRESO, WEBINAR, FERIA)."
+            else:
+                desc = FIELD_DESCRIPTIONS.get(field_name, "")
+                msg = f"La columna '{col_label}' es obligatoria y la celda está vacía."
+                if desc:
+                    msg += f" Debe ingresar: {desc}."
+        elif "date" in err_type or "date" in raw_msg.lower():
+            msg = f"La fecha en la columna '{col_label}' no es válida. Debe ingresar el formato DD/MM/AAAA (por ejemplo 15/03/2027)."
+        elif field_name == "gestion_id":
+            msg = "La gestión indicada no existe o la fecha de la actividad no coincide con ninguna gestión registrada en el sistema."
+        elif "int" in err_type:
+            msg = f"El valor en la columna '{col_label}' debe ser un número entero."
+        elif "bool" in err_type:
+            msg = f"El valor en la columna '{col_label}' debe ser 'SI' o 'NO'."
+        else:
+            msg = f"Dato inválido en la columna '{col_label}': {raw_msg}."
+
+        res_errors.append(format_excel_error(
+            row_num=excel_row,
+            sheet_name=sheet_name,
+            column_name=col_label,
+            activity_title=title_val,
+            explanation=msg
+        ))
+    return res_errors
+
 def parse_date_val(val):
     if val is None or pd.isna(val):
         return None
@@ -356,7 +456,11 @@ async def upload_excel(
         if sheet_name.strip().lower() in ["referencia", "reference", "instrucciones", "guia"]:
             continue
         sheet_recs = df.to_dict('records')
-        for rec in sheet_recs:
+        for sheet_idx, rec in enumerate(sheet_recs):
+            excel_row_num = sheet_idx + 2  # Excel row (row 1 is header)
+            rec["_sheet_name"] = sheet_name
+            rec["_excel_row"] = excel_row_num
+
             # Skip empty rows or rows without title
             title_val = str(rec.get("titulo", rec.get("title", "")) or "").strip()
             if not title_val or title_val.lower() in ["nan", "none", "null"]:
@@ -438,7 +542,12 @@ async def upload_excel(
 
     renamed_records = []
     for record in records:
+        sheet_name = record.get("_sheet_name", "Principal")
+        excel_row = record.get("_excel_row", 0)
+
         renamed = {COLUMN_MAP.get(str(k).strip().lower(), k): v for k, v in record.items()}
+        renamed["_sheet_name"] = sheet_name
+        renamed["_excel_row"] = excel_row
 
         # Normalize start_date & end_date (supports DD/MM/YYYY and YYYY-MM-DD)
         if "start_date" in renamed and pd.notnull(renamed["start_date"]):
@@ -520,10 +629,25 @@ async def upload_excel(
     valid_scientific = []
     errors = []
     
-    for i, record in enumerate(records):
-        clean_record = {k: v for k, v in record.items() if pd.notnull(v)}
+    for record in records:
+        sheet_name = record.get("_sheet_name", "Principal")
+        excel_row = record.get("_excel_row", 0)
+        title_val = str(record.get("title", "") or "").strip()
+
+        clean_record = {k: v for k, v in record.items() if not k.startswith("_") and pd.notnull(v)}
         try:
             validated = ActivityRowValidator(**clean_record)
+
+            # Date order validation
+            if validated.start_date and validated.end_date and validated.start_date > validated.end_date:
+                errors.append(format_excel_error(
+                    row_num=excel_row,
+                    sheet_name=sheet_name,
+                    column_name="fecha_fin",
+                    activity_title=title_val,
+                    explanation=f"La fecha de fin ({validated.end_date.strftime('%d/%m/%Y')}) no puede ser anterior a la fecha de inicio ({validated.start_date.strftime('%d/%m/%Y')})."
+                ))
+                continue
             
             if validated.is_scientific:
                 raw_type = (validated.activity_type.value if hasattr(validated.activity_type, 'value')
@@ -560,7 +684,8 @@ async def upload_excel(
                     act_type_val = ScientificActivityType.congreso.value
 
                 valid_scientific.append({
-                    "_excel_row": i + 2,
+                    "_excel_row": excel_row,
+                    "_sheet_name": sheet_name,
                     "title": validated.title,
                     "start_date": validated.start_date,
                     "end_date": validated.end_date,
@@ -577,7 +702,13 @@ async def upload_excel(
                 })
             else:
                 if not validated.category:
-                    errors.append({"row": i + 2, "error": "category is required for academic activities"})
+                    errors.append(format_excel_error(
+                        row_num=excel_row,
+                        sheet_name=sheet_name,
+                        column_name="categoria",
+                        activity_title=title_val,
+                        explanation="La columna 'categoria' es obligatoria para actividades académicas (ej. EXAMEN, CLASE, GENERAL)."
+                    ))
                     continue
 
                 lookup_key = validated.category.strip().upper()
@@ -590,7 +721,8 @@ async def upload_excel(
                     category_code = validated.category
 
                 valid_academic.append({
-                    "_excel_row": i + 2,
+                    "_excel_row": excel_row,
+                    "_sheet_name": sheet_name,
                     "title": validated.title,
                     "start_date": validated.start_date,
                     "end_date": validated.end_date,
@@ -604,7 +736,13 @@ async def upload_excel(
                     "gestion_id": validated.gestion_id,
                 })
         except ValidationError as e:
-            errors.append({"row": i + 2, "error": str(e)})
+            parsed_errs = parse_pydantic_validation_error(
+                e=e,
+                excel_row=excel_row,
+                sheet_name=sheet_name,
+                title_val=title_val
+            )
+            errors.extend(parsed_errs)
 
     # Build career ID to Name lookup map
     career_id_to_name = {c.id: c.name for c in careers_all}
@@ -640,10 +778,13 @@ async def upload_excel(
             permitted_academic.append(row)
         else:
             c_name = career_id_to_name.get(c_id, f"ID {c_id}") if c_id else "Institucional"
-            errors.append({
-                "row": row.get("_excel_row", "Académicas"),
-                "error": f"No tienes permisos para registrar actividades en '{c_name}'"
-            })
+            errors.append(format_excel_error(
+                row_num=row.get("_excel_row", 0),
+                sheet_name=row.get("_sheet_name", "Actividades Académicas"),
+                column_name="carrera",
+                activity_title=row.get("title", ""),
+                explanation=f"No tienes permisos para registrar actividades en la carrera '{c_name}'."
+            ))
 
     permitted_scientific = []
     for row in valid_scientific:
@@ -654,10 +795,13 @@ async def upload_excel(
             permitted_scientific.append(row)
         else:
             c_name = career_id_to_name.get(c_id, f"ID {c_id}") if c_id else "Institucional"
-            errors.append({
-                "row": row.get("_excel_row", "Científicas"),
-                "error": f"No tienes permisos para registrar actividades en '{c_name}'"
-            })
+            errors.append(format_excel_error(
+                row_num=row.get("_excel_row", 0),
+                sheet_name=row.get("_sheet_name", "Actividades Científicas"),
+                column_name="carrera",
+                activity_title=row.get("title", ""),
+                explanation=f"No tienes permisos para registrar actividades en la carrera '{c_name}'."
+            ))
 
     valid_academic = permitted_academic
     valid_scientific = permitted_scientific
@@ -690,6 +834,7 @@ async def upload_excel(
             duplicate_count += 1
             duplicates_detected.append({
                 "row": row.get("_excel_row", 0),
+                "sheet": row.get("_sheet_name", "Actividades Académicas"),
                 "title": row["title"],
             })
             continue
@@ -702,17 +847,21 @@ async def upload_excel(
             for ex in existing_academics:
                 if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
                     conflicts_detected.append({
+                        "row": row.get("_excel_row", 0),
+                        "sheet": row.get("_sheet_name", "Actividades Académicas"),
                         "activity_title": row["title"],
                         "conflicting_title": ex.title,
-                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "dates": f"{ex.start_date.strftime('%d/%m/%Y')} a {ex.end_date.strftime('%d/%m/%Y')}",
                         "career_id": c_id,
                     })
             for ex in existing_scientifics:
                 if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
                     conflicts_detected.append({
+                        "row": row.get("_excel_row", 0),
+                        "sheet": row.get("_sheet_name", "Actividades Académicas"),
                         "activity_title": row["title"],
                         "conflicting_title": ex.title,
-                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "dates": f"{ex.start_date.strftime('%d/%m/%Y')} a {ex.end_date.strftime('%d/%m/%Y')}",
                         "career_id": c_id,
                     })
 
@@ -723,6 +872,7 @@ async def upload_excel(
             duplicate_count += 1
             duplicates_detected.append({
                 "row": row.get("_excel_row", 0),
+                "sheet": row.get("_sheet_name", "Actividades Científicas"),
                 "title": row["title"],
             })
             continue
@@ -735,28 +885,32 @@ async def upload_excel(
             for ex in existing_academics:
                 if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
                     conflicts_detected.append({
+                        "row": row.get("_excel_row", 0),
+                        "sheet": row.get("_sheet_name", "Actividades Científicas"),
                         "activity_title": row["title"],
                         "conflicting_title": ex.title,
-                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "dates": f"{ex.start_date.strftime('%d/%m/%Y')} a {ex.end_date.strftime('%d/%m/%Y')}",
                         "career_id": c_id,
                     })
             for ex in existing_scientifics:
                 if ex.career_id == c_id and ex.gestion_id == g_id and overlaps(row["start_date"], row["end_date"], ex.start_date, ex.end_date):
                     conflicts_detected.append({
+                        "row": row.get("_excel_row", 0),
+                        "sheet": row.get("_sheet_name", "Actividades Científicas"),
                         "activity_title": row["title"],
                         "conflicting_title": ex.title,
-                        "dates": f"{ex.start_date} a {ex.end_date}",
+                        "dates": f"{ex.start_date.strftime('%d/%m/%Y')} a {ex.end_date.strftime('%d/%m/%Y')}",
                         "career_id": c_id,
                     })
 
     inserted_count = 0
     try:
         if filtered_academic:
-            academic_db_rows = [{k: v for k, v in r.items() if k != "_excel_row"} for r in filtered_academic]
+            academic_db_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in filtered_academic]
             db.bulk_insert_mappings(AcademicActivity, academic_db_rows)
             inserted_count += len(filtered_academic)
         if filtered_scientific:
-            scientific_db_rows = [{k: v for k, v in r.items() if k != "_excel_row"} for r in filtered_scientific]
+            scientific_db_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in filtered_scientific]
             db.bulk_insert_mappings(ScientificActivity, scientific_db_rows)
             inserted_count += len(filtered_scientific)
         
