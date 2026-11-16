@@ -49,6 +49,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
     volumes:
       - agenda_uploads:/app/uploads
+      - agenda_reports:/app/reports
     depends_on:
       - db
       - redis
@@ -80,6 +81,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD:-}
     volumes:
       - agenda_uploads:/app/uploads
+      - agenda_reports:/app/reports
     depends_on:
       - db
       - redis
@@ -114,6 +116,7 @@ services:
 volumes:
   agenda_postgres_data:
   agenda_uploads:
+  agenda_reports:
 
 networks:
   agenda-internal:
