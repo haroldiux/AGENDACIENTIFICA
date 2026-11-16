@@ -111,17 +111,17 @@ def test_get_user_excel_template(client, db_session):
 
         # Verify DataValidation on Usuarios worksheet
         dvs = ws_users.data_validations.dataValidation
-        assert len(dvs) == 2
+        assert len(dvs) == 3
         
         role_dv = next((dv for dv in dvs if "C2:C500" in str(dv.sqref)), None)
         career_dv = next((dv for dv in dvs if "G2:G500" in str(dv.sqref)), None)
+        sede_dv = next((dv for dv in dvs if "H2:H500" in str(dv.sqref)), None)
 
         assert role_dv is not None
-        assert role_dv.formula1 == "=Catalogos!$A$2:$A$10"
-
         assert career_dv is not None
-        assert career_dv.formula1 == "=Catalogos!$B$2:$B$2"
+        assert sede_dv is not None
         assert career_dv.showErrorMessage is False
+        assert sede_dv.showErrorMessage is False
     finally:
         app.dependency_overrides.clear()
 

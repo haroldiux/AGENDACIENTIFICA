@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.models import User, Career
+from app.models.models import User, Career, Sede
 from app.schemas.schemas import (
     UserResponse,
     UserCreate,
@@ -46,6 +46,11 @@ ROLE_MAP = {
     "jefe de investigación": RoleEnum.jefe_investigacion,
     "jefe de investigacion": RoleEnum.jefe_investigacion,
     "jefe_investigacion": RoleEnum.jefe_investigacion,
+    "vicerrector de sede": RoleEnum.vicerrector_sede,
+    "vicerrector_sede": RoleEnum.vicerrector_sede,
+    "director académico de sede": RoleEnum.director_academico_sede,
+    "director academico de sede": RoleEnum.director_academico_sede,
+    "director_academico_sede": RoleEnum.director_academico_sede,
 }
 
 for r in RoleEnum:
@@ -143,11 +148,12 @@ def list_users(
     search: Optional[str] = Query(None),
     role: Optional[RoleEnum] = Query(None),
     career_id: Optional[int] = Query(None),
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
     """
-    List users with pagination, search, role, and career filters.
+    List users with pagination, search, role, career, and sede filters.
     """
     query = db.query(User)
 
@@ -165,6 +171,9 @@ def list_users(
 
     if career_id:
         query = query.filter(User.careers.any(Career.id == career_id))
+
+    if sede_id:
+        query = query.filter(User.sede_id == sede_id)
 
     total = query.count()
     pages = math.ceil(total / page_size) if total > 0 else 1
@@ -196,7 +205,7 @@ def get_user_excel_template(
     ws.title = "Usuarios"
 
     # Title / headers
-    ws.append(["Email *", "Nombre Completo", "Rol", "Teléfono", "Telegram Chat ID", "Contraseña", "IDs Carreras (separadas por coma)"])
+    ws.append(["Email *", "Nombre Completo", "Rol", "Teléfono", "Telegram Chat ID", "Contraseña", "IDs Carreras (separadas por coma)", "Sede"])
 
     careers = db.query(Career).order_by(Career.id).all()
     if careers:
@@ -204,22 +213,29 @@ def get_user_excel_template(
     else:
         career_options = ["1 - Carrera General"]
 
+    sedes = db.query(Sede).order_by(Sede.id).all()
+    if sedes:
+        sede_options = [f"{s.id} - {s.name}" for s in sedes]
+    else:
+        sede_options = ["1 - Sede Cochabamba"]
+
     sample_career = career_options[0]
-    ws.append(["ejemplo.docente@unitepc.edu.bo", "Juan Pérez", "Docente", "+59170000000", "12345678", "Unitepc2026!", sample_career])
-    ws.append(["coordinador.med@unitepc.edu.bo", "María Lopez", "Coordinador", "+59171111111", "", "Unitepc2026!", sample_career])
+    sample_sede = sede_options[0]
+    ws.append(["ejemplo.docente@unitepc.edu.bo", "Juan Pérez", "Docente", "+59170000000", "12345678", "Unitepc2026!", sample_career, sample_sede])
+    ws.append(["director.academico@unitepc.edu.bo", "María Lopez", "Director Académico de Sede", "+59171111111", "", "Unitepc2026!", "", sample_sede])
 
     # Header styling
     header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
     header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
 
-    for col in range(1, 8):
+    for col in range(1, 9):
         cell = ws.cell(row=1, column=col)
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
     # Column widths
-    widths = [35, 25, 18, 16, 20, 18, 30]
+    widths = [35, 25, 26, 16, 20, 18, 30, 24]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
 
@@ -233,27 +249,36 @@ def get_user_excel_template(
         "Super Admin",
         "Lectura",
         "Vicerrectorado",
+        "Vicerrector de Sede",
+        "Director Académico de Sede",
         "Director de Investigación",
         "Jefe de Investigación",
     ]
 
-    ws_cat.append(["Roles", "Carreras"])
-    max_rows = max(len(roles), len(career_options))
+    ws_cat.append(["Roles", "Carreras", "Sedes"])
+    max_rows = max(len(roles), len(career_options), len(sede_options))
     for i in range(max_rows):
         r_val = roles[i] if i < len(roles) else None
         c_val = career_options[i] if i < len(career_options) else None
-        ws_cat.append([r_val, c_val])
+        s_val = sede_options[i] if i < len(sede_options) else None
+        ws_cat.append([r_val, c_val, s_val])
 
     # DataValidation setup on Usuarios sheet
-    dv_role = DataValidation(type="list", formula1="=Catalogos!$A$2:$A$10", allow_blank=True)
+    dv_role = DataValidation(type="list", formula1=f"=Catalogos!$A$2:$A${1 + len(roles)}", allow_blank=True)
     ws.add_data_validation(dv_role)
     dv_role.add("C2:C500")
 
-    N = 1 + len(career_options)
-    dv_career = DataValidation(type="list", formula1=f"=Catalogos!$B$2:$B${N}", allow_blank=True)
+    N_car = 1 + len(career_options)
+    dv_career = DataValidation(type="list", formula1=f"=Catalogos!$B$2:$B${N_car}", allow_blank=True)
     dv_career.showErrorMessage = False
     ws.add_data_validation(dv_career)
     dv_career.add("G2:G500")
+
+    N_sede = 1 + len(sede_options)
+    dv_sede = DataValidation(type="list", formula1=f"=Catalogos!$C$2:$C${N_sede}", allow_blank=True)
+    dv_sede.showErrorMessage = False
+    ws.add_data_validation(dv_sede)
+    dv_sede.add("H2:H500")
 
     output = BytesIO()
     wb.save(output)
@@ -314,6 +339,16 @@ def import_users_excel(
     existing_emails = set(e[0].lower() for e in db.query(User.email).all())
     processed_emails_in_batch = set()
 
+    # Pre-fetch Sedes map for fast resolution
+    sedes_all = db.query(Sede).all()
+    sede_map = {}
+    for s in sedes_all:
+        sede_map[str(s.id)] = s.id
+        sede_map[s.name.strip().upper()] = s.id
+        sede_map[f"{s.id} - {s.name}".strip().upper()] = s.id
+        clean_name = s.name.upper().replace("SEDE", "").strip()
+        sede_map[clean_name] = s.id
+
     for idx, r in enumerate(data_rows, start=header_idx + 2):
         if not r or all(cell is None or str(cell).strip() == "" for cell in r):
             total_rows -= 1
@@ -326,6 +361,7 @@ def import_users_excel(
         telegram_val = str(r[4]).strip() if len(r) > 4 and r[4] is not None else None
         password_val = str(r[5]).strip() if len(r) > 5 and r[5] is not None else "Unitepc2026!"
         careers_val = str(r[6]).strip() if len(r) > 6 and r[6] is not None else ""
+        sede_val = str(r[7]).strip() if len(r) > 7 and r[7] is not None else ""
 
         if not email_val or "@" not in email_val:
             row_errors.append(UserImportRowError(row=idx, email=email_val or None, error="Email inválido o ausente"))
@@ -352,11 +388,23 @@ def import_users_excel(
             if valid_cids:
                 career_objects = db.query(Career).filter(Career.id.in_(valid_cids)).all()
 
+        matched_sede_id = None
+        if sede_val:
+            s_clean = sede_val.upper()
+            if s_clean in sede_map:
+                matched_sede_id = sede_map[s_clean]
+            else:
+                parts = s_clean.split("-")
+                first_part = parts[0].strip()
+                if first_part in sede_map:
+                    matched_sede_id = sede_map[first_part]
+
         try:
             new_user = User(
                 email=email_val,
                 full_name=name_val or None,
                 role=role_enum_val,
+                sede_id=matched_sede_id,
                 phone_number=phone_val or None,
                 telegram_chat_id=telegram_val or None,
                 hashed_password=get_password_hash(password_val if password_val else "Unitepc2026!"),

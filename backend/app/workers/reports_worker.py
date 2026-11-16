@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 
 from app.core.celery_app import celery_app
+from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion
 from app.schemas.schemas import ConflictItem

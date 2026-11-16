@@ -82,7 +82,9 @@ def update_academic_activity(
 
     update_data = activity_update.model_dump(exclude_unset=True)
     if "career_id" in update_data and update_data["career_id"] != db_activity.career_id:
-        check_activity_scope_permission(current_user, update_data["career_id"])
+        target_sede = update_data.get("sede_id", db_activity.sede_id)
+        target_pilar = update_data.get("pilar", db_activity.pilar or "academica")
+        check_activity_scope_permission(current_user, update_data["career_id"], target_sede, target_pilar)
 
     if "category_id" in update_data and update_data["category_id"] is not None:
         cat = db.query(ActivityCategory).filter(ActivityCategory.id == update_data["category_id"]).first()
@@ -106,7 +108,12 @@ def delete_academic_activity(
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    check_activity_scope_permission(current_user, db_activity.career_id)
+    check_activity_scope_permission(
+        current_user,
+        career_id=db_activity.career_id,
+        sede_id=db_activity.sede_id,
+        pilar=db_activity.pilar or "academica",
+    )
 
     db.delete(db_activity)
     db.commit()
@@ -119,7 +126,12 @@ def batch_import_academic_activities(
     current_user: User = Depends(require_read_only_get),
 ):
     for activity in activities:
-        check_activity_scope_permission(current_user, activity.career_id)
+        check_activity_scope_permission(
+            current_user,
+            career_id=activity.career_id,
+            sede_id=activity.sede_id,
+            pilar=activity.pilar or "academica",
+        )
 
     db_activities = []
     for activity in activities:

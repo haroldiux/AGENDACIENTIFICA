@@ -565,7 +565,7 @@ export const api = {
       telegram_chat_id?: string | null;
     }) => apiClient.patch('/users/me', data).then((res) => res.data),
     testTelegram: () => apiClient.post('/users/me/test-telegram').then((res) => res.data),
-    list: (params?: { page?: number; page_size?: number; search?: string; role?: string; career_id?: number }) =>
+    list: (params?: { page?: number; page_size?: number; search?: string; role?: string; career_id?: number; sede_id?: number }) =>
       apiClient.get<PaginatedUserResponse>('/users/', { params }).then((res) => res.data),
     create: (data: UserCreateData) =>
       apiClient.post<UserResponseItem>('/users/', data).then((res) => res.data),

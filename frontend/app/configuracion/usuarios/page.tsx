@@ -38,6 +38,7 @@ import {
   type UserResponseItem,
   type RoleEnum,
   type Career,
+  type Sede,
   type UserImportReport,
 } from "@/lib/api";
 import { usePermissions, ROLE_LABELS } from "@/lib/usePermissions";
@@ -61,6 +62,7 @@ export default function UserManagementPage() {
 
   const [users, setUsers] = useState<UserResponseItem[]>([]);
   const [careers, setCareers] = useState<Career[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +74,7 @@ export default function UserManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [selectedCareer, setSelectedCareer] = useState<string>("");
+  const [selectedSede, setSelectedSede] = useState<string>("");
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -93,6 +96,7 @@ export default function UserManagementPage() {
     phone_number: "",
     telegram_chat_id: "",
     role: "teacher" as RoleEnum,
+    sede_id: null as number | null,
     career_ids: [] as number[],
   });
 
@@ -103,17 +107,22 @@ export default function UserManagementPage() {
     phone_number: "",
     telegram_chat_id: "",
     role: "teacher" as RoleEnum,
+    sede_id: null as number | null,
     is_active: true,
     career_ids: [] as number[],
     password: "",
   });
 
-  // Load careers
+  // Load careers and sedes
   useEffect(() => {
     api.careers
       .list()
       .then((data) => setCareers(data))
       .catch((err) => console.error("Error loading careers:", err));
+    api.sedes
+      .list()
+      .then((data) => setSedes(data))
+      .catch((err) => console.error("Error loading sedes:", err));
   }, []);
 
   // Load Users
@@ -127,6 +136,7 @@ export default function UserManagementPage() {
         search: searchQuery || undefined,
         role: selectedRole || undefined,
         career_id: selectedCareer ? parseInt(selectedCareer, 10) : undefined,
+        sede_id: selectedSede ? parseInt(selectedSede, 10) : undefined,
       });
       setUsers(data.items);
       setTotalPages(data.pages);
@@ -140,7 +150,7 @@ export default function UserManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, searchQuery, selectedRole, selectedCareer]);
+  }, [page, pageSize, searchQuery, selectedRole, selectedCareer, selectedSede]);
 
   useEffect(() => {
     if (canManage) {
@@ -183,6 +193,7 @@ export default function UserManagementPage() {
         phone_number: createForm.phone_number || undefined,
         telegram_chat_id: createForm.telegram_chat_id || undefined,
         role: createForm.role,
+        sede_id: createForm.sede_id || undefined,
         career_ids: createForm.career_ids,
       });
       toast.success("Usuario creado exitosamente");
@@ -194,6 +205,7 @@ export default function UserManagementPage() {
         phone_number: "",
         telegram_chat_id: "",
         role: "teacher",
+        sede_id: null,
         career_ids: [],
       });
       loadUsers();
@@ -215,6 +227,7 @@ export default function UserManagementPage() {
       phone_number: userItem.phone_number || "",
       telegram_chat_id: userItem.telegram_chat_id || "",
       role: userItem.role,
+      sede_id: userItem.sede_id ?? null,
       is_active: userItem.is_active,
       career_ids: userItem.careers.map((c) => c.id),
       password: "",
@@ -235,6 +248,7 @@ export default function UserManagementPage() {
         phone_number: editForm.phone_number || undefined,
         telegram_chat_id: editForm.telegram_chat_id || undefined,
         role: editForm.role,
+        sede_id: editForm.sede_id || null,
         is_active: editForm.is_active,
         career_ids: editForm.career_ids,
         password: editForm.password ? editForm.password : undefined,
@@ -367,6 +381,24 @@ export default function UserManagementPage() {
 
           <div>
             <select
+              value={selectedSede}
+              onChange={(e) => {
+                setSelectedSede(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 border border-input rounded-xl text-sm bg-background text-foreground focus:outline-none focus:ring-1 focus:border-primary/50 dark:bg-slate-800/60 dark:border-white/10"
+            >
+              <option value="">Todas las Sedes</option>
+              {sedes.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <select
               value={selectedCareer}
               onChange={(e) => {
                 setSelectedCareer(e.target.value);
@@ -409,6 +441,7 @@ export default function UserManagementPage() {
                 <TableRow className="border-b-0 hover:bg-transparent">
                   <TableHead className="text-muted-foreground">Usuario</TableHead>
                   <TableHead className="text-muted-foreground">Rol</TableHead>
+                  <TableHead className="text-muted-foreground">Sede</TableHead>
                   <TableHead className="text-muted-foreground">Contacto</TableHead>
                   <TableHead className="text-muted-foreground">Carreras Asignadas</TableHead>
                   <TableHead className="text-center text-muted-foreground">Estado</TableHead>
@@ -426,6 +459,16 @@ export default function UserManagementPage() {
                       <Badge variant="outline" className={ROLE_BADGE_STYLES[u.role] || ""}>
                         {ROLE_LABELS[u.role] || u.role}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm text-foreground">
+                      {u.sede ? (
+                        <Badge variant="outline" className="bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950 dark:text-sky-300 flex items-center gap-1 w-fit text-xs font-normal">
+                          <Building2 className="w-3 h-3 text-sky-600 dark:text-sky-400" />
+                          {u.sede.name}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Nacional / Todas</span>
+                      )}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-xs text-muted-foreground">
                       {u.phone_number && <div>Tel: {u.phone_number}</div>}
@@ -591,6 +634,29 @@ export default function UserManagementPage() {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-semibold mb-1 flex items-center justify-between">
+                    <span>Sede</span>
+                    {["vicerrector_sede", "director_academico_sede", "director_investigacion"].includes(createForm.role) && (
+                      <span className="text-[10px] text-destructive font-medium">* Requerida</span>
+                    )}
+                  </label>
+                  <select
+                    value={createForm.sede_id || ""}
+                    onChange={(e) => setCreateForm({ ...createForm, sede_id: e.target.value ? Number(e.target.value) : null })}
+                    className="w-full px-3 py-2 border rounded-md text-sm bg-background"
+                  >
+                    <option value="">Todas / Nacional (Sin sede fija)</option>
+                    {sedes.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-semibold mb-1">Teléfono</label>
                   <input
                     type="text"
@@ -600,17 +666,16 @@ export default function UserManagementPage() {
                     className="w-full px-3 py-2 border rounded-md text-sm bg-background"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1">Telegram Chat ID</label>
-                <input
-                  type="text"
-                  placeholder="Ej. 123456789"
-                  value={createForm.telegram_chat_id}
-                  onChange={(e) => setCreateForm({ ...createForm, telegram_chat_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md text-sm bg-background"
-                />
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Telegram Chat ID</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. 123456789"
+                    value={createForm.telegram_chat_id}
+                    onChange={(e) => setCreateForm({ ...createForm, telegram_chat_id: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md text-sm bg-background"
+                  />
+                </div>
               </div>
 
               <div>
@@ -707,7 +772,7 @@ export default function UserManagementPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold mb-1">Rol</label>
                   <select
@@ -725,6 +790,27 @@ export default function UserManagementPage() {
                         }
                       >
                         {rLabel}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold mb-1 flex items-center justify-between">
+                    <span>Sede</span>
+                    {["vicerrector_sede", "director_academico_sede", "director_investigacion"].includes(editForm.role) && (
+                      <span className="text-[10px] text-destructive font-medium">* Requerida</span>
+                    )}
+                  </label>
+                  <select
+                    value={editForm.sede_id || ""}
+                    onChange={(e) => setEditForm({ ...editForm, sede_id: e.target.value ? Number(e.target.value) : null })}
+                    className="w-full px-3 py-2 border rounded-md text-sm bg-background"
+                  >
+                    <option value="">Todas / Nacional (Sin sede fija)</option>
+                    {sedes.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
                       </option>
                     ))}
                   </select>

@@ -223,7 +223,12 @@ def delete_scientific_activity(
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
         
-    check_activity_scope_permission(current_user, db_activity.career_id)
+    check_activity_scope_permission(
+        current_user,
+        career_id=db_activity.career_id,
+        sede_id=db_activity.sede_id,
+        pilar=db_activity.pilar or "investigacion",
+    )
             
     db.delete(db_activity)
     db.commit()
@@ -286,7 +291,12 @@ async def upload_scientific_activity_evidence(
     if not db_activity:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-    check_activity_scope_permission(current_user, db_activity.career_id)
+    check_activity_scope_permission(
+        current_user,
+        career_id=db_activity.career_id,
+        sede_id=db_activity.sede_id,
+        pilar=db_activity.pilar or "investigacion",
+    )
 
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS and file.content_type not in ALLOWED_MIME_TYPES:
@@ -355,7 +365,12 @@ def delete_scientific_activity_evidence(
         raise HTTPException(status_code=404, detail="Evidence not found")
 
     if evidence.scientific_activity:
-        check_activity_scope_permission(current_user, evidence.scientific_activity.career_id)
+        check_activity_scope_permission(
+            current_user,
+            career_id=evidence.scientific_activity.career_id,
+            sede_id=evidence.scientific_activity.sede_id,
+            pilar=evidence.scientific_activity.pilar or "investigacion",
+        )
 
     if os.path.exists(evidence.file_path):
         try:
