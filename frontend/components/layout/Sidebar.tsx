@@ -22,6 +22,7 @@ import {
   Users,
   Sparkles,
   Bell,
+  CalendarRange,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,7 @@ export default function Sidebar() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user, logout } = useUser();
-  const { canManageCategories, canManageUsers, role } = usePermissions();
+  const { canManageCategories, canManageUsers, canManageGestiones, role } = usePermissions();
 
   useEffect(() => {
     setMounted(true);
@@ -66,6 +67,9 @@ export default function Sidebar() {
     BASE_NAV_ITEMS[2],
     ...(canManageCategories
       ? [{ href: "/configuracion/categorias", label: "Categorías", icon: Tag }]
+      : []),
+    ...(canManageGestiones
+      ? [{ href: "/configuracion/gestiones", label: "Gestiones", icon: CalendarRange }]
       : []),
     ...(canManageUsers
       ? [{ href: "/configuracion/usuarios", label: "Usuarios", icon: Users }]

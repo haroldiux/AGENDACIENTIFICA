@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {
+  api,
   PublicCalendarItem,
   PublicMetadata,
   PublicCalendarFilters,
@@ -19,6 +20,7 @@ import {
   Building2,
   Tag,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,7 +95,22 @@ export default function PublicCalendarExplorer({
             <span>Filtros de Exploración</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Export / Subscribe iCal */}
+            <a
+              href={api.publicPortal.getExportIcsUrl({
+                gestion_id: filters.gestion_id || undefined,
+                career_id: filters.career_id || undefined,
+                sede_id: filters.sede_id || undefined,
+              })}
+              download="agenda_unitepc.ics"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50/60 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors shadow-xs"
+              title="Descargar o sincronizar con Google Calendar, Apple Calendar u Outlook"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Exportar (.ics)</span>
+            </a>
+
             {hasActiveFilters && (
               <Button
                 variant="ghost"

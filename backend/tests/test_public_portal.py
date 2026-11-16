@@ -202,3 +202,29 @@ def test_download_public_evidence_path_traversal_prevention(client: TestClient, 
     res = client.get(f"/api/v1/public-portal/evidences/{malicious_evidence.id}/download")
     assert res.status_code == 400
     assert "path traversal" in res.json()["detail"].lower()
+
+
+def test_export_public_ical(client: TestClient, db_session):
+    gestion = Gestion(name="1-2026", start_date=date(2026, 2, 1), end_date=date(2026, 6, 30))
+    career = Career(name="Bioquimica", faculty="Ciencias de la Salud")
+    db_session.add_all([gestion, career])
+    db_session.commit()
+
+    academic_act = AcademicActivity(
+        career_id=career.id,
+        gestion_id=gestion.id,
+        title="Inicio de Clases Bioquimica",
+        start_date=date(2026, 2, 15),
+        end_date=date(2026, 2, 15),
+        category="ACADEMICA",
+    )
+    db_session.add(academic_act)
+    db_session.commit()
+
+    res = client.get("/api/v1/public-portal/export-ics", params={"gestion_id": gestion.id})
+    assert res.status_code == 200
+    assert "text/calendar" in res.headers.get("content-type", "")
+    assert "BEGIN:VCALENDAR" in res.text
+    assert "Inicio de Clases Bioquimica" in res.text
+    assert "END:VCALENDAR" in res.text
+

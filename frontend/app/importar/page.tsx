@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle, AlertTriangle, X, Loader2, Download, CopyX } from "lucide-react";
+import Link from "next/link";
+import { UploadCloud, FileSpreadsheet, CheckCircle, AlertCircle, AlertTriangle, X, Loader2, Download, CopyX, CalendarRange } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { api } from "@/lib/api";
 import PageHeader from "@/components/layout/PageHeader";
@@ -137,6 +138,15 @@ export default function ImportarPage() {
       <PageHeader
         title="Importar Calendario Académico"
         description="Sube un archivo Excel con las actividades académicas y/o científicas. El sistema las fusionará automáticamente con el calendario existente."
+        actions={
+          <Link
+            href="/configuracion/gestiones"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors border border-border rounded-lg px-3 py-2 bg-surface hover:bg-muted shadow-xs font-medium"
+          >
+            <CalendarRange className="w-3.5 h-3.5" />
+            Administrar / Vaciar Gestiones →
+          </Link>
+        }
       />
 
       {/* Upload Zone */}

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 
 from app.db.session import get_db
+from app.api.v1.fusion import export_ical_stream
 from app.models.models import (
     AcademicActivity,
     ScientificActivity,
@@ -468,3 +469,31 @@ def download_public_evidence(id: int, db: Session = Depends(get_db)):
         filename=evidence.filename,
         media_type=evidence.file_type or "application/octet-stream",
     )
+
+
+@router.get("/export-ics")
+def export_public_ical(
+    career_id: Optional[int] = Query(None),
+    gestion_id: Optional[int] = Query(None),
+    sede_id: Optional[int] = Query(None),
+    regimen: Optional[str] = Query(None),
+    pilar: Optional[str] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Exports the public calendar activities as an RFC 5545 iCalendar (.ics) stream.
+    Can be imported or subscribed to directly by calendar applications (Google Calendar, Outlook, Apple Calendar).
+    """
+    return export_ical_stream(
+        career_id=career_id,
+        gestion_id=gestion_id,
+        sede_id=sede_id,
+        regimen=regimen,
+        pilar=pilar,
+        start_date=start_date,
+        end_date=end_date,
+        db=db,
+    )
+

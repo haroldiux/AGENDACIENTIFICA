@@ -118,6 +118,10 @@ class UserAdminUpdate(BaseModel):
     sede_id: Optional[int] = None
     password: Optional[str] = None
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 class PaginatedUserResponse(BaseModel):
     items: List[UserResponse]
     total: int
@@ -159,9 +163,39 @@ class GestionBase(BaseModel):
 class GestionCreate(GestionBase):
     pass
 
+class GestionUpdate(BaseModel):
+    name: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+    @field_validator('name')
+    @classmethod
+    def name_must_be_semester_format(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if not _re.match(r'^[12]-\d{4}$', v.strip()):
+            raise ValueError(
+                "El nombre de la gestión debe tener el formato semestral: N-AAAA "
+                "(ej. 1-2026, 2-2026). El semestre debe ser 1 o 2."
+            )
+        return v.strip()
+
 class GestionResponse(GestionBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
+
+class GestionSummaryResponse(BaseModel):
+    gestion_id: int
+    gestion_name: str
+    academic_count: int
+    scientific_count: int
+    total_activities: int
+
+class GestionClearResponse(BaseModel):
+    detail: str
+    deleted_academic: int
+    deleted_scientific: int
+    total_deleted: int
 
 # --- Activity Category Schemas ---
 class ActivityCategoryBase(BaseModel):

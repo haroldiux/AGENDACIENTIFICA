@@ -88,6 +88,21 @@ export interface Gestion {
   end_date: string;
 }
 
+export interface GestionSummary {
+  gestion_id: number;
+  gestion_name: string;
+  academic_count: number;
+  scientific_count: number;
+  total_activities: number;
+}
+
+export interface GestionClearResponse {
+  detail: string;
+  deleted_academic: number;
+  deleted_scientific: number;
+  total_deleted: number;
+}
+
 // --- Scientific activities ---
 
 export type ScientificActivityType =
@@ -542,6 +557,17 @@ export const api = {
   },
   gestiones: {
     list: () => apiClient.get<Gestion[]>('/gestiones/').then((res) => res.data),
+    getById: (id: number) => apiClient.get<Gestion>(`/gestiones/${id}`).then((res) => res.data),
+    create: (data: { name: string; start_date: string; end_date: string }) =>
+      apiClient.post<Gestion>('/gestiones/', data).then((res) => res.data),
+    update: (id: number, data: { name?: string; start_date?: string; end_date?: string }) =>
+      apiClient.put<Gestion>(`/gestiones/${id}`, data).then((res) => res.data),
+    delete: (id: number) =>
+      apiClient.delete<{ detail: string }>(`/gestiones/${id}`).then((res) => res.data),
+    summary: (id: number) =>
+      apiClient.get<GestionSummary>(`/gestiones/${id}/summary`).then((res) => res.data),
+    clearActivities: (id: number) =>
+      apiClient.post<GestionClearResponse>(`/gestiones/${id}/clear-activities`).then((res) => res.data),
   },
   dashboard: {
     stats: (filters?: DashboardFilters) =>
@@ -567,6 +593,8 @@ export const api = {
       phone_number?: string | null;
       telegram_chat_id?: string | null;
     }) => apiClient.patch('/users/me', data).then((res) => res.data),
+    changePassword: (data: { current_password: string; new_password: string }) =>
+      apiClient.post<{ status: string; message: string }>('/users/me/change-password', data).then((res) => res.data),
     testTelegram: () => apiClient.post('/users/me/test-telegram').then((res) => res.data),
     list: (params?: { page?: number; page_size?: number; search?: string; role?: string; career_id?: number; sede_id?: number }) =>
       apiClient.get<PaginatedUserResponse>('/users/', { params }).then((res) => res.data),
@@ -648,6 +676,14 @@ export const api = {
         .then((res) => res.data),
     getEvidenceDownloadUrl: (id: number) =>
       `${API_URL}/public-portal/evidences/${id}/download`,
+    getExportIcsUrl: (params?: { gestion_id?: number; career_id?: number; sede_id?: number }) => {
+      const query = new URLSearchParams();
+      if (params?.gestion_id) query.append('gestion_id', String(params.gestion_id));
+      if (params?.career_id) query.append('career_id', String(params.career_id));
+      if (params?.sede_id) query.append('sede_id', String(params.sede_id));
+      const qs = query.toString();
+      return `${API_URL}/public-portal/export-ics${qs ? `?${qs}` : ''}`;
+    },
   },
   userPreferences: {
     get: () =>

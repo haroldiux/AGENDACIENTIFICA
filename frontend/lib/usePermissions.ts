@@ -55,6 +55,7 @@ export function usePermissions() {
   const isReadOnly = !!role && READ_ONLY_ROLES.includes(role);
   const canManageUsers = !!role && USER_ADMIN_ROLES.includes(role);
   const canManageCategories = !!role && CATEGORY_MANAGER_ROLES.includes(role);
+  const canManageGestiones = isGlobalRole || role === "director_investigacion";
 
   const canCreatePilar = (pilar: string) => {
     if (!role || isReadOnly) return false;
@@ -98,6 +99,7 @@ export function usePermissions() {
     isReadOnly,
     canManageUsers,
     canManageCategories,
+    canManageGestiones,
     canManageActivity,
     canCreatePilar,
     allowedPilares,

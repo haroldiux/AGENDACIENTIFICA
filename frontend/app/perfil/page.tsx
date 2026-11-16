@@ -16,6 +16,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Pencil,
+  Lock,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useUser } from "@/context/AuthContext";
@@ -44,6 +48,18 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({ full_name: "" });
 
+  // Password change state
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdForm, setPwdForm] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+
   useEffect(() => {
     if (user) setForm({ full_name: user.full_name || "" });
   }, [user]);
@@ -62,6 +78,37 @@ export default function ProfilePage() {
       toast.error(err?.response?.data?.detail || "Ocurrió un error al actualizar el perfil.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pwdForm.current_password) {
+      toast.error("Ingresá tu contraseña actual");
+      return;
+    }
+    if (pwdForm.new_password.length < 6) {
+      toast.error("La nueva contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    if (pwdForm.new_password !== pwdForm.confirm_password) {
+      toast.error("Las nuevas contraseñas no coinciden");
+      return;
+    }
+
+    setPwdLoading(true);
+    try {
+      await api.users.changePassword({
+        current_password: pwdForm.current_password,
+        new_password: pwdForm.new_password,
+      });
+      toast.success("Contraseña actualizada correctamente");
+      setPwdForm({ current_password: "", new_password: "", confirm_password: "" });
+      setIsChangingPassword(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Error al actualizar la contraseña");
+    } finally {
+      setPwdLoading(false);
     }
   };
 
@@ -191,6 +238,123 @@ export default function ProfilePage() {
             <p className="text-foreground font-medium">
               {user.full_name || <span className="text-muted-foreground italic text-sm">No configurado — hacé clic en Editar</span>}
             </p>
+          )}
+        </div>
+      </div>
+
+      {/* PASSWORD CHANGE SECTION */}
+      <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden dark:bg-slate-900/60 dark:border-white/10">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between dark:border-white/5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center">
+              <KeyRound className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-foreground">Seguridad y Contraseña</span>
+              <p className="text-xs text-muted-foreground">Cambiá tu contraseña de acceso al sistema</p>
+            </div>
+          </div>
+          {!isChangingPassword && (
+            <button
+              onClick={() => setIsChangingPassword(true)}
+              className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+            >
+              Cambiar contraseña
+            </button>
+          )}
+        </div>
+        <div className="px-5 py-4">
+          {isChangingPassword ? (
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Contraseña actual</label>
+                <div className="relative">
+                  <Input
+                    type={showCurrentPwd ? "text" : "password"}
+                    value={pwdForm.current_password}
+                    onChange={(e) => setPwdForm({ ...pwdForm, current_password: e.target.value })}
+                    placeholder="Tu contraseña actual"
+                    className="pr-10 bg-background border-input text-foreground"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPwd(!showCurrentPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showCurrentPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Nueva contraseña (mínimo 6 caracteres)</label>
+                  <div className="relative">
+                    <Input
+                      type={showNewPwd ? "text" : "password"}
+                      value={pwdForm.new_password}
+                      onChange={(e) => setPwdForm({ ...pwdForm, new_password: e.target.value })}
+                      placeholder="Nueva contraseña"
+                      className="pr-10 bg-background border-input text-foreground"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPwd(!showNewPwd)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Confirmar nueva contraseña</label>
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPwd ? "text" : "password"}
+                      value={pwdForm.confirm_password}
+                      onChange={(e) => setPwdForm({ ...pwdForm, confirm_password: e.target.value })}
+                      placeholder="Repetir nueva contraseña"
+                      className="pr-10 bg-background border-input text-foreground"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Button type="submit" disabled={pwdLoading} size="sm" className="gap-1.5">
+                  {pwdLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Guardar nueva contraseña
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsChangingPassword(false);
+                    setPwdForm({ current_password: "", new_password: "", confirm_password: "" });
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground font-mono">••••••••••••</span>
+              <span className="text-xs text-muted-foreground">Protegida</span>
+            </div>
           )}
         </div>
       </div>

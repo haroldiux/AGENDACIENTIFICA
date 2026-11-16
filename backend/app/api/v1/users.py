@@ -13,13 +13,14 @@ from app.schemas.schemas import (
     UserCreate,
     UserUpdate,
     UserAdminUpdate,
+    ChangePasswordRequest,
     PaginatedUserResponse,
     UserImportReport,
     UserImportRowError,
     RoleEnum,
 )
 from app.api.deps import get_current_active_user, require_admin_role
-from app.core.security import get_password_hash
+from app.core.security import get_password_hash, verify_password
 from app.workers.notification_worker import send_telegram_message
 
 router = APIRouter()
@@ -112,6 +113,29 @@ def update_user_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.post("/me/change-password", status_code=status.HTTP_200_OK)
+def change_my_password(
+    password_data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Allow logged in user to update their own password."""
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña actual no es correcta.",
+        )
+    if len(password_data.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La nueva contraseña debe tener al menos 6 caracteres.",
+        )
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    db.add(current_user)
+    db.commit()
+    return {"status": "ok", "message": "Contraseña actualizada exitosamente."}
 
 
 @router.post("/me/test-telegram", status_code=status.HTTP_200_OK)
