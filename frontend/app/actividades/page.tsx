@@ -72,8 +72,8 @@ export default function ActividadesPage() {
           setCareers(careersData);
           setGestiones(gestionesData);
           setSedes(sedesData);
-          if (user?.sede_id && sedeId === null) {
-            setSedeId(user.sede_id);
+          if (user?.sede_id) {
+            setSedeId((curr) => (curr === null ? user.sede_id! : curr));
           }
         }
       })

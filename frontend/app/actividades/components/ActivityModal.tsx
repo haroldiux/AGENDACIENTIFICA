@@ -196,7 +196,7 @@ export default function ActivityModal({
         }
       })
       .catch(() => toast.error("Error cargando carreras, gestiones y categorías"));
-  }, [isOpen, activity, user]);
+  }, [isOpen, activity, user, defaultPilar]);
 
   // Req 1B — restrict career options to user's careers when career-scoped role
   const userCareers = user?.careers ?? [];

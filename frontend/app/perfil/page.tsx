@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Shield,
   GraduationCap,
+  Building2,
   CheckCircle2,
   AlertCircle,
   Pencil,
@@ -229,6 +230,25 @@ export default function ProfilePage() {
                 <span className={cn("w-1.5 h-1.5 rounded-full mr-1.5 inline-block", accent.dot)} />
                 {formatRole(user.role)}
               </Badge>
+            </div>
+          </div>
+
+          {/* Sede */}
+          <div className="px-5 py-4 flex items-center gap-4">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+              <Building2 className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground font-medium mb-1.5">Sede Universitaria</p>
+              {user.sede?.name ? (
+                <Badge variant="outline" className="text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25 px-2.5 py-0.5 rounded-full">
+                  {user.sede.name}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs font-semibold bg-muted text-muted-foreground border-border px-2.5 py-0.5 rounded-full">
+                  Nacional / Todas las sedes
+                </Badge>
+              )}
             </div>
           </div>
 

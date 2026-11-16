@@ -12,11 +12,25 @@ def _overlaps(start_a: date, end_a: date, start_b: date, end_b: date) -> bool:
     return start_a <= end_b and start_b <= end_a
 
 
-def find_conflicts(db: Session, career_id: Optional[int], gestion_id: int) -> list[ConflictItem]:
-    """Return overlapping academic/scientific activity pairs for a career and gestión.
+def _locations_conflict(sede_a: Optional[int], sede_b: Optional[int]) -> bool:
+    """Return True if locations conflict: either is global/national (None) or both belong to the same sede."""
+    if sede_a is None or sede_b is None:
+        return True
+    return sede_a == sede_b
+
+
+def find_conflicts(
+    db: Session,
+    career_id: Optional[int],
+    gestion_id: int,
+    sede_id: Optional[int] = None,
+) -> list[ConflictItem]:
+    """Return overlapping academic/scientific activity pairs for a career, sede, and gestión.
 
     If career_id is provided, includes both career-specific and global activities.
     If career_id is None, detects conflicts across all activities for that gestión.
+    If sede_id is provided, includes both sede-specific and national activities.
+    Activities in different physical sedes do not conflict.
     Cancelled scientific activities are excluded from detection.
     """
     academic_query = db.query(AcademicActivity).filter(AcademicActivity.gestion_id == gestion_id)
@@ -34,6 +48,14 @@ def find_conflicts(db: Session, career_id: Optional[int], gestion_id: int) -> li
             or_(ScientificActivity.career_id == career_id, ScientificActivity.career_id.is_(None))
         )
 
+    if sede_id is not None:
+        academic_query = academic_query.filter(
+            or_(AcademicActivity.sede_id == sede_id, AcademicActivity.sede_id.is_(None))
+        )
+        scientific_query = scientific_query.filter(
+            or_(ScientificActivity.sede_id == sede_id, ScientificActivity.sede_id.is_(None))
+        )
+
     academics = academic_query.all()
     scientifics = scientific_query.all()
 
@@ -45,7 +67,7 @@ def find_conflicts(db: Session, career_id: Optional[int], gestion_id: int) -> li
                 academic.end_date,
                 scientific.start_date,
                 scientific.end_date,
-            ):
+            ) and _locations_conflict(academic.sede_id, scientific.sede_id):
                 conflicts.append(
                     ConflictItem(
                         academic_id=academic.id,

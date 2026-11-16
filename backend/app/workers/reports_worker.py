@@ -5,9 +5,10 @@ from collections import defaultdict
 from datetime import datetime
 
 from app.core.celery_app import celery_app
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
-from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion
+from app.models.models import AcademicActivity, ScientificActivity, Career, Gestion, Sede
 from app.schemas.schemas import ConflictItem
 from app.services import conflict_service
 
@@ -188,7 +189,7 @@ def _conflict_month_group(conflicts):
     return grouped
 
 
-def build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db: Session = None):
+def build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db: Session = None, sede_id: int = None):
     grouped = _conflict_month_group(conflicts) if conflicts else {}
     grouped_list = []
     for (year, month) in sorted(grouped.keys()):
@@ -199,6 +200,7 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db: Session =
 
     career_name = "Todas las carreras / General"
     gestion_name = "Todas las gestiones"
+    sede_name = None
     if db:
         if career_id:
             c = db.query(Career).filter(Career.id == career_id).first()
@@ -208,11 +210,19 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db: Session =
             g = db.query(Gestion).filter(Gestion.id == gestion_id).first()
             if g:
                 gestion_name = g.name
+        if sede_id:
+            s = db.query(Sede).filter(Sede.id == sede_id).first()
+            if s:
+                sede_name = s.name
 
     cover_image_b64 = _get_cover_base64(career_id, career_name)
     total_conflicts = len(conflicts)
     unique_academic = len({c.academic_id for c in conflicts})
     unique_scientific = len({c.scientific_id for c in conflicts})
+
+    subtitle = f"{career_name} — {gestion_name}"
+    if sede_name:
+        subtitle += f" (Sede: {sede_name})"
 
     context = {
         **DEFAULT_CONTEXT,
@@ -222,11 +232,12 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db: Session =
         "unique_scientific": unique_scientific,
         "career_name": career_name,
         "gestion_name": gestion_name,
+        "sede_name": sede_name,
         "cover_image_b64": cover_image_b64,
         "current_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "now_str": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "report_title": "Reporte de Choques y Conflictos de Horario",
-        "subtitle": f"{career_name} — {gestion_name}"
+        "subtitle": subtitle,
     }
 
     template = jinja_env.get_template("conflict_report.html")
@@ -234,7 +245,7 @@ def build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db: Session =
     _write_pdf(html_out, filepath)
 
 
-def build_conflict_excel(conflicts, career_id, gestion_id, db: Session = None):
+def build_conflict_excel(conflicts, career_id, gestion_id, db: Session = None, sede_id: int = None):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
@@ -243,6 +254,7 @@ def build_conflict_excel(conflicts, career_id, gestion_id, db: Session = None):
 
     career_name = "Todas las carreras / General"
     gestion_name = "Todas las gestiones"
+    sede_name = None
     if db:
         if career_id:
             c = db.query(Career).filter(Career.id == career_id).first()
@@ -252,6 +264,10 @@ def build_conflict_excel(conflicts, career_id, gestion_id, db: Session = None):
             g = db.query(Gestion).filter(Gestion.id == gestion_id).first()
             if g:
                 gestion_name = g.name
+        if sede_id:
+            s = db.query(Sede).filter(Sede.id == sede_id).first()
+            if s:
+                sede_name = s.name
 
     wb = Workbook()
     ws = wb.active
@@ -440,13 +456,17 @@ def build_research_agenda_pdf(
     _write_pdf(html_out, filepath)
 
 
-def _build_table_report(filepath, career_id, gestion_id, db, status_filter=None):
+def _build_table_report(filepath, career_id, gestion_id, db, status_filter=None, sede_id=None):
     ac_query = db.query(AcademicActivity)
     sc_query = db.query(ScientificActivity)
 
     if career_id:
         ac_query = ac_query.filter(AcademicActivity.career_id == career_id)
         sc_query = sc_query.filter(ScientificActivity.career_id == career_id)
+
+    if sede_id:
+        ac_query = ac_query.filter(or_(AcademicActivity.sede_id == sede_id, AcademicActivity.sede_id.is_(None)))
+        sc_query = sc_query.filter(or_(ScientificActivity.sede_id == sede_id, ScientificActivity.sede_id.is_(None)))
 
     if gestion_id:
         ac_query = ac_query.filter(AcademicActivity.gestion_id == gestion_id)
@@ -467,13 +487,23 @@ def _build_table_report(filepath, career_id, gestion_id, db, status_filter=None)
     if status_filter:
         status_filter_label = get_status_label(status_filter)
 
+    sede_name = None
+    if sede_id:
+        s = db.query(Sede).filter(Sede.id == sede_id).first()
+        if s:
+            sede_name = s.name
+
+    sub_parts = [f"Carrera ID: {career_id or 'Todas'}", f"Gestión ID: {gestion_id}"]
+    if sede_name:
+        sub_parts.append(f"Sede: {sede_name}")
+
     context = {
         **DEFAULT_CONTEXT,
         "academic_activities": academic_activities,
         "scientific_activities": scientific_activities,
         "status_filter_label": status_filter_label,
         "current_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "subtitle": f"Carrera ID: {career_id or 'Todas'} — Gestión ID: {gestion_id}"
+        "subtitle": " — ".join(sub_parts)
     }
 
     template = jinja_env.get_template("activity_report.html")
@@ -481,7 +511,7 @@ def _build_table_report(filepath, career_id, gestion_id, db, status_filter=None)
     _write_pdf(html_out, filepath)
 
 
-def build_seguimiento_data(db, career_id, gestion_id):
+def build_seguimiento_data(db, career_id, gestion_id, sede_id=None):
     careers_all = db.query(Career).all()
     gestion = db.query(Gestion).filter(Gestion.id == gestion_id).first() if gestion_id else None
     gestion_name = gestion.name if gestion else "Gestión actual"
@@ -493,12 +523,22 @@ def build_seguimiento_data(db, career_id, gestion_id):
         c_list = careers_all
         career_name = "Todas las carreras"
 
+    sede_name = None
+    if sede_id:
+        s = db.query(Sede).filter(Sede.id == sede_id).first()
+        if s:
+            sede_name = s.name
+            career_name = f"{career_name} ({sede_name})"
+
     ac_query = db.query(AcademicActivity)
     sc_query = db.query(ScientificActivity)
 
     if career_id is not None:
         ac_query = ac_query.filter(AcademicActivity.career_id == career_id)
         sc_query = sc_query.filter(ScientificActivity.career_id == career_id)
+    if sede_id is not None:
+        ac_query = ac_query.filter(or_(AcademicActivity.sede_id == sede_id, AcademicActivity.sede_id.is_(None)))
+        sc_query = sc_query.filter(or_(ScientificActivity.sede_id == sede_id, ScientificActivity.sede_id.is_(None)))
     if gestion_id is not None:
         ac_query = ac_query.filter(AcademicActivity.gestion_id == gestion_id)
         sc_query = sc_query.filter(ScientificActivity.gestion_id == gestion_id)
@@ -606,8 +646,8 @@ def build_seguimiento_data(db, career_id, gestion_id):
     }
 
 
-def build_seguimiento_pdf(filepath, career_id, gestion_id, db):
-    data = build_seguimiento_data(db, career_id, gestion_id)
+def build_seguimiento_pdf(filepath, career_id, gestion_id, db, sede_id=None):
+    data = build_seguimiento_data(db, career_id, gestion_id, sede_id)
     context = {
         **DEFAULT_CONTEXT,
         **data,
@@ -619,7 +659,11 @@ def build_seguimiento_pdf(filepath, career_id, gestion_id, db):
 
 @celery_app.task
 def generate_pdf_report_task(
-    career_id: int = None, gestion_id: int = None, report_type: str = "table", status_filter: str = None
+    career_id: int = None,
+    gestion_id: int = None,
+    report_type: str = "table",
+    status_filter: str = None,
+    sede_id: int = None,
 ):
     db = SessionLocal()
     try:
@@ -627,10 +671,13 @@ def generate_pdf_report_task(
         filepath = os.path.join(REPORTS_DIR, filename)
 
         if report_type in ["seguimiento", "seguimiento-cumplimiento"]:
-            build_seguimiento_pdf(filepath, career_id, gestion_id, db)
+            build_seguimiento_pdf(filepath, career_id, gestion_id, db, sede_id)
         elif report_type == "conflict":
-            conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
-            build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db)
+            if sede_id is not None:
+                conflicts = conflict_service.find_conflicts(db, career_id, gestion_id, sede_id)
+            else:
+                conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
+            build_conflict_pdf(filepath, conflicts, career_id, gestion_id, db, sede_id)
         elif report_type in ["agenda-completa", "agenda-academica", "agenda-cientifica", "research-agenda"]:
             career = (
                 db.query(Career).filter(Career.id == career_id).first()
@@ -650,6 +697,8 @@ def generate_pdf_report_task(
                 query_sc = db.query(ScientificActivity)
                 if career_id is not None:
                     query_sc = query_sc.filter(ScientificActivity.career_id == career_id)
+                if sede_id is not None:
+                    query_sc = query_sc.filter(or_(ScientificActivity.sede_id == sede_id, ScientificActivity.sede_id.is_(None)))
                 if gestion_id is not None:
                     query_sc = query_sc.filter(ScientificActivity.gestion_id == gestion_id)
                 if status_filter:
@@ -661,11 +710,14 @@ def generate_pdf_report_task(
                 query_ac = db.query(AcademicActivity)
                 if career_id is not None:
                     query_ac = query_ac.filter(AcademicActivity.career_id == career_id)
+                if sede_id is not None:
+                    query_ac = query_ac.filter(or_(AcademicActivity.sede_id == sede_id, AcademicActivity.sede_id.is_(None)))
                 if gestion_id is not None:
                     query_ac = query_ac.filter(AcademicActivity.gestion_id == gestion_id)
                 activities_ac = query_ac.all()
             
             career_names = {c.id: c.name for c in db.query(Career.id, Career.name).all()}
+            sede_names = {s.id: s.name for s in db.query(Sede.id, Sede.name).all()}
 
             class UnifiedActivity:
                 def __init__(self, obj, is_scientific=True):
@@ -674,7 +726,9 @@ def generate_pdf_report_task(
                     self.end_date = obj.end_date
                     self.activity_type = obj.activity_type if is_scientific else obj.category
                     self.is_scientific = is_scientific
-                    self.career_name = career_names.get(obj.career_id) if obj.career_id else "Global"
+                    c_name = career_names.get(obj.career_id) if obj.career_id else "Global"
+                    s_name = sede_names.get(obj.sede_id) if obj.sede_id else "Nacional"
+                    self.career_name = f"{c_name} ({s_name})" if obj.sede_id else c_name
 
             activities = [UnifiedActivity(a, True) for a in activities_sc] + [UnifiedActivity(a, False) for a in activities_ac]
             activities.sort(key=lambda x: x.start_date)
@@ -686,11 +740,14 @@ def generate_pdf_report_task(
             else:
                 r_title = "Calendario Académico y Científico"
 
+            if sede_id and sede_id in sede_names:
+                r_title = f"{r_title} — {sede_names[sede_id]}"
+
             build_research_agenda_pdf(
                 filepath, activities, career_name, gestion_name, r_title, career_id=career_id
             )
         else:
-            _build_table_report(filepath, career_id, gestion_id, db, status_filter)
+            _build_table_report(filepath, career_id, gestion_id, db, status_filter, sede_id)
 
         return {"status": "completed", "file_path": filepath, "file_name": filename}
     except Exception as e:
@@ -703,13 +760,20 @@ def generate_pdf_report_task(
 
 @celery_app.task
 def generate_excel_report_task(
-    career_id: int = None, gestion_id: int = None, report_type: str = "table", status_filter: str = None
+    career_id: int = None,
+    gestion_id: int = None,
+    report_type: str = "table",
+    status_filter: str = None,
+    sede_id: int = None,
 ):
     db = SessionLocal()
     try:
         if report_type == "conflict":
-            conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
-            return build_conflict_excel(conflicts, career_id, gestion_id, db)
+            if sede_id is not None:
+                conflicts = conflict_service.find_conflicts(db, career_id, gestion_id, sede_id)
+            else:
+                conflicts = conflict_service.find_conflicts(db, career_id, gestion_id)
+            return build_conflict_excel(conflicts, career_id, gestion_id, db, sede_id)
 
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -718,7 +782,7 @@ def generate_excel_report_task(
         filepath = os.path.join(REPORTS_DIR, filename)
 
         if report_type in ["seguimiento", "seguimiento-cumplimiento"]:
-            data = build_seguimiento_data(db, career_id, gestion_id)
+            data = build_seguimiento_data(db, career_id, gestion_id, sede_id)
             wb = Workbook()
             
             # Sheet 1: Resumen Cumplimiento
@@ -777,6 +841,9 @@ def generate_excel_report_task(
         if career_id is not None:
             ac_query = ac_query.filter(AcademicActivity.career_id == career_id)
             sc_query = sc_query.filter(ScientificActivity.career_id == career_id)
+        if sede_id is not None:
+            ac_query = ac_query.filter(or_(AcademicActivity.sede_id == sede_id, AcademicActivity.sede_id.is_(None)))
+            sc_query = sc_query.filter(or_(ScientificActivity.sede_id == sede_id, ScientificActivity.sede_id.is_(None)))
         if gestion_id is not None:
             ac_query = ac_query.filter(AcademicActivity.gestion_id == gestion_id)
             sc_query = sc_query.filter(ScientificActivity.gestion_id == gestion_id)
@@ -786,29 +853,33 @@ def generate_excel_report_task(
         academic_activities = ac_query.all() if (not status_filter or status_filter == 'scheduled') else []
         scientific_activities = sc_query.all()
 
+        sede_names = {s.id: s.name for s in db.query(Sede.id, Sede.name).all()}
         wb = Workbook()
 
         # Academic sheet
         if academic_activities:
             ws_ac = wb.active
             ws_ac.title = "Académicas"
-            ws_ac.append(["Título", "Fecha inicio", "Fecha fin", "Categoría", "Carrera ID"])
+            ws_ac.append(["Título", "Fecha inicio", "Fecha fin", "Categoría", "Carrera ID", "Sede"])
             for act in academic_activities:
+                s_name = sede_names.get(act.sede_id, "Nacional / Todas") if act.sede_id else "Nacional / Todas"
                 ws_ac.append([
                     act.title,
                     act.start_date.isoformat() if act.start_date else "",
                     act.end_date.isoformat() if act.end_date else "",
                     act.category or "",
                     act.career_id,
+                    s_name,
                 ])
             ws_sc = wb.create_sheet("Científicas")
         else:
             ws_sc = wb.active
             ws_sc.title = "Científicas"
 
-        ws_sc.append(["Título", "Fecha inicio", "Fecha fin", "Tipo", "Estado", "Responsable", "Evidencias / Respaldos", "Observaciones / Justificación", "Carrera ID"])
+        ws_sc.append(["Título", "Fecha inicio", "Fecha fin", "Tipo", "Estado", "Responsable", "Evidencias / Respaldos", "Observaciones / Justificación", "Carrera ID", "Sede"])
         for act in scientific_activities:
             has_ev = (len(act.evidences) > 0 or bool(act.evidence_url)) if hasattr(act, 'evidences') else False
+            s_name = sede_names.get(act.sede_id, "Nacional / Todas") if act.sede_id else "Nacional / Todas"
             ws_sc.append([
                 act.title,
                 act.start_date.isoformat() if act.start_date else "",
@@ -819,9 +890,12 @@ def generate_excel_report_task(
                 f"✓ Con evidencia ({len(act.evidences)} archivos)" if (hasattr(act, 'evidences') and len(act.evidences) > 0) else ("✓ Con evidencia" if has_ev else "Sin evidencia"),
                 act.notes or "—",
                 act.career_id,
+                s_name,
             ])
 
         wb.save(filepath)
+
+        return {"status": "completed", "file_path": filepath, "file_name": filename}
 
         return {"status": "completed", "file_path": filepath, "file_name": filename}
     except Exception as e:

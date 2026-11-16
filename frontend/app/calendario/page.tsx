@@ -76,8 +76,8 @@ export default function CalendarioPage() {
           setSedes(sedesData);
 
           // If user belongs to a specific sede, preselect it
-          if (user?.sede_id && sedeId === null) {
-            setSedeId(user.sede_id);
+          if (user?.sede_id) {
+            setSedeId((curr) => (curr === null ? user.sede_id! : curr));
           }
           
           // Select active gestion by checking current date
@@ -88,16 +88,15 @@ export default function CalendarioPage() {
             return today >= start && today <= end;
           });
           
-          if (activeGestion && gestionId === null) {
-            setGestionId(activeGestion.id);
-          } else if (gestionesData.length > 0 && gestionId === null) {
-            const mostRecent = [...gestionesData].sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())[0];
-            setGestionId(mostRecent.id);
-          }
+          const mostRecent = gestionesData.length > 0
+            ? [...gestionesData].sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())[0]
+            : null;
+
+          setGestionId((curr) => (curr !== null ? curr : (activeGestion?.id ?? mostRecent?.id ?? null)));
           
           // Default career for restricted users with single career
-          if (filteredCareers.length === 1 && user && !GLOBAL_ROLES.includes(user.role as any) && careerId === null) {
-            setCareerId(filteredCareers[0].id);
+          if (filteredCareers.length === 1 && user && !GLOBAL_ROLES.includes(user.role as any)) {
+            setCareerId((curr) => (curr !== null ? curr : filteredCareers[0].id));
           }
         }
       } catch (err) {

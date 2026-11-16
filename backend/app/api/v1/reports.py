@@ -110,10 +110,42 @@ def generate_report(
     current_user: User = Depends(require_read_only_get),
 ):
     _check_celery_broker()
+    effective_sede_id = request.sede_id
+    if current_user.sede_id and not effective_sede_id:
+        effective_sede_id = current_user.sede_id
+
     if request.format == "pdf":
-        task = generate_pdf_report_task.delay(request.career_id, request.gestion_id, request.report_type, request.status_filter)
+        if effective_sede_id is not None:
+            task = generate_pdf_report_task.delay(
+                request.career_id,
+                request.gestion_id,
+                request.report_type,
+                request.status_filter,
+                sede_id=effective_sede_id,
+            )
+        else:
+            task = generate_pdf_report_task.delay(
+                request.career_id,
+                request.gestion_id,
+                request.report_type,
+                request.status_filter,
+            )
     elif request.format == "excel":
-        task = generate_excel_report_task.delay(request.career_id, request.gestion_id, request.report_type, request.status_filter)
+        if effective_sede_id is not None:
+            task = generate_excel_report_task.delay(
+                request.career_id,
+                request.gestion_id,
+                request.report_type,
+                request.status_filter,
+                sede_id=effective_sede_id,
+            )
+        else:
+            task = generate_excel_report_task.delay(
+                request.career_id,
+                request.gestion_id,
+                request.report_type,
+                request.status_filter,
+            )
     else:
         raise HTTPException(status_code=400, detail="Invalid format. Must be 'pdf' or 'excel'")
 
@@ -160,8 +192,12 @@ def download_report(
 def get_seguimiento_stats(
     gestion_id: int,
     career_id: Optional[int] = None,
+    sede_id: Optional[int] = None,
     current_user: User = Depends(require_read_only_get),
     db: Session = Depends(get_db),
 ):
+    effective_sede_id = sede_id
+    if current_user.sede_id and not effective_sede_id:
+        effective_sede_id = current_user.sede_id
     from app.workers.reports_worker import build_seguimiento_data
-    return build_seguimiento_data(db, career_id, gestion_id)
+    return build_seguimiento_data(db, career_id, gestion_id, effective_sede_id)

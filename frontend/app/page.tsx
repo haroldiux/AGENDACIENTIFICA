@@ -11,7 +11,7 @@ import {
   User,
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import { api, type DashboardStats, type Career, type Gestion } from '@/lib/api';
+import { api, type DashboardStats, type Career, type Gestion, type Sede } from '@/lib/api';
 import { activityTypeLabels } from '@/components/agenda/agenda-helpers';
 import PageHeader from '@/components/layout/PageHeader';
 import { useUser } from '@/context/AuthContext';
@@ -58,9 +58,11 @@ export default function Dashboard() {
 
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
   const [careers, setCareers] = useState<Career[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
 
   const [selectedGestionId, setSelectedGestionId] = useState<number | null>(null);
   const [selectedCareerId, setSelectedCareerId] = useState<number | null>(null);
+  const [selectedSedeId, setSelectedSedeId] = useState<number | null>(null);
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,11 +72,15 @@ export default function Dashboard() {
   // Load initial dropdown options
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.gestiones.list(), api.careers.list()])
-      .then(([gList, cList]) => {
+    Promise.all([api.gestiones.list(), api.careers.list(), api.sedes.list()])
+      .then(([gList, cList, sList]) => {
         if (!cancelled) {
           setGestiones(gList);
           setCareers(cList);
+          setSedes(sList);
+          if (user?.sede_id) {
+            setSelectedSedeId((curr) => (curr === null ? user.sede_id! : curr));
+          }
         }
       })
       .catch((err) => {
@@ -84,14 +90,15 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   // Fetch stats when filters change
-  const fetchStats = useCallback((gId: number | null, cId: number | null) => {
+  const fetchStats = useCallback((gId: number | null, cId: number | null, sId: number | null) => {
     setFetchingStats(true);
     const filters = {
       ...(gId ? { gestion_id: gId } : {}),
       ...(cId ? { career_id: cId } : {}),
+      ...(sId ? { sede_id: sId } : {}),
     };
 
     api.dashboard
@@ -111,8 +118,8 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetchStats(selectedGestionId, selectedCareerId);
-  }, [selectedGestionId, selectedCareerId, fetchStats]);
+    fetchStats(selectedGestionId, selectedCareerId, selectedSedeId);
+  }, [selectedGestionId, selectedCareerId, selectedSedeId, fetchStats]);
 
   const handleGestionChange = (gId: number | null) => {
     setSelectedGestionId(gId);
@@ -120,6 +127,10 @@ export default function Dashboard() {
 
   const handleCareerChange = (cId: number | null) => {
     setSelectedCareerId(cId);
+  };
+
+  const handleSedeChange = (sId: number | null) => {
+    setSelectedSedeId(sId);
   };
 
   if (loading) {
@@ -137,7 +148,7 @@ export default function Dashboard() {
         <h3 className="text-lg font-medium text-red-300">Error cargando el dashboard</h3>
         <p className="text-slate-400 mt-1 text-sm">{error}</p>
         <button
-          onClick={() => fetchStats(selectedGestionId, selectedCareerId)}
+          onClick={() => fetchStats(selectedGestionId, selectedCareerId, selectedSedeId)}
           className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-white transition-colors"
         >
           Reintentar
@@ -199,11 +210,15 @@ export default function Dashboard() {
       <DashboardFilters
         gestiones={gestiones}
         careers={careers}
+        sedes={sedes}
         selectedGestionId={selectedGestionId}
         selectedCareerId={selectedCareerId}
+        selectedSedeId={selectedSedeId}
         onGestionChange={handleGestionChange}
         onCareerChange={handleCareerChange}
+        onSedeChange={handleSedeChange}
         disabled={fetchingStats}
+        disabledSede={!!user?.sede_id && ["vicerrector_sede", "director_academico_sede", "director_investigacion"].includes(user?.role ?? "")}
       />
 
       {/* Primary KPI Cards */}

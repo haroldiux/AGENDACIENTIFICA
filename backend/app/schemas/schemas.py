@@ -429,6 +429,7 @@ class ReportRequest(BaseModel):
         "seguimiento",
     ] = "table"
     status_filter: Optional[str] = None
+    sede_id: Optional[int] = None
 
 # --- Notification Schemas ---
 class UserNotificationPreferenceBase(BaseModel):

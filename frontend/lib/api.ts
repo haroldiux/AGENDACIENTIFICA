@@ -202,6 +202,7 @@ export interface ReportGenerateRequest {
   format: ReportFormat;
   report_type: ReportType;
   status_filter?: string;
+  sede_id?: number | null;
 }
 
 export interface ReportGenerateResponse {
@@ -237,6 +238,7 @@ export interface ConflictListResponse {
 export interface ConflictFilters {
   career_id?: number | null;
   gestion_id: number;
+  sede_id?: number | null;
 }
 
 
@@ -288,6 +290,7 @@ export interface MergedCalendarFilters {
 export interface DashboardFilters {
   gestion_id?: number;
   career_id?: number;
+  sede_id?: number;
 }
 
 export interface MonthlyTimelineItem {
@@ -595,10 +598,10 @@ export const api = {
       apiClient
         .get<Blob>(`/reports/${taskId}/download`, { responseType: 'blob' })
         .then((res) => res.data),
-    getSeguimientoStats: (gestion_id: number, career_id?: number | null) =>
+    getSeguimientoStats: (gestion_id: number, career_id?: number | null, sede_id?: number | null) =>
       apiClient
         .get<SeguimientoStatsResponse>('/reports/seguimiento/stats', {
-          params: { gestion_id, career_id },
+          params: { gestion_id, career_id, sede_id },
         })
         .then((res) => res.data),
     getCover: (careerId?: number | null) =>

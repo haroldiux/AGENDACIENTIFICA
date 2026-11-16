@@ -24,8 +24,13 @@ GLOBAL_ROLES = {
     RoleEnum.super_admin,
     RoleEnum.admin,
     RoleEnum.vicerrectorado,
-    RoleEnum.director_investigacion,
     RoleEnum.research,
+}
+
+SEDE_ROLES = {
+    RoleEnum.vicerrector_sede,
+    RoleEnum.director_academico_sede,
+    RoleEnum.director_investigacion,
 }
 
 SCOPED_ROLES = {
@@ -40,11 +45,27 @@ SCOPED_ROLES = {
 def get_dashboard_stats(
     gestion_id: Optional[int] = Query(None),
     career_id: Optional[int] = Query(None),
+    sede_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Return role-aware dashboard statistics and analytics aggregation."""
     today = date.today()
+
+    # Resolve sede scope authorization
+    target_sede_id = None
+    if current_user.role in SEDE_ROLES or current_user.sede_id:
+        if current_user.sede_id:
+            if sede_id is not None and sede_id != current_user.sede_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not authorized to view dashboard stats for another sede",
+                )
+            target_sede_id = current_user.sede_id
+        else:
+            target_sede_id = sede_id
+    elif current_user.role in GLOBAL_ROLES:
+        target_sede_id = sede_id
 
     # Resolve career scope authorization
     user_career_ids = [c.id for c in current_user.careers] if current_user.careers else []
@@ -60,7 +81,7 @@ def get_dashboard_stats(
         else:
             target_career_ids = user_career_ids
     else:
-        # Global role
+        # Global role or Sede role
         if career_id is not None:
             target_career_ids = [career_id]
         else:
@@ -95,6 +116,11 @@ def get_dashboard_stats(
             return query.filter(model.career_id.in_(target_career_ids))
         return query
 
+    def apply_sede_filter(query, model):
+        if target_sede_id is not None:
+            return query.filter(or_(model.sede_id == target_sede_id, model.sede_id.is_(None)))
+        return query
+
     # Queries base
     acad_q = db.query(AcademicActivity)
     sci_q = db.query(ScientificActivity)
@@ -104,7 +130,9 @@ def get_dashboard_stats(
         sci_q = sci_q.filter(ScientificActivity.gestion_id == g_id)
 
     acad_q = apply_career_filter(acad_q, AcademicActivity)
+    acad_q = apply_sede_filter(acad_q, AcademicActivity)
     sci_q = apply_career_filter(sci_q, ScientificActivity)
+    sci_q = apply_sede_filter(sci_q, ScientificActivity)
 
     # Count totals
     total_academic = acad_q.count()
@@ -157,6 +185,7 @@ def get_dashboard_stats(
     if g_id:
         status_subq = status_subq.filter(ScientificActivity.gestion_id == g_id)
     status_subq = apply_career_filter(status_subq, ScientificActivity)
+    status_subq = apply_sede_filter(status_subq, ScientificActivity)
 
     for st, cnt in status_subq.group_by(ScientificActivity.status).all():
         if st:
@@ -169,6 +198,7 @@ def get_dashboard_stats(
     if g_id:
         acad_month_q = acad_month_q.filter(AcademicActivity.gestion_id == g_id)
     acad_month_q = apply_career_filter(acad_month_q, AcademicActivity)
+    acad_month_q = apply_sede_filter(acad_month_q, AcademicActivity)
     acad_months = dict(
         acad_month_q.group_by(extract("month", AcademicActivity.start_date)).all()
     )
@@ -179,6 +209,7 @@ def get_dashboard_stats(
     if g_id:
         sci_month_q = sci_month_q.filter(ScientificActivity.gestion_id == g_id)
     sci_month_q = apply_career_filter(sci_month_q, ScientificActivity)
+    sci_month_q = apply_sede_filter(sci_month_q, ScientificActivity)
     sci_months = dict(
         sci_month_q.group_by(extract("month", ScientificActivity.start_date)).all()
     )
@@ -209,6 +240,7 @@ def get_dashboard_stats(
         )
         if g_id:
             car_sci_q = car_sci_q.filter(ScientificActivity.gestion_id == g_id)
+        car_sci_q = apply_sede_filter(car_sci_q, ScientificActivity)
         car_total = car_sci_q.count()
         car_completed = car_sci_q.filter(
             ScientificActivity.status == ScientificActivityStatus.completed
@@ -237,6 +269,7 @@ def get_dashboard_stats(
     if g_id:
         audit_q = audit_q.filter(ScientificActivity.gestion_id == g_id)
     audit_q = apply_career_filter(audit_q, ScientificActivity)
+    audit_q = apply_sede_filter(audit_q, ScientificActivity)
     recent_audits_raw = (
         audit_q.order_by(ScientificActivityAudit.timestamp.desc()).limit(10).all()
     )

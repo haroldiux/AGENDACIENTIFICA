@@ -10,6 +10,7 @@ import {
   api,
   type Career,
   type Gestion,
+  type Sede,
   type ReportFormat,
   type ReportType,
   type ConflictItem,
@@ -29,8 +30,10 @@ export default function ReportesPage() {
   const { user } = useUser();
   const [careers, setCareers] = useState<Career[]>([]);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
   const [careerId, setCareerId] = useState<number | null>(null);
   const [gestionId, setGestionId] = useState<number | null>(null);
+  const [sedeId, setSedeId] = useState<number | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<ConflictItem[]>([]);
   const [conflictsOpen, setConflictsOpen] = useState(false);
@@ -47,9 +50,10 @@ export default function ReportesPage() {
     let cancelled = false;
     const loadSelectors = async () => {
       try {
-        const [careersData, gestionesData] = await Promise.all([
+        const [careersData, gestionesData, sedesData] = await Promise.all([
           api.careers.list(),
           api.gestiones.list(),
+          api.sedes.list(),
         ]);
         if (!cancelled) {
           let filteredCareers = careersData;
@@ -62,6 +66,11 @@ export default function ReportesPage() {
           }
           setCareers(filteredCareers);
           setGestiones(gestionesData);
+          setSedes(sedesData);
+
+          if (user?.sede_id) {
+            setSedeId((curr) => (curr === null ? user.sede_id! : curr));
+          }
 
           // Auto-select active gestion based on current date
           const today = new Date();
@@ -71,21 +80,20 @@ export default function ReportesPage() {
             return today >= start && today <= end;
           });
 
-          if (activeGestion && gestionId === null) {
-            setGestionId(activeGestion.id);
-          } else if (gestionesData.length > 0 && gestionId === null) {
-            const mostRecent = [...gestionesData].sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())[0];
-            setGestionId(mostRecent.id);
-          }
+          const mostRecent = gestionesData.length > 0
+            ? [...gestionesData].sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())[0]
+            : null;
+
+          setGestionId((curr) => (curr !== null ? curr : (activeGestion?.id ?? mostRecent?.id ?? null)));
 
           // Auto-select career for restricted single-career users
-          if (filteredCareers.length === 1 && user && !globalRoles.includes(user.role) && careerId === null) {
-            setCareerId(filteredCareers[0].id);
+          if (filteredCareers.length === 1 && user && !globalRoles.includes(user.role)) {
+            setCareerId((curr) => (curr !== null ? curr : filteredCareers[0].id));
           }
         }
       } catch (err) {
         console.error('Error loading selector options:', err);
-        toast.error('Error cargando carreras y gestiones');
+        toast.error('Error cargando carreras, gestiones y sedes');
       }
     };
     loadSelectors();
@@ -121,6 +129,7 @@ export default function ReportesPage() {
       const { task_id } = await api.reports.generate({
         career_id: careerId,
         gestion_id: gestionId,
+        sede_id: sedeId || undefined,
         format,
         report_type: reportType,
         status_filter: statusFilter || undefined,
@@ -179,6 +188,7 @@ export default function ReportesPage() {
       const data = await api.conflicts.list({
         career_id: careerId,
         gestion_id: gestionId,
+        sede_id: sedeId || undefined,
       });
       setConflicts(data.conflicts);
     } catch (err) {
@@ -197,7 +207,7 @@ export default function ReportesPage() {
     setSeguimientoOpen(true);
 
     try {
-      const data = await api.reports.getSeguimientoStats(gestionId, careerId);
+      const data = await api.reports.getSeguimientoStats(gestionId, careerId, sedeId || undefined);
       setSeguimientoData(data);
     } catch (err) {
       console.error('Error loading seguimiento stats:', err);
@@ -232,9 +242,29 @@ export default function ReportesPage() {
         }
       />
 
-      {/* Shared career/gestión selectors */}
-      <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-4 flex flex-col md:flex-row gap-4 dark:bg-slate-900/60 dark:border-white/10">
-        <div className="flex flex-col gap-1 flex-1">
+      {/* Shared career/sede/gestión selectors */}
+      <div className="rounded-2xl border border-border bg-surface shadow-[var(--shadow-glass)] overflow-hidden p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 dark:bg-slate-900/60 dark:border-white/10">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="report-sede" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+            Sede Académica
+          </label>
+          <select
+            id="report-sede"
+            value={sedeId ?? ''}
+            onChange={(e) => setSedeId(e.target.value ? Number(e.target.value) : null)}
+            disabled={selectorsDisabled || (!!user?.sede_id && ["vicerrector_sede", "director_academico_sede", "director_investigacion"].includes(user?.role ?? ""))}
+            className="bg-background border border-input text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 dark:bg-slate-800/80 dark:border-white/10"
+          >
+            <option value="">Todas las Sedes / Nacional</option>
+            {sedes.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
           <label htmlFor="report-career" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             Carrera
           </label>
@@ -245,7 +275,7 @@ export default function ReportesPage() {
             disabled={selectorsDisabled}
             className="bg-background border border-input text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary disabled:opacity-50 dark:bg-slate-800/80 dark:border-white/10"
           >
-            <option value="">Seleccione una carrera</option>
+            <option value="">Todas las carreras / General</option>
             {careers.map((career) => (
               <option key={career.id} value={career.id}>
                 {career.name}
@@ -254,7 +284,7 @@ export default function ReportesPage() {
           </select>
         </div>
 
-        <div className="flex flex-col gap-1 flex-1">
+        <div className="flex flex-col gap-1">
           <label htmlFor="report-gestion" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             Gestión
           </label>
@@ -274,7 +304,7 @@ export default function ReportesPage() {
           </select>
         </div>
 
-        <div className="flex flex-col gap-1 flex-1">
+        <div className="flex flex-col gap-1">
           <label htmlFor="report-status" className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             Filtrar por Estado (Opcional)
           </label>
