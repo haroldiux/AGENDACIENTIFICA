@@ -3,69 +3,143 @@
 {% block title %}Reporte de Seguimiento y Cumplimiento{% endblock %}
 {% block header_title %}Reporte de Seguimiento y Cumplimiento de Agenda{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
-    .kpi-container {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 25px;
+    @page {
+        size: A4 portrait;
+        margin: 1.2cm 1cm 1.4cm 1cm;
+        @bottom-left {
+            content: "UNITEPC · Reporte de Seguimiento y Cumplimiento";
+            font-family: 'Inter', sans-serif;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
+        @bottom-right {
+            content: "Página " counter(page) " de " counter(pages);
+            font-family: 'Inter', sans-serif;
+            font-size: 7.5pt;
+            color: #94a3b8;
+        }
     }
-    .kpi-card {
-        flex: 1;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px;
-        text-align: center;
-    }
-    .kpi-value {
-        font-size: 20px;
-        font-weight: 800;
+
+    body {
+        font-family: 'Inter', sans-serif;
         color: #0f172a;
-        line-height: 1.2;
+        line-height: 1.35;
+        font-size: 8.5pt;
     }
-    .kpi-label {
-        font-size: 10px;
-        color: #64748b;
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-top: 4px;
-    }
-    .progress-bar-bg {
-        background-color: #e2e8f0;
+
+    .meta-bar {
+        margin-bottom: 16px;
+        font-size: 8.5pt;
+        color: #475569;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
         border-radius: 6px;
-        height: 10px;
-        width: 100%;
-        overflow: hidden;
-        margin-top: 4px;
+        padding: 8px 12px;
     }
-    .progress-bar-fill {
-        background-color: #059669;
-        height: 100%;
+
+    .section-title {
+        font-size: 11pt;
+        font-weight: 700;
+        margin-bottom: 10px;
+        page-break-after: avoid;
+        break-after: avoid;
     }
+
+    /* Fixed table layouts ensuring 100% fit on page */
+    table.table-summary, table.table-details {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    table.table-summary th, table.table-summary td,
+    table.table-details th, table.table-details td {
+        border: 1px solid #cbd5e1;
+        padding: 5px 6px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        box-sizing: border-box;
+    }
+
+    table.table-summary th, table.table-details th {
+        background-color: #6B3392;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 7.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        vertical-align: middle;
+    }
+
+    table.table-summary td {
+        font-size: 8pt;
+        vertical-align: middle;
+    }
+
+    table.table-details td {
+        font-size: 7.5pt;
+        vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
+
     .badge-status {
         display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 9px;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 7pt;
         font-weight: 700;
         text-transform: uppercase;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.15;
     }
-    .badge-completed { background-color: #d1fae5; color: #065f46; }
-    .badge-in_progress { background-color: #dbeafe; color: #1e40af; }
-    .badge-cancelled { background-color: #ffe4e6; color: #9f1239; }
-    .badge-scheduled { background-color: #f3f4f6; color: #374151; }
-</style>
+    .badge-completed { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-in_progress { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-cancelled { background-color: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
+    .badge-scheduled { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
 
-<div style="margin-bottom: 15px; font-size: 11px; color: #475569;">
+    .act-title {
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.25;
+        font-size: 7.5pt;
+    }
+
+    .col-dates {
+        font-size: 7pt;
+        color: #334155;
+        line-height: 1.2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="meta-bar">
     <b>Gestión:</b> {{ gestion_name }} &nbsp;|&nbsp; 
     <b>Filtro Carrera:</b> {{ career_name }} &nbsp;|&nbsp; 
     <b>Fecha de Emisión:</b> {{ now_str }}
 </div>
 
-<h3 style="color: #009E96; margin-bottom: 12px;">1. Resumen Estadístico por Carrera</h3>
+<h3 class="section-title" style="color: #009E96;">1. Resumen Estadístico por Carrera</h3>
 
-<table>
+<table class="table-summary">
+    <colgroup>
+        <col style="width: 34%;">
+        <col style="width: 9%;">
+        <col style="width: 11%;">
+        <col style="width: 12%;">
+        <col style="width: 12%;">
+        <col style="width: 10%;">
+        <col style="width: 12%;">
+    </colgroup>
     <thead>
         <tr>
             <th>Carrera / Alcance</th>
@@ -103,12 +177,20 @@
     </tbody>
 </table>
 
-<h3 style="color: #6B3392; margin-top: 30px; margin-bottom: 12px;">2. Detalle de Actividades por Estado</h3>
+<h3 class="section-title" style="color: #6B3392; margin-top: 24px;">2. Detalle de Actividades por Estado</h3>
 
 {% if not detailed_activities %}
-    <p style="font-style: italic; color: #64748b;">No hay actividades registradas para esta selección.</p>
+    <p style="font-style: italic; color: #64748b; font-size: 8.5pt;">No hay actividades registradas para esta selección.</p>
 {% else %}
-    <table>
+    <table class="table-details">
+        <colgroup>
+            <col style="width: 28%;">
+            <col style="width: 16%;">
+            <col style="width: 14%;">
+            <col style="width: 12%;">
+            <col style="width: 12%;">
+            <col style="width: 18%;">
+        </colgroup>
         <thead>
             <tr>
                 <th>Actividad</th>
@@ -122,16 +204,18 @@
         <tbody>
             {% for act in detailed_activities %}
             <tr>
-                <td><b>{{ act.title }}</b></td>
+                <td>
+                    <div class="act-title">{{ act.title }}</div>
+                </td>
                 <td>{{ act.career_name }}</td>
-                <td style="font-size: 9px; white-space: nowrap;">{{ act.dates }}</td>
-                <td style="font-size: 9px;">{{ act.type_label }}</td>
+                <td class="col-dates">{{ act.dates }}</td>
+                <td style="font-size: 7pt;">{{ act.type_label }}</td>
                 <td style="text-align: center;">
                     <span class="badge-status badge-{{ act.status }}">
                         {{ act.status_label }}
                     </span>
                 </td>
-                <td style="font-size: 9px; color: #475569;">
+                <td style="font-size: 7pt; color: #475569;">
                     {% if act.notes %}
                         <div><b>Notas:</b> {{ clamp_notes(act.notes) }}</div>
                     {% endif %}
