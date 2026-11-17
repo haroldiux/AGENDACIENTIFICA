@@ -103,14 +103,33 @@ export default function NotificationPreferencesPage() {
     }
   };
 
+  const handleOpenWhatsApp = async () => {
+    setTestingChannel("whatsapp");
+    try {
+      const payload = await api.notifications.getWhatsAppPayload(prefs.custom_whatsapp?.trim());
+      if (payload.whatsapp_url) {
+        window.open(payload.whatsapp_url, "_blank");
+        toast.success("Abriendo WhatsApp con la planificación lista para enviar.", { duration: 5000 });
+      } else {
+        toast.error("No se pudo generar el enlace de WhatsApp.");
+      }
+    } catch {
+      toast.error("Error al preparar el mensaje de WhatsApp.");
+    } finally {
+      setTestingChannel(null);
+    }
+  };
+
   const handleTestChannel = async (channel: "email" | "whatsapp" | "telegram") => {
+    if (channel === "whatsapp") {
+      await handleOpenWhatsApp();
+      return;
+    }
     setTestingChannel(channel);
     try {
       let target_destination: string | undefined = undefined;
       if (channel === "email" && prefs.custom_email?.trim()) {
         target_destination = prefs.custom_email.trim();
-      } else if (channel === "whatsapp" && prefs.custom_whatsapp?.trim()) {
-        target_destination = prefs.custom_whatsapp.trim();
       } else if (channel === "telegram" && prefs.custom_telegram_chat_id?.trim()) {
         target_destination = prefs.custom_telegram_chat_id.trim();
       }
@@ -198,24 +217,41 @@ export default function NotificationPreferencesPage() {
           </div>
           <div>
             <p className="font-semibold text-foreground">
-              Planificación Semanal Multicanal Automatizada
+              Planificación Semanal Multicanal
             </p>
             <p className="text-muted-foreground mt-0.5">
-              El sistema despacha automáticamente cada <strong>domingo a las 20:00</strong> el resumen de actividades de la semana a <strong>todos los canales habilitados</strong> (Email y WhatsApp de forma simultánea).
+              El sistema despacha automáticamente el resumen de actividades por <strong>Email</strong> y te permite compartirlo o enviártelo a vos mismo con un clic por <strong>WhatsApp</strong>.
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={handleSendWeeklyDigestNow}
-          disabled={isSendingWeekly}
-          className="shrink-0 flex items-center gap-2 text-xs font-medium"
-        >
-          {isSendingWeekly ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-          Probar Envío Semanal
-        </Button>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleOpenWhatsApp}
+            disabled={testingChannel === "whatsapp"}
+            className="flex items-center gap-2 text-xs font-medium border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+          >
+            {testingChannel === "whatsapp" ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+            )}
+            Compartir por WhatsApp
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={handleSendWeeklyDigestNow}
+            disabled={isSendingWeekly}
+            className="flex items-center gap-2 text-xs font-medium"
+          >
+            {isSendingWeekly ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            Enviar Email Ahora
+          </Button>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
@@ -305,17 +341,17 @@ export default function NotificationPreferencesPage() {
 
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Teléfono / Móvil (+591...)
+                  Tu número de WhatsApp (opcional)
                 </label>
                 <input
                   type="text"
                   value={prefs.custom_whatsapp || ""}
                   onChange={(e) => setPrefs((prev) => ({ ...prev, custom_whatsapp: e.target.value }))}
-                  placeholder={user?.phone_number ? `Default: ${user.phone_number}` : "+591 70000000"}
+                  placeholder={user?.phone_number ? `Default: ${user.phone_number}` : "Ej: 78311416"}
                   className="w-full p-2 bg-background border border-input rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:border-primary/50 dark:bg-slate-800/60 dark:border-white/10"
                 />
                 <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">
-                  Formato internacional (ej: <code>59170000000</code>). Requiere token y Phone ID de Meta Cloud API en el archivo <code>.env</code>.
+                  Abre WhatsApp Web o tu App móvil con el mensaje preformateado listo para enviar a tus mensajes personales (&quot;Mensajes conmigo&quot;) o a grupos institucionales sin costo ni dependencias de Meta.
                 </p>
               </div>
 
@@ -323,16 +359,16 @@ export default function NotificationPreferencesPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => handleTestChannel("whatsapp")}
+                onClick={() => handleOpenWhatsApp()}
                 disabled={testingChannel === "whatsapp"}
-                className="w-full flex items-center justify-center gap-2 text-xs"
+                className="w-full flex items-center justify-center gap-2 text-xs border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
               >
                 {testingChannel === "whatsapp" ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Send className="w-3.5 h-3.5" />
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
                 )}
-                Probar WhatsApp
+                Abrir en WhatsApp
               </Button>
             </div>
 

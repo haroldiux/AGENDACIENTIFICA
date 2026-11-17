@@ -1,3 +1,5 @@
+import re
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -74,25 +76,24 @@ def test_notification_channel(
         success = result["success"]
         message = result["message"]
     elif channel == "whatsapp":
-        if not settings.WHATSAPP_API_TOKEN or not settings.WHATSAPP_PHONE_ID:
-            return TestChannelResponse(
-                success=False,
-                message="Credenciales WhatsApp no configuradas. Agrega WHATSAPP_API_TOKEN y WHATSAPP_PHONE_ID en tu archivo .env",
-                channel=channel,
-                target_destination=target,
-                timestamp=datetime.now(timezone.utc),
+        if settings.WHATSAPP_API_TOKEN and settings.WHATSAPP_PHONE_ID:
+            body = (
+                f"Hola {current_user.full_name or 'Usuario'},\n\n"
+                "Este es un mensaje de prueba del canal WhatsApp de Agenda Científica UNITEPC.\n"
+                "Tu configuración de notificaciones WhatsApp está activa y funcional."
             )
-        body = (
-            f"Hola {current_user.full_name or 'Usuario'},\n\n"
-            "Este es un mensaje de prueba del canal WhatsApp de Agenda Científica UNITEPC.\n"
-            "Tu configuración de notificaciones WhatsApp está activa y funcional."
-        )
-        success = send_whatsapp_message(target, body)
-        message = (
-            f"Mensaje de prueba enviado con éxito vía WhatsApp a {target}"
-            if success
-            else f"No se pudo enviar el mensaje WhatsApp a {target}. Verifica tu número (ej: 59170000000) y las credenciales de WhatsApp Cloud API."
-        )
+            success = send_whatsapp_message(target, body)
+            message = (
+                f"Mensaje de prueba enviado con éxito vía WhatsApp a {target}"
+                if success
+                else f"No se pudo enviar el mensaje WhatsApp a {target}. Verifica tu número (ej: 59170000000) y las credenciales de WhatsApp Cloud API."
+            )
+        else:
+            clean_digits = re.sub(r"\D", "", target)
+            if len(clean_digits) == 8:
+                clean_digits = "591" + clean_digits
+            success = True
+            message = f"Canal WhatsApp habilitado en modo directo para {clean_digits or target}. Podés abrir y enviar la planificación con un clic."
     elif channel == "telegram":
         body = (
             f"Hola {current_user.full_name or 'Usuario'},\n\n"
@@ -292,19 +293,25 @@ def send_weekly_digest_now(
     if pref.whatsapp_enabled:
         whatsapp_target = (pref.custom_whatsapp or current_user.phone_number or "").strip()
         if whatsapp_target:
-            if send_whatsapp_message(whatsapp_target, message):
-                delivered_channels.append(f"WhatsApp ({whatsapp_target})")
+            if settings.WHATSAPP_API_TOKEN and settings.WHATSAPP_PHONE_ID:
+                if send_whatsapp_message(whatsapp_target, message):
+                    delivered_channels.append(f"WhatsApp ({whatsapp_target})")
+                else:
+                    errors.append("WhatsApp (verifica credenciales Meta API en .env)")
             else:
-                errors.append("WhatsApp (verifica credenciales Meta API en .env)")
+                delivered_channels.append("WhatsApp (enlace directo listo en web)")
 
     # Telegram
     if pref.telegram_enabled:
         telegram_target = (pref.custom_telegram_chat_id or current_user.telegram_chat_id or "").strip()
         if telegram_target:
-            if send_telegram_message(telegram_target, message):
-                delivered_channels.append(f"Telegram ({telegram_target})")
+            if settings.TELEGRAM_BOT_TOKEN:
+                if send_telegram_message(telegram_target, message):
+                    delivered_channels.append(f"Telegram ({telegram_target})")
+                else:
+                    errors.append("Telegram (verifica bot token en .env)")
             else:
-                errors.append("Telegram (verifica bot token en .env)")
+                errors.append("Telegram (bot token no configurado)")
 
     success = len(delivered_channels) > 0
     return {
@@ -317,4 +324,97 @@ def send_weekly_digest_now(
         "delivered_channels": delivered_channels,
         "errors": errors,
         "activities_count": len(user_academic) + len(user_scientific),
+    }
+
+
+@router.get("/whatsapp-payload")
+def get_whatsapp_payload(
+    phone: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Generate formatted WhatsApp text and direct wa.me link for weekly activity planning."""
+    pref = get_or_create_user_preference(db, current_user.id)
+    today = datetime.now(timezone.utc).date()
+    lookahead_days = pref.lookahead_days if pref.lookahead_days else settings.NOTIFICATION_DAYS_AHEAD
+    user_lookahead = today + timedelta(days=lookahead_days)
+
+    user_academic = []
+    if pref.notify_academic:
+        user_academic = db.query(AcademicActivity).filter(
+            AcademicActivity.start_date <= user_lookahead,
+            AcademicActivity.start_date >= today,
+        ).all()
+
+    user_scientific = []
+    if pref.notify_scientific:
+        user_scientific = db.query(ScientificActivity).filter(
+            ScientificActivity.start_date <= user_lookahead,
+            ScientificActivity.start_date >= today,
+            ScientificActivity.status != "cancelled",
+        ).all()
+
+    user_career_ids = {c.id for c in current_user.careers}
+
+    def activity_matches(activity) -> bool:
+        if activity.career_id is None:
+            return True
+        return activity.career_id in user_career_ids
+
+    user_academic = [a for a in user_academic if activity_matches(a)]
+    user_scientific = [a for a in user_scientific if activity_matches(a)]
+
+    total_acts = len(user_academic) + len(user_scientific)
+    date_range_str = f"del {today.strftime('%d/%m')} al {user_lookahead.strftime('%d/%m/%Y')}"
+
+    lines = [
+        "🏛️ *AGENDA CIENTÍFICA UNITEPC*",
+        f"📋 *Planificación Semanal ({date_range_str})*",
+        f"👤 *Docente / Responsable:* {current_user.full_name or 'Usuario'}",
+        "",
+    ]
+
+    if total_acts == 0:
+        lines.append("ℹ️ _No hay actividades académicas ni científicas programadas para los próximos días._")
+        lines.append("")
+    else:
+        if user_scientific:
+            lines.append("🔬 *Actividades Científicas:*")
+            for act in user_scientific:
+                date_str = act.start_date.strftime("%d/%m/%Y")
+                time_str = f" - {act.start_time.strftime('%H:%M')}" if getattr(act, "start_time", None) else ""
+                lines.append(f"• *{act.title}* ({date_str}{time_str})")
+                if getattr(act, "modality", None):
+                    lines.append(f"  _Modalidad:_ {act.modality}")
+            lines.append("")
+
+        if user_academic:
+            lines.append("📚 *Actividades Académicas:*")
+            for act in user_academic:
+                date_str = act.start_date.strftime("%d/%m/%Y")
+                lines.append(f"• *{act.title}* ({date_str})")
+            lines.append("")
+
+    lines.append("🌐 *Ver agenda completa y reportes:*")
+    lines.append("https://agenda.unitepc.pro")
+
+    message_text = "\n".join(lines)
+
+    target_phone = (phone or pref.custom_whatsapp or current_user.phone_number or "").strip()
+    clean_phone = re.sub(r"\D", "", target_phone)
+    if len(clean_phone) == 8:
+        clean_phone = "591" + clean_phone
+
+    encoded_text = urllib.parse.quote(message_text)
+
+    if clean_phone:
+        whatsapp_url = f"https://wa.me/{clean_phone}?text={encoded_text}"
+    else:
+        whatsapp_url = f"https://api.whatsapp.com/send?text={encoded_text}"
+
+    return {
+        "text": message_text,
+        "whatsapp_url": whatsapp_url,
+        "target_phone": clean_phone,
+        "activities_count": total_acts,
     }

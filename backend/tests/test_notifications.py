@@ -421,3 +421,21 @@ def test_api_send_digest_endpoint_all_users(client, db_session):
     data = response.json()
     assert data["success"] is True
     assert "recipients_count" in data
+
+
+def test_api_whatsapp_payload_endpoint(client, db_session):
+    user = _make_admin_user()
+    db_session.add(user)
+    db_session.commit()
+    app.dependency_overrides[get_current_active_user] = lambda: user
+
+    response = client.get("/api/v1/notifications/whatsapp-payload?phone=78311416")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "text" in data
+    assert "whatsapp_url" in data
+    assert "59178311416" in data["whatsapp_url"]
+    assert "AGENDA CIENTÍFICA UNITEPC" in data["text"]
+

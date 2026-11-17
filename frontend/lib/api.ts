@@ -710,6 +710,17 @@ export const api = {
           activities_count: number;
         }>('/notifications/send-weekly-digest-now')
         .then((res) => res.data),
+    getWhatsAppPayload: (phone?: string) =>
+      apiClient
+        .get<{
+          text: string;
+          whatsapp_url: string;
+          target_phone: string;
+          activities_count: number;
+        }>('/notifications/whatsapp-payload', {
+          params: phone ? { phone } : undefined,
+        })
+        .then((res) => res.data),
   },
 };
 
