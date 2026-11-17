@@ -48,12 +48,15 @@ class EmailService:
         text_content: Optional[str] = None,
     ) -> tuple[bool, Optional[str]]:
         """Send an email using SMTP and return (success, error_message)."""
+        smtp_user = settings.SMTP_USER.strip() if settings.SMTP_USER else ""
+        smtp_password = settings.SMTP_PASSWORD.replace(" ", "") if settings.SMTP_PASSWORD else ""
+
         if not settings.SMTP_HOST or not settings.SMTP_PORT:
             err = "Falta configurar SMTP_HOST o SMTP_PORT."
             logger.warning(err)
             return False, err
 
-        if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        if not smtp_user or not smtp_password:
             err = "Credenciales SMTP faltantes. Se requiere SMTP_USER y SMTP_PASSWORD en el archivo .env"
             logger.warning(err)
             return False, err
@@ -62,7 +65,7 @@ class EmailService:
         msg["Subject"] = subject
 
         from_name = settings.EMAILS_FROM_NAME or "Agenda Científica UNITEPC"
-        from_addr = settings.EMAILS_FROM_EMAIL or settings.SMTP_USER or "noreply@unitepc.edu.bo"
+        from_addr = settings.EMAILS_FROM_EMAIL or smtp_user or "noreply@unitepc.edu.bo"
         msg["From"] = f"{from_name} <{from_addr}>"
         msg["To"] = to_email
 
@@ -74,9 +77,11 @@ class EmailService:
 
         try:
             with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+                server.ehlo()
                 if getattr(settings, "SMTP_TLS", True):
                     server.starttls()
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                    server.ehlo()
+                server.login(smtp_user, smtp_password)
                 server.send_message(msg)
             logger.info(f"Email sent successfully to {to_email}")
             return True, None
@@ -94,7 +99,10 @@ class EmailService:
         now = datetime.now()
         timestamp_str = now.strftime("%Y-%m-%d %H:%M:%S")
 
-        if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        smtp_user = settings.SMTP_USER.strip() if settings.SMTP_USER else ""
+        smtp_password = settings.SMTP_PASSWORD.replace(" ", "") if settings.SMTP_PASSWORD else ""
+
+        if not smtp_user or not smtp_password:
             return {
                 "success": False,
                 "message": (
