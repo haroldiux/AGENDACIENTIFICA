@@ -59,31 +59,55 @@
     table.table-summary th, table.table-summary td,
     table.table-details th, table.table-details td {
         border: 1px solid #cbd5e1;
-        padding: 5px 6px;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        word-break: break-word;
+        padding: 5px 4px;
         box-sizing: border-box;
     }
 
-    table.table-summary th, table.table-details th {
+    table.table-summary th {
         background-color: #6B3392;
         color: #ffffff;
         font-weight: 700;
-        font-size: 7.5pt;
+        font-size: 6.8pt;
         text-transform: uppercase;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.2px;
         vertical-align: middle;
+        text-align: center;
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: normal;
+        hyphens: none;
+        padding: 6px 3px;
+    }
+
+    table.table-details th {
+        background-color: #6B3392;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 7.2pt;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        vertical-align: middle;
+        text-align: center;
+        padding: 6px 4px;
+    }
+
+    table.table-details th:first-child {
+        text-align: left;
+        padding-left: 6px;
     }
 
     table.table-summary td {
         font-size: 8pt;
         vertical-align: middle;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
 
     table.table-details td {
         font-size: 7.5pt;
-        vertical-align: top;
+        vertical-align: middle !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
 
     tr:nth-child(even) {
@@ -92,14 +116,15 @@
 
     .badge-status {
         display: inline-block;
-        padding: 2px 5px;
+        padding: 2.5px 7px;
         border-radius: 4px;
-        font-size: 7pt;
+        font-size: 6.5pt;
         font-weight: 700;
         text-transform: uppercase;
-        white-space: normal;
+        letter-spacing: 0.3px;
+        white-space: nowrap !important;
         text-align: center;
-        line-height: 1.15;
+        line-height: 1.2;
     }
     .badge-completed { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
     .badge-in_progress { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
@@ -117,6 +142,7 @@
         font-size: 7pt;
         color: #334155;
         line-height: 1.2;
+        text-align: center;
     }
 </style>
 {% endblock %}
@@ -132,17 +158,17 @@
 
 <table class="table-summary">
     <colgroup>
-        <col style="width: 34%;">
-        <col style="width: 9%;">
+        <col style="width: 28%;">
+        <col style="width: 8%;">
+        <col style="width: 13%;">
+        <col style="width: 13%;">
+        <col style="width: 13%;">
         <col style="width: 11%;">
-        <col style="width: 12%;">
-        <col style="width: 12%;">
-        <col style="width: 10%;">
-        <col style="width: 12%;">
+        <col style="width: 14%;">
     </colgroup>
     <thead>
         <tr>
-            <th>Carrera / Alcance</th>
+            <th style="text-align: left; padding-left: 6px;">Carrera / Alcance</th>
             <th style="text-align: center;">Total</th>
             <th style="text-align: center;">Programadas</th>
             <th style="text-align: center;">En Desarrollo</th>
@@ -166,7 +192,7 @@
         </tr>
         {% endfor %}
         <tr style="background-color: #f1f5f9; font-weight: 700;">
-            <td>TOTAL INSTITUCIONAL</td>
+            <td style="padding-left: 6px;">TOTAL INSTITUCIONAL</td>
             <td style="text-align: center;">{{ totals.total }}</td>
             <td style="text-align: center;">{{ totals.scheduled }}</td>
             <td style="text-align: center;">{{ totals.in_progress }}</td>
@@ -184,21 +210,21 @@
 {% else %}
     <table class="table-details">
         <colgroup>
-            <col style="width: 28%;">
+            <col style="width: 29%;">
             <col style="width: 16%;">
+            <col style="width: 16%;">
+            <col style="width: 12%;">
             <col style="width: 14%;">
-            <col style="width: 12%;">
-            <col style="width: 12%;">
-            <col style="width: 18%;">
+            <col style="width: 13%;">
         </colgroup>
         <thead>
             <tr>
                 <th>Actividad</th>
                 <th>Carrera</th>
-                <th>Fechas</th>
-                <th>Tipo / Categoría</th>
+                <th style="text-align: center;">Fechas</th>
+                <th style="text-align: center;">Tipo / Categoría</th>
                 <th style="text-align: center;">Estado</th>
-                <th>Observaciones / Evidencias</th>
+                <th style="text-align: center;">Observaciones / Evidencias</th>
             </tr>
         </thead>
         <tbody>
@@ -209,15 +235,15 @@
                 </td>
                 <td>{{ act.career_name }}</td>
                 <td class="col-dates">{{ act.dates }}</td>
-                <td style="font-size: 7pt;">{{ act.type_label }}</td>
+                <td style="font-size: 7pt; text-align: center;">{{ act.type_label }}</td>
                 <td style="text-align: center;">
                     <span class="badge-status badge-{{ act.status }}">
                         {{ act.status_label }}
                     </span>
                 </td>
-                <td style="font-size: 7pt; color: #475569;">
+                <td style="font-size: 7pt; color: #475569; text-align: center;">
                     {% if act.notes %}
-                        <div><b>Notas:</b> {{ clamp_notes(act.notes) }}</div>
+                        <div style="text-align: left;"><b>Notas:</b> {{ clamp_notes(act.notes) }}</div>
                     {% endif %}
                     {% if act.has_evidence %}
                         <div style="color: #047857; font-weight: 600;">✓ Evidencia adjunta</div>
