@@ -137,13 +137,14 @@ from app.models.models import User, AcademicActivity, ScientificActivity, UserNo
 
 @celery_app.task(name="app.workers.notification_worker.dispatch_weekly_notifications")
 def dispatch_weekly_notifications():
-    """Dispatch weekly activity summaries to all active users based on preference matrix.
+    """Dispatch weekly activity summaries to active users who explicitly opted in.
 
-    Channel evaluation order:
-      1. Telegram (if enabled & chat ID present)
-      2. WhatsApp Business API (if enabled & phone present)
-      3. Email (if enabled or fallback)
+    Automated weekly dispatch is disabled by default via ENABLE_AUTOMATED_WEEKLY_DISPATCH=False.
     """
+    if not getattr(settings, "ENABLE_AUTOMATED_WEEKLY_DISPATCH", False):
+        logger.info("Automated weekly notification dispatch is disabled by configuration (ENABLE_AUTOMATED_WEEKLY_DISPATCH=False).")
+        return
+
     logger.info("Starting weekly notification dispatch...")
     db = SessionLocal()
     try:
@@ -155,9 +156,9 @@ def dispatch_weekly_notifications():
             if not pref:
                 pref = UserNotificationPreference(
                     user_id=user.id,
-                    email_enabled=not bool(user.telegram_chat_id or user.phone_number),
-                    whatsapp_enabled=bool(user.phone_number and not user.telegram_chat_id),
-                    telegram_enabled=bool(user.telegram_chat_id),
+                    email_enabled=False,
+                    whatsapp_enabled=False,
+                    telegram_enabled=False,
                     notify_academic=True,
                     notify_scientific=True,
                     digest_frequency="weekly",
@@ -228,26 +229,10 @@ def dispatch_weekly_notifications():
                     ):
                         delivered_channels.append("email")
 
-            # Fallback if all attempted channels failed or no specific channel preference was set active
-            if not delivered_channels:
-                if user.email:
-                    if send_email_message(
-                        user.email,
-                        "Agenda Científica - Actividades de la Semana",
-                        message,
-                        user_name=user.full_name or "Usuario",
-                        academic_activities=user_academic,
-                        scientific_activities=user_scientific,
-                    ):
-                        delivered_channels.append("email")
-                elif user.phone_number:
-                    if send_whatsapp_message(user.phone_number, message):
-                        delivered_channels.append("whatsapp")
-
             if delivered_channels:
                 logger.info(f"Weekly summary delivered to {user.email} via {', '.join(delivered_channels)}")
             else:
-                logger.warning(f"Could not deliver weekly summary to {user.email}: no channel configured or all channels failed")
+                logger.debug(f"No active channels opted-in or configured for user {user.email}")
 
     except Exception as e:
         logger.error(f"Error dispatching notifications: {e}")

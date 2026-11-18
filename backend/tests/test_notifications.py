@@ -6,7 +6,13 @@ import pytest
 from app.api.deps import get_current_active_user
 from app.core.config import settings, Settings
 from app.main import app
-from app.models.models import AcademicActivity, ScientificActivity, RoleEnum, User
+from app.models.models import (
+    AcademicActivity,
+    ScientificActivity,
+    RoleEnum,
+    User,
+    UserNotificationPreference,
+)
 from app.services.email_service import email_service, EmailService
 from app.workers.notification_worker import (
     dispatch_weekly_notifications,
@@ -212,12 +218,45 @@ def _create_activity(db_session, title: str, days_from_today: int):
     db_session.add(activity)
 
 
+def test_dispatch_weekly_notifications_noop_when_automated_dispatch_disabled(
+    db_session, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.workers.notification_worker.SessionLocal", lambda: db_session
+    )
+    monkeypatch.setattr(
+        "app.workers.notification_worker.settings.ENABLE_AUTOMATED_WEEKLY_DISPATCH", False
+    )
+
+    user = User(
+        email="disabled@example.com",
+        full_name="Disabled Dispatch User",
+        hashed_password="pw",
+        role=RoleEnum.teacher,
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    pref = UserNotificationPreference(user_id=user.id, email_enabled=True)
+    db_session.add(pref)
+    _create_activity(db_session, "Activity", 1)
+    db_session.commit()
+
+    with patch("app.workers.notification_worker.send_email_message") as mock_email:
+        dispatch_weekly_notifications()
+
+    mock_email.assert_not_called()
+
+
 def test_dispatch_weekly_notifications_prefers_telegram(db_session, monkeypatch):
     monkeypatch.setattr(
         "app.workers.notification_worker.SessionLocal", lambda: db_session
     )
     monkeypatch.setattr(
         "app.workers.notification_worker.settings.NOTIFICATION_DAYS_AHEAD", 7
+    )
+    monkeypatch.setattr(
+        "app.workers.notification_worker.settings.ENABLE_AUTOMATED_WEEKLY_DISPATCH", True
     )
 
     user = User(
@@ -230,6 +269,14 @@ def test_dispatch_weekly_notifications_prefers_telegram(db_session, monkeypatch)
         phone_number="+59111111111",
     )
     db_session.add(user)
+    db_session.commit()
+    pref = UserNotificationPreference(
+        user_id=user.id,
+        telegram_enabled=True,
+        email_enabled=False,
+        whatsapp_enabled=False,
+    )
+    db_session.add(pref)
     _create_activity(db_session, "Telegram Activity", 1)
     db_session.commit()
 
@@ -248,7 +295,7 @@ def test_dispatch_weekly_notifications_prefers_telegram(db_session, monkeypatch)
     mock_email.assert_not_called()
 
 
-def test_dispatch_weekly_notifications_falls_back_to_whatsapp_then_email(
+def test_dispatch_weekly_notifications_does_not_send_when_channels_disabled(
     db_session, monkeypatch
 ):
     monkeypatch.setattr(
@@ -257,32 +304,34 @@ def test_dispatch_weekly_notifications_falls_back_to_whatsapp_then_email(
     monkeypatch.setattr(
         "app.workers.notification_worker.settings.NOTIFICATION_DAYS_AHEAD", 7
     )
+    monkeypatch.setattr(
+        "app.workers.notification_worker.settings.ENABLE_AUTOMATED_WEEKLY_DISPATCH", True
+    )
 
     user = User(
-        email="fallback@example.com",
-        full_name="Fallback User",
+        email="optout@example.com",
+        full_name="Opt-out User",
         hashed_password="pw",
         role=RoleEnum.teacher,
         is_active=True,
         phone_number="+59122222222",
     )
     db_session.add(user)
-    _create_activity(db_session, "Fallback Activity", 1)
+    _create_activity(db_session, "Activity Not Sent", 1)
     db_session.commit()
 
     with patch(
-        "app.workers.notification_worker.send_whatsapp_message", return_value=False
+        "app.workers.notification_worker.send_whatsapp_message"
     ) as mock_whatsapp, patch(
-        "app.workers.notification_worker.send_email_message", return_value=True
+        "app.workers.notification_worker.send_email_message"
     ) as mock_email:
         dispatch_weekly_notifications()
 
-    mock_whatsapp.assert_called_once()
-    mock_email.assert_called_once()
-    assert mock_email.call_args.args[0] == "fallback@example.com"
+    mock_whatsapp.assert_not_called()
+    mock_email.assert_not_called()
 
 
-def test_dispatch_weekly_notifications_uses_email_when_no_other_channel(
+def test_dispatch_weekly_notifications_uses_email_when_explicitly_enabled(
     db_session, monkeypatch
 ):
     monkeypatch.setattr(
@@ -290,6 +339,9 @@ def test_dispatch_weekly_notifications_uses_email_when_no_other_channel(
     )
     monkeypatch.setattr(
         "app.workers.notification_worker.settings.NOTIFICATION_DAYS_AHEAD", 7
+    )
+    monkeypatch.setattr(
+        "app.workers.notification_worker.settings.ENABLE_AUTOMATED_WEEKLY_DISPATCH", True
     )
 
     user = User(
@@ -300,6 +352,12 @@ def test_dispatch_weekly_notifications_uses_email_when_no_other_channel(
         is_active=True,
     )
     db_session.add(user)
+    db_session.commit()
+    pref = UserNotificationPreference(
+        user_id=user.id,
+        email_enabled=True,
+    )
+    db_session.add(pref)
     _create_activity(db_session, "Email Activity", 1)
     db_session.commit()
 
@@ -319,6 +377,9 @@ def test_dispatch_weekly_notifications_filters_by_date(db_session, monkeypatch):
     monkeypatch.setattr(
         "app.workers.notification_worker.settings.NOTIFICATION_DAYS_AHEAD", 7
     )
+    monkeypatch.setattr(
+        "app.workers.notification_worker.settings.ENABLE_AUTOMATED_WEEKLY_DISPATCH", True
+    )
 
     user = User(
         email="datefilter@example.com",
@@ -329,6 +390,12 @@ def test_dispatch_weekly_notifications_filters_by_date(db_session, monkeypatch):
         telegram_chat_id="999999",
     )
     db_session.add(user)
+    db_session.commit()
+    pref = UserNotificationPreference(
+        user_id=user.id,
+        telegram_enabled=True,
+    )
+    db_session.add(pref)
     _create_activity(db_session, "Inside Window", 1)
     _create_activity(db_session, "Outside Window", 30)
     db_session.commit()

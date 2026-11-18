@@ -467,7 +467,7 @@ class ReportRequest(BaseModel):
 
 # --- Notification Schemas ---
 class UserNotificationPreferenceBase(BaseModel):
-    email_enabled: bool = True
+    email_enabled: bool = False
     whatsapp_enabled: bool = False
     telegram_enabled: bool = False
     custom_email: Optional[str] = None

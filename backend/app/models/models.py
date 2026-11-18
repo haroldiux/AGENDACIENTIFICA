@@ -206,7 +206,7 @@ class UserNotificationPreference(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, index=True, nullable=False)
-    email_enabled = Column(Boolean, default=True, nullable=False)
+    email_enabled = Column(Boolean, default=False, nullable=False)
     whatsapp_enabled = Column(Boolean, default=False, nullable=False)
     telegram_enabled = Column(Boolean, default=False, nullable=False)
     custom_email = Column(String, nullable=True)

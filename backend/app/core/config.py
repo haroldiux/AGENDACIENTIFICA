@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str | None = None
     EMAILS_FROM_NAME: str = "Agenda Cientifica UNITEPC"
     EMAILS_FROM_EMAIL: str | None = None
+    ENABLE_AUTOMATED_WEEKLY_DISPATCH: bool = False
 
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",

@@ -32,7 +32,7 @@ def test_get_notification_preferences_auto_initialization(client, db_session):
     assert response.status_code == 200
     data = response.json()
     assert data["user_id"] == 101
-    assert data["email_enabled"] is True
+    assert data["email_enabled"] is False
     assert data["whatsapp_enabled"] is False
     assert data["telegram_enabled"] is False
     assert data["notify_academic"] is True
@@ -163,6 +163,9 @@ def test_worker_respects_custom_destinations_and_lookahead(db_session, monkeypat
 
     monkeypatch.setattr(
         "app.workers.notification_worker.SessionLocal", lambda: db_session
+    )
+    monkeypatch.setattr(
+        "app.workers.notification_worker.settings.ENABLE_AUTOMATED_WEEKLY_DISPATCH", True
     )
 
     user = User(
