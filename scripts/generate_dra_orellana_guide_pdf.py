@@ -158,15 +158,15 @@ def generate_guide_pdf(output_path: str):
     meta_data = [
         [
             Paragraph("<b>Destinataria:</b> Dra. María Lorena Orellana Aguilar", body_style),
-            Paragraph("<b>Gestión Habilitada:</b> 1-2027", body_style)
+            Paragraph("<b>Gestión Activa:</b> 2-2026 (con datos) / 1-2027", body_style)
         ],
         [
             Paragraph("<b>Cargo:</b> Directora Nacional de Investigación", body_style),
-            Paragraph("<b>Alcance del Rol:</b> Planificación y Seguimiento Nacional", body_style)
+            Paragraph("<b>Alcance del Rol:</b> Planificación, Aprobación y Seguimiento Nacional", body_style)
         ],
         [
             Paragraph("<b>Institución:</b> Universidad Técnica Privada Cosmos (UNITEPC)", body_style),
-            Paragraph("<b>Estado de Cuenta:</b> Activo / Habilitado", body_style)
+            Paragraph("<b>Estado de Cuenta:</b> Habilitada y Activa", body_style)
         ]
     ]
     meta_table = Table(meta_data, colWidths=[280, 252])
@@ -221,24 +221,22 @@ def generate_guide_pdf(output_path: str):
             ]
         ),
         (
-            "Paso 2: Carga de la Planificación 1-2027 mediante la Plantilla Excel",
+            "Paso 2: Carga de Planificación mediante Plantilla Excel",
             "#0F294A",
             [
                 "En el menú lateral izquierdo, seleccione la opción <b>'Importar'</b>.",
-                "Seleccione la gestión <b>'1-2027'</b> en el desplegable oficial.",
-                "Adjunte el archivo provisto: <b>Plantilla_Direccion_Investigacion_1-2027_Dra_Maria_Lorena_Orellana.xlsx</b>.",
-                "El sistema ejecutará una <b>pre-validación inteligente</b>: detectará las 7 actividades de investigación preparadas, comprobará la consistencia de fechas y descartará solapamientos.",
-                "Presione <b>'Confirmar e Importar'</b>. El cronograma semestral quedará publicado instantáneamente."
+                "Seleccione la gestión correspondiente (ej. <b>2-2026</b> o <b>1-2027</b>).",
+                "Adjunte la plantilla Excel oficial: el sistema ejecutará una <b>pre-validación inteligente</b> comprobando consistencia de fechas, categorías y campos requeridos antes de guardar.",
+                "Presione <b>'Confirmar e Importar'</b> para publicar el cronograma semestral de inmediato."
             ]
         ),
         (
             "Paso 3: Visualización en el Calendario Integrado y Detección de Cruces",
             "#0F294A",
             [
-                "En el menú lateral, haga clic en <b>'Calendario'</b>.",
-                "Seleccione la vista de su agrado: <b>Mes</b>, <b>Semana</b> o <b>Agenda (Lista)</b>.",
-                "Filtre por la gestión <b>1-2027</b>. Verá sus actividades científicas resaltadas.",
-                "<b>Cruce con Actividades Académicas:</b> El sistema le permite contrastar sus congresos y eventos con las fechas de exámenes parciales y finales cargados por Vicerrectorado y Direcciones de Carrera, garantizando la máxima concurrencia de docentes y estudiantes."
+                "En el menú lateral, haga clic en <b>'Calendario'</b> y seleccione la gestión activa <b>2-2026</b>.",
+                "Podrá ver las actividades institucionales ya registradas (Congresos, Webinars, Ferias, Hackathons y períodos académicos de Vicerrectorado y Sistemas).",
+                "<b>Detección de Cruces:</b> El sistema contrasta los eventos de investigación contra los exámenes parciales y finales para asegurar máxima convocatoria sin interferir con la docencia."
             ]
         ),
         (
@@ -263,11 +261,12 @@ def generate_guide_pdf(output_path: str):
             ]
         ),
         (
-            "Paso 6: Descarga de Reportes y Sincronización Móvil (iCal)",
+            "Paso 6: Emisión de Reportes Ejecutivos y Difusión por WhatsApp / iCal",
             "#0F294A",
             [
-                "En la sección <b>'Reportes'</b>, genere el resumen ejecutivo semestral de actividades científicas en formato <b>PDF imprimible</b> o <b>Excel analítico</b>.",
-                "<b>Sincronización con Teléfono / Correo:</b> Desde el Calendario, utilice el botón <b>'Sincronizar Calendario (iCal)'</b> para suscribirse desde su Google Calendar o Microsoft Outlook, recibiendo alertas automáticas en su celular antes de cada evento."
+                "En la sección <b>'Reportes'</b>, emita el <b>Reporte de Seguimiento y Cumplimiento (PDF)</b> oficial con semáforos, porcentajes de avance por carrera y cuadro estadístico.",
+                "En <b>'Configuración > Notificaciones'</b>, use el botón <b>'Abrir en WhatsApp'</b> para generar y enviar al instante el resumen semanal formateado con emojis a grupos de trabajo o autoridades.",
+                "En <b>'Calendario'</b>, active <b>'Sincronizar (iCal)'</b> para suscribir los eventos a su Google Calendar o Microsoft Outlook institucional en su teléfono o computadora."
             ]
         )
     ]
@@ -320,5 +319,7 @@ def generate_guide_pdf(output_path: str):
 
 
 if __name__ == "__main__":
-    out = os.path.abspath("material_demostracion/GUIA_INICIO_Y_PRUEBAS_DRA_ORELLANA_1-2027.pdf")
-    generate_guide_pdf(out)
+    out_main = os.path.abspath("material_demostracion/GUIA_INICIO_Y_PRUEBAS_DRA_ORELLANA.pdf")
+    generate_guide_pdf(out_main)
+    out_compat = os.path.abspath("material_demostracion/GUIA_INICIO_Y_PRUEBAS_DRA_ORELLANA_1-2027.pdf")
+    generate_guide_pdf(out_compat)
