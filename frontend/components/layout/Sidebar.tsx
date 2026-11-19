@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,8 +13,6 @@ import {
   GraduationCap,
   Menu,
   ChevronLeft,
-  Moon,
-  Sun,
   Tag,
   LogOut,
   User,
@@ -43,7 +40,6 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user, logout } = useUser();
   const { canManageCategories, canManageUsers, canManageGestiones, role } = usePermissions();
@@ -98,18 +94,6 @@ export default function Sidebar() {
         </Link>
 
         <div className="flex items-center gap-1.5">
-          {mounted && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="h-9 w-9 text-muted-foreground hover:text-foreground"
-              aria-label="Cambiar tema"
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-          )}
-
           <Button
             variant="ghost"
             size="icon"
@@ -383,7 +367,7 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* Theme & Onboarding Toggle */}
+        {/* Onboarding Guide Action */}
         <div className={cn("p-3 border-t border-border bg-muted/40 flex flex-col gap-1 items-center justify-center dark:border-white/5", !user && "mt-auto")}>
           <Button
             variant="ghost"
@@ -395,18 +379,6 @@ export default function Sidebar() {
             <Sparkles className="w-4 h-4 shrink-0 text-primary animate-pulse" />
             {!collapsed && <span>Guía del Sistema</span>}
           </Button>
-
-          {mounted && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className={cn("w-full flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground", collapsed ? "justify-center px-0" : "justify-start px-2.5")}
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
-              {!collapsed && <span>{theme === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>}
-            </Button>
-          )}
         </div>
       </motion.aside>
     </>

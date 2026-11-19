@@ -21,8 +21,9 @@ export default function RootLayout({
       <body suppressHydrationWarning className={GeistSans.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          forcedTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <AuthProvider>
